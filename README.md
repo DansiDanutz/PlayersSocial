@@ -18,6 +18,6 @@ Open <http://localhost:8000>. The browser needs network access for Google Fonts,
 
 ## Deployment
 
-The existing Vercel project is `playerssocial` in the `irises-projects-ce549f63` team. `vercel.json` serves the `dist` directory. The live deployment predates this repository baseline. Connect the GitHub repository to the Vercel project before expecting Git pushes to deploy automatically.
+The existing Vercel project is `playerssocial` in the `irises-projects-ce549f63` team. `vercel.json` serves the `dist` directory. The Vercel project is connected to this GitHub repository, so pushes to `main` deploy the site automatically.
 
 The `.openai/hosting.json` file records the original Sites project registration. It does not deploy the Vercel project.
