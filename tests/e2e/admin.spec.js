@@ -1,6 +1,6 @@
 const path = require('path');
 const { test, expect } = require('@playwright/test');
-const { mockSupabase, featuredRow, ADMIN_TOKEN } = require('../support/supabase-mock');
+const { mockSupabase, featuredRow, gotoLoaded, ADMIN_TOKEN } = require('../support/supabase-mock');
 
 const BANNER = path.join(__dirname, '..', '..', 'dist', 'poster-remi.webp');
 
@@ -36,7 +36,7 @@ test('email link logs the admin in only after confirming', async ({ page }) => {
 
 test('admin creates a featured event with a banner', async ({ page }) => {
   const state = await mockSupabase(page, { admin: true });
-  await page.goto('/#events');
+  await gotoLoaded(page, '/#events');
   await openFeaturedAdmin(page);
 
   await page.getByRole('button', { name: '+ Creează eveniment' }).click();
@@ -52,6 +52,7 @@ test('admin creates a featured event with a banner', async ({ page }) => {
   await form.getByRole('button', { name: 'Publică evenimentul' }).click();
 
   await expect(page.locator('#featuredUpcoming')).toContainText('Turneu de Remi');
+  await expect(page.locator('#featuredUpcoming .featured-admin[open] .admin-form-status')).toHaveText('Evenimentul a fost publicat.');
   expect(state.calls.some(call => call.name === 'storage:POST')).toBe(true);
   const create = state.calls.find(call => call.name === 'players_admin_create_event');
   expect(create.token).toBe(ADMIN_TOKEN);
@@ -63,7 +64,7 @@ test('admin creates a featured event with a banner', async ({ page }) => {
 
 test('admin records attendance, recap and notes for an ended event', async ({ page }) => {
   const state = await mockSupabase(page, { admin: true, events: [featuredRow({ event_name: 'Turneu de Șah', event_date: '2026-09-26', joined_count: 7 })] });
-  await page.goto('/#events');
+  await gotoLoaded(page, '/#events');
   await openFeaturedAdmin(page);
 
   await page.locator('#featuredEnded summary', { hasText: 'Turneu de Șah' }).click();
@@ -81,7 +82,7 @@ test('admin records attendance, recap and notes for an ended event', async ({ pa
 
 test('admin exports registrants as CSV with formula injection neutralised', async ({ page }) => {
   await mockSupabase(page, { admin: true, events: [featuredRow({ event_name: 'Turneu de Șah', event_date: '2026-09-26' })], registrants: [{ first_name: '=HYPERLINK("x")', last_name: 'Pop', email: 'ana@example.com', confirmation_status: 'accepted', created_at: '2026-09-20T10:00:00Z', public_display_consent: true }] });
-  await page.goto('/#events');
+  await gotoLoaded(page, '/#events');
   await openFeaturedAdmin(page);
   await page.locator('#featuredEnded summary', { hasText: 'Turneu de Șah' }).click();
 

@@ -67,4 +67,12 @@ async function mockSupabase(page, { events = [], registrants = [], admin = false
   return state;
 }
 
-module.exports = { mockSupabase, featuredRow, ADMIN_TOKEN };
+// Navigates and waits until the page has rendered the first players_public_events response.
+async function gotoLoaded(page, url) {
+  const loaded = page.waitForResponse(response => response.url().endsWith('/rest/v1/rpc/players_public_events'));
+  await page.goto(url);
+  await loaded;
+  await page.locator('#eventGrid .event .status-chip').first().waitFor({ state: 'attached' });
+}
+
+module.exports = { mockSupabase, featuredRow, gotoLoaded, ADMIN_TOKEN };

@@ -98,7 +98,7 @@ function renderCreateForm(){
     const created=await submitEventForm(form,(data,bannerUrl)=>adminRpc('players_admin_create_event',{p_event_name:data.get('event_name'),...eventPayload(data,bannerUrl)}),'Evenimentul a fost publicat.');
     if(!created) return;
     const name=String(new FormData(form).get('event_name')).trim();
-    await refreshWorkflow(); toggleCreatePanel(false); await renderFeaturedAdmin(name);
+    await refreshWorkflow(); toggleCreatePanel(false); await renderFeaturedAdmin(name,'Evenimentul a fost publicat.');
   });
   panel.replaceChildren(form);
 }
@@ -147,7 +147,7 @@ function buildEditForm(row,notes){
     const saved=await submitEventForm(form,(data,bannerUrl)=>adminRpc('players_admin_update_featured_event',{p_event_name:row.event_name,...eventPayload(data,bannerUrl||row.banner_url),p_final_participants:finalValue===''?null:Number(finalValue),p_public_recap:data.get('public_recap'),p_admin_notes:data.get('admin_notes'),p_is_hidden:data.get('is_hidden')==='on'}),'Modificările au fost salvate.');
     if(!saved) return;
     if(form.querySelector('input[name="banner"]').files[0]) await discardBanner(row.banner_url);
-    await refreshWorkflow(); await renderFeaturedAdmin(row.event_name);
+    await refreshWorkflow(); await renderFeaturedAdmin(row.event_name,'Modificările au fost salvate.');
   });
   return form;
 }
@@ -165,7 +165,8 @@ function featuredAdminItem(row,notes,isOpen){
   return item;
 }
 
-async function renderFeaturedAdmin(openName){
+// Re-renders both lists; the saved event reopens and keeps its confirmation message.
+async function renderFeaturedAdmin(openName,savedMessage){
   let notes={};
   try { notes=Object.fromEntries((await adminRpc('players_admin_event_notes',{})).map(row=>[row.event_name,row.admin_notes])); }
   catch(error){ document.querySelector('#featuredUpcoming').textContent=error.message; return; }
@@ -173,6 +174,8 @@ async function renderFeaturedAdmin(openName){
   const item=row=>featuredAdminItem(row,notes[row.event_name],row.event_name===openName);
   document.querySelector('#featuredUpcoming').replaceChildren(...upcoming.map(item));
   document.querySelector('#featuredEnded').replaceChildren(...ended.map(item));
+  const openForm=document.querySelector('.featured-admin[open] form');
+  if(openForm&&savedMessage) setFormStatus(openForm,savedMessage,'ok');
 }
 
 document.querySelector('.admin-create-toggle').addEventListener('click',()=>toggleCreatePanel(document.querySelector('#createEventPanel').hidden));

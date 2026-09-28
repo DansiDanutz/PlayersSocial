@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { mockSupabase, featuredRow } = require('../support/supabase-mock');
+const { mockSupabase, featuredRow, gotoLoaded } = require('../support/supabase-mock');
 
 const hasHorizontalOverflow = page => page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
 
@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
 
 test('page and admin dashboard fit the viewport without horizontal scrolling', async ({ page }) => {
   await mockSupabase(page, { admin: true, events: [featuredRow({ event_name: 'Turneu de Remi', event_date: '2026-10-10' }), featuredRow({ event_name: 'Turneu de Șah', event_date: '2026-09-26' })] });
-  await page.goto('/#events');
+  await gotoLoaded(page, '/#events');
   await expect(page.locator('#eveniment-turneu-de-remi')).toBeVisible();
   expect(await hasHorizontalOverflow(page)).toBe(false);
 
