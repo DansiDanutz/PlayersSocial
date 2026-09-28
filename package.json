@@ -1,0 +1,11 @@
+{
+  "name": "players-social",
+  "private": true,
+  "scripts": {
+    "serve": "python3 -m http.server 4173 --directory dist",
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

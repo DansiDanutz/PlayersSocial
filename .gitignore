@@ -9,3 +9,5 @@ supabase/.branches/
 supabase/.env.keys
 supabase/.env.local
 supabase/.env.*.local
+test-results/
+playwright-report/
