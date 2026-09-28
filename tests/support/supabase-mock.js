@@ -1,0 +1,70 @@
+// In-memory stand-in for the Supabase REST, auth and storage endpoints the page calls.
+// Each test gets its own state; `calls` records request bodies for assertions.
+const SUPABASE_ORIGIN = 'https://lxhjfdxowpxzrybxdasi.supabase.co';
+const ADMIN_TOKEN = 'admin-access-token';
+const ADMIN_EMAIL = 'semebitcoin@gmail.com';
+
+const CATEGORY_CARDS = ['Seară de Șah', 'Seară de Table', 'Turneu de Ping-Pong', 'Karaoke Club', 'Stand-up Open Mic', 'Remi & Prieteni', 'Campionat de FIFA', 'Seară Champions League', 'Team Building', 'Evenimente Caritabile'];
+
+function categoryRow(name) {
+  return { event_name: name, event_date: null, participant_target: 20, status: 'coming_soon', joined_count: 0, accepted_count: 0, linked_card: null, start_time: null, description: null, location: null, banner_url: null, is_featured: false, created_at: '2026-09-01T00:00:00Z', final_participants: null, public_recap: null, is_hidden: false };
+}
+
+function featuredRow(overrides) {
+  return { ...categoryRow(overrides.event_name), linked_card: 'Remi & Prieteni', start_time: '18:00:00', participant_target: 24, description: 'Turneu de remi pe echipe cu premii.', location: 'Str. Louis Pasteur nr. 75, Cluj-Napoca', banner_url: '/poster-remi.webp', is_featured: true, ...overrides };
+}
+
+const json = (route, body, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
+const bearer = request => (request.headers().authorization || '').replace('Bearer ', '');
+const isAdminRequest = request => bearer(request) === ADMIN_TOKEN;
+
+function rpcHandlers(state) {
+  return {
+    players_public_events: request => state.events.filter(row => !row.is_hidden || isAdminRequest(request)),
+    players_registration_status: () => [],
+    players_notifications_for_token: () => [],
+    players_public_registrants: () => [],
+    is_players_admin: request => isAdminRequest(request),
+    players_admin_event_notes: () => state.events.filter(row => row.is_featured).map(row => ({ event_name: row.event_name, admin_notes: row.admin_notes || null })),
+    players_admin_registrants: () => state.registrants,
+    players_register: (request, body) => ({ token: `token-${state.calls.length}`, status: 'registered' }),
+    players_admin_create_event: (request, body) => {
+      state.events.push(featuredRow({ event_name: body.p_event_name, linked_card: body.p_linked_card, event_date: body.p_event_date, start_time: `${body.p_start_time}:00`, participant_target: body.p_target, description: body.p_description, location: body.p_location, banner_url: body.p_banner_url }));
+      return true;
+    },
+    players_admin_update_featured_event: (request, body) => {
+      state.events = state.events.map(row => row.event_name === body.p_event_name ? { ...row, final_participants: body.p_final_participants, public_recap: body.p_public_recap, admin_notes: body.p_admin_notes, is_hidden: body.p_is_hidden } : row);
+      return true;
+    },
+  };
+}
+
+async function handle(route, state) {
+  const request = route.request(), url = new URL(request.url()), path = url.pathname;
+  const body = request.postData() && request.headers()['content-type']?.includes('json') ? request.postDataJSON() : null;
+  if (path.startsWith('/rest/v1/rpc/')) {
+    const name = path.slice('/rest/v1/rpc/'.length), handler = rpcHandlers(state)[name];
+    state.calls.push({ name, body, token: bearer(request) });
+    return handler ? json(route, handler(request, body)) : json(route, { message: `unmocked rpc ${name}` }, 404);
+  }
+  if (path === '/auth/v1/user') return isAdminRequest(request) ? json(route, { id: 'admin-id', email: ADMIN_EMAIL }) : json(route, { message: 'invalid' }, 401);
+  if (path === '/auth/v1/verify') {
+    state.calls.push({ name: 'verify', body });
+    return body?.token_hash === 'valid-hash' ? json(route, { access_token: ADMIN_TOKEN, refresh_token: 'refresh' }) : json(route, { message: 'expired' }, 403);
+  }
+  if (path.startsWith('/storage/v1/object/players-event-banners/')) {
+    state.calls.push({ name: `storage:${request.method()}`, path });
+    return json(route, { Key: path });
+  }
+  return json(route, { message: `unmocked ${request.method()} ${path}` }, 404);
+}
+
+async function mockSupabase(page, { events = [], registrants = [], admin = false } = {}) {
+  const state = { events: [...CATEGORY_CARDS.map(categoryRow), ...events], registrants, calls: [] };
+  await page.route(`${SUPABASE_ORIGIN}/**`, route => handle(route, state));
+  await page.route(/fonts\.(googleapis|gstatic)\.com|maps\.google/, route => route.abort());
+  if (admin) await page.addInitScript(token => localStorage.setItem('players-admin-session', JSON.stringify({ access_token: token, refresh_token: 'refresh' })), ADMIN_TOKEN);
+  return state;
+}
+
+module.exports = { mockSupabase, featuredRow, ADMIN_TOKEN };

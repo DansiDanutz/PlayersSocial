@@ -21,3 +21,15 @@ Open <http://localhost:8000>. The browser needs network access for Google Fonts,
 The existing Vercel project is `playerssocial` in the `irises-projects-ce549f63` team. `vercel.json` serves the `dist` directory. The Vercel project is connected to this GitHub repository, so pushes to `main` deploy the site automatically.
 
 The `.openai/hosting.json` file records the original Sites project registration. It does not deploy the Vercel project.
+
+## Tests
+
+Browser tests use Playwright against `dist/` with every Supabase call mocked, so they need no credentials and never touch production data. They run on desktop and a phone-sized viewport, and in GitHub Actions on every push and pull request.
+
+```sh
+npm install
+npx playwright install chromium
+npm test
+```
+
+`supabase/tests/players_events_test.sql` checks database permissions and the admin event functions. Run it in the Supabase SQL editor: it always rolls back and ends with `ALL PASSED` on success.

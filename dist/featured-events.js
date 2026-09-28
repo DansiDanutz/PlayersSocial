@@ -6,7 +6,9 @@ const DEFAULT_EVENT_GLYPH='★';
 
 const eventSlug=name=>name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 const startTimeLabel=value=>value?String(value).slice(0,5):'';
-const participantsLabel=count=>count===1?'1 participant':`${count} ${count%100===0||count%100>=20?'de participanți':'participanți'}`;
+// Romanian counts take "de" from 20 upwards, except 101–119 style endings (e.g. 20 de locuri, 101 locuri).
+const countLabel=(count,singular,plural)=>count===1?`1 ${singular}`:`${count} ${count%100===0||count%100>=20?'de ':''}${plural}`;
+const participantsLabel=count=>countLabel(count,'participant','participanți');
 
 function eventStart(row){ return row?.event_date?new Date(`${row.event_date}T${startTimeLabel(row.start_time)||'00:00'}:00`):null; }
 function hasEventEnded(row){ const start=eventStart(row); return Boolean(start)&&Date.now()-start.getTime()>=EVENT_ARCHIVE_DELAY_MS; }
