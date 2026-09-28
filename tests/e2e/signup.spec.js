@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { mockSupabase, featuredRow } = require('../support/supabase-mock');
+const { mockSupabase, featuredRow, gotoLoaded } = require('../support/supabase-mock');
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-10-01T12:00:00'));
@@ -7,7 +7,7 @@ test.beforeEach(async ({ page }) => {
 
 test('visitor signs up for a featured event and sees that event’s details', async ({ page }) => {
   const state = await mockSupabase(page, { events: [featuredRow({ event_name: 'Turneu de Remi', event_date: '2026-10-10', participant_target: 24 })] });
-  await page.goto('/#events');
+  await gotoLoaded(page, '/#events');
 
   await page.locator('#featuredEvents .event-featured').getByRole('button', { name: 'Înscrie-te la turneu' }).click();
   await expect(page.locator('#signupNote')).toContainText('10 octombrie 2026 · ora 18:00');
@@ -26,7 +26,7 @@ test('visitor signs up for a featured event and sees that event’s details', as
 
 test('visitor signs up for a category card', async ({ page }) => {
   const state = await mockSupabase(page);
-  await page.goto('/#events');
+  await gotoLoaded(page, '/#events');
 
   await page.locator('#eventGrid [data-name="Seară de Table"] button.join').click();
   await page.locator('#firstName').fill('Ion');
