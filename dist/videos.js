@@ -1,7 +1,7 @@
-// Video library + promo player.
-// The Video tab is rendered from /videos/videos.json: to publish a new event video, add the MP4 + poster to
-// dist/videos/ and append one entry to "videos" (category = one of "categories", type = promo | premium | event).
-// Promo buttons on the game cards are static markup (data-promo-*), so they work even if the library fails to load.
+// Video library + promo player. Loaded after the main inline script (uses SUPABASE_URL and authHeaders).
+// The Video tab merges two sources: videos shipped with the site (/videos/videos.json) and event videos
+// uploaded from the admin dashboard (players_public_videos RPC). Uploaded videos are listed first in their
+// category. Promo buttons on the game cards are static markup (data-promo-*), so they work even if both fail.
 (() => {
   const TYPE_LABELS = { promo: 'Promo', premium: 'Premium', event: 'Eveniment' };
   const ALL = 'all';
@@ -85,18 +85,44 @@
     if (linked) linked.scrollIntoView({ block: 'start' });
   }
 
-  fetch('/videos/videos.json', { cache: 'no-cache' })
-    .then((response) => {
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return response.json();
-    })
-    .then((data) => {
-      if (!Array.isArray(data.categories) || !Array.isArray(data.videos)) throw new Error('invalid videos.json');
-      render(data);
-    })
-    .catch((error) => {
-      console.error('Video library failed to load:', error);
+  async function loadSiteVideos() {
+    const response = await fetch('/videos/videos.json', { cache: 'no-cache' });
+    if (!response.ok) throw new Error(`videos.json HTTP ${response.status}`);
+    const data = await response.json();
+    if (!Array.isArray(data.categories) || !Array.isArray(data.videos)) throw new Error('invalid videos.json');
+    return data;
+  }
+
+  async function loadUploadedVideos() {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/players_public_videos`, { method: 'POST', headers: authHeaders(), body: '{}' });
+    if (!response.ok) throw new Error(`players_public_videos HTTP ${response.status}`);
+    const rows = await response.json();
+    return rows.map((row) => ({ id: row.id, category: row.category, type: row.video_type, title: row.title, description: row.description, src: row.video_url, poster: row.poster_url || '' }));
+  }
+
+  // Uploaded videos first within each category, then the site's own; categories keep the videos.json order.
+  function merge(site, uploaded) {
+    const categories = site ? site.categories : [...new Set(uploaded.map((video) => video.category))].map((id) => ({ id, label: id, card: '' }));
+    const siteVideos = site ? site.videos : [];
+    const videos = categories.flatMap((category) => [
+      ...uploaded.filter((video) => video.category === category.id),
+      ...siteVideos.filter((video) => video.category === category.id),
+    ]);
+    return { categories, videos };
+  }
+
+  async function reload() {
+    const [site, uploaded] = await Promise.allSettled([loadSiteVideos(), loadUploadedVideos()]);
+    if (site.status === 'rejected') console.error('Site videos failed to load:', site.reason);
+    if (uploaded.status === 'rejected') console.error('Uploaded videos failed to load:', uploaded.reason);
+    if (site.status === 'rejected' && uploaded.status === 'rejected') {
       status.textContent = 'Videoclipurile nu au putut fi încărcate. Reîncarcă pagina.';
       status.hidden = false;
-    });
+      return;
+    }
+    render(merge(site.value, uploaded.value || []));
+  }
+
+  window.PlayersVideos = { reload };
+  reload();
 })();

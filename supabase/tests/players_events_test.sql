@@ -55,5 +55,33 @@ begin
   failed := false; begin perform public.players_register('Turneu de Șah Amatori', 'Test', 'Regression', 'regression@example.invalid', false); exception when others then failed := true; end;
   assert failed, 'registration accepted for a past event';
 
+  -- Event videos: public read via RPC only, admin-only writes, validated categories, types and storage URLs.
+  perform set_config('role', 'postgres', true);
+  assert has_function_privilege('anon', 'public.players_public_videos()', 'execute'), 'anon cannot list videos';
+  assert not has_function_privilege('anon', 'public.players_admin_add_video(text,text,text,text,text,text)', 'execute'), 'anon can add videos';
+  assert not has_function_privilege('anon', 'public.players_admin_delete_video(uuid)', 'execute'), 'anon can delete videos';
+  assert not has_table_privilege('anon', 'public.players_videos', 'select'), 'anon can read players_videos directly';
+  perform set_config('role', 'authenticated', true);
+  perform set_config('request.jwt.claims', admin_claims, true);
+  declare
+    video_id uuid;
+    video_base constant text := 'https://lxhjfdxowpxzrybxdasi.supabase.co/storage/v1/object/public/players-videos/';
+  begin
+    video_id := public.players_admin_add_video('remi', 'event', 'Regression video', 'Seara de test', video_base || 'regression.mp4', video_base || 'regression.jpg');
+    assert exists (select 1 from public.players_public_videos() v where v.id = video_id and v.category = 'remi' and v.video_type = 'event'), 'uploaded video not listed';
+    failed := false; begin perform public.players_admin_add_video('poker', 'event', 'Bad category', null, video_base || 'x.mp4', null); exception when others then failed := true; end;
+    assert failed, 'invalid category accepted';
+    failed := false; begin perform public.players_admin_add_video('remi', 'event', 'Foreign file', null, 'https://evil.example/x.mp4', null); exception when others then failed := true; end;
+    assert failed, 'foreign video URL accepted';
+    perform set_config('request.jwt.claims', visitor_claims, true);
+    failed := false; begin perform public.players_admin_add_video('remi', 'event', 'Hack video', null, video_base || 'hack.mp4', null); exception when others then failed := true; end;
+    assert failed, 'non-admin added a video';
+    failed := false; begin perform public.players_admin_delete_video(video_id); exception when others then failed := true; end;
+    assert failed, 'non-admin deleted a video';
+    perform set_config('request.jwt.claims', admin_claims, true);
+    assert (select d.video_url from public.players_admin_delete_video(video_id) d) = video_base || 'regression.mp4', 'delete did not return the file URL';
+    assert not exists (select 1 from public.players_public_videos() v where v.id = video_id), 'deleted video still listed';
+  end;
+
   raise exception 'ALL PASSED';
 end $$;

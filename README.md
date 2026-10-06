@@ -20,7 +20,8 @@ Open <http://localhost:8000>. The browser needs network access for Google Fonts,
 
 - Every game card (Șah, Table, Ping-Pong, Remi) and the hero have a static `▶ Promo` button (`.card-promo-button`, `data-promo-*`) that opens the promo in a dialog. These buttons are plain HTML, so the promos stay up regardless of events or the video list.
 - The **Video** tab is rendered by `dist/videos.js` from `dist/videos/videos.json`, grouped by category (Club, Șah, Remi, Table, Ping-Pong).
-- To publish a new event video: add the MP4 (vertical, ideally under 15 MB) and a 540×960 poster JPG to `dist/videos/`, then append an entry to `videos` with `category` (an existing category id), `type` (`promo`, `premium` or `event`), `title`, `description`, `src` and `poster`. To add a new category, append it to `categories` (with `card` set to the game card anchor, or `""`).
+- Event videos are normally uploaded from the admin dashboard (**Videoclipuri**): MP4 up to 50 MB, optional poster, category and type. They go to the public `players-videos` bucket and the `players_videos` table (migration `20261006150000_players_videos.sql`), and the Video tab shows them first in their category.
+- To ship a video with the site instead: add the MP4 (vertical, ideally under 15 MB) and a 540×960 poster JPG to `dist/videos/`, then append an entry to `videos` with `category` (an existing category id), `type` (`promo`, `premium` or `event`), `title`, `description`, `src` and `poster`. To add a new category, append it to `categories` (with `card` set to the game card anchor, or `""`).
 
 ## Deployment
 
