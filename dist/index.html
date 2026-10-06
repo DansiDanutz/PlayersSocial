@@ -392,6 +392,8 @@
   .schedule-day.is-today .schedule-when { background:#ff3d8b; box-shadow:0 0 10px rgba(255,61,139,.8); }
   .schedule-day.is-today.is-featured .schedule-when { background:#fff; color:#e0115f; box-shadow:0 0 10px rgba(255,255,255,.7); }
   .schedule-day.is-past { opacity:.55; }
+  .card-next { display:grid; gap:6px; margin:0 0 16px; padding:10px 12px; border:1px dashed rgba(25,20,17,.28); border-radius:14px; background:rgba(255,255,255,.55); } .card-next-label { font-size:.7rem; font-weight:900; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); } .card-next-day { font:800 1rem/1.2 "Fraunces",serif; } .event:has(.card-next) .coming-soon-banner, .event:has(.card-next) .event-date { display:none; }
+  .card-next .schedule-prizes { display:flex; flex-wrap:wrap; gap:4px 14px; } .card-next .schedule-prize { padding:0; border-radius:0; background:none; color:var(--ink); font-size:.85rem; font-weight:800; white-space:normal; }
   .image-viewer-info { width:0; min-width:100%; display:grid; gap:8px; padding:12px 16px 14px; border-radius:0 0 18px 18px; background:var(--ink); color:#fff; } .image-viewer-info[hidden] { display:none; }
   .image-viewer-title { font:800 1.05rem/1.2 "Fraunces",serif; } .image-viewer-info .schedule-prize { font-size:.85rem; padding:4px 12px; border:1px solid #d6a943; background:rgba(255,209,102,.12); color:#ffd166; }
   .image-viewer:has(.image-viewer-info:not([hidden])) img { max-height:calc(88vh - 110px); border-radius:18px 18px 0 0; }

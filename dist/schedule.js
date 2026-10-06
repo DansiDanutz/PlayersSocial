@@ -177,10 +177,30 @@
     section.hidden = false;
   }
 
+  // The big event cards show their next programme day (this week or next) with its time, entry and prize.
+  function renderCardDays(days) {
+    const today = isoDay(new Date()), tomorrow = isoDay(addDays(new Date(), 1));
+    const upcoming = days.filter((entry) => entry.day >= today).sort((a, b) => a.day.localeCompare(b.day));
+    document.querySelectorAll('#eventGrid .event').forEach((card) => {
+      card.querySelector('.card-next')?.remove();
+      const entry = upcoming.find((day) => day.linked_card === card.dataset.name);
+      if (!entry) return;
+      const when = entry.day === today ? 'Azi · ' : entry.day === tomorrow ? 'Mâine · ' : '';
+      const box = element('div', 'card-next');
+      box.append(element('span', 'card-next-label', 'În Program'), element('strong', 'card-next-day', `${when}${dayLabel(parseDay(entry.day))}`), ...prizeRow(entry));
+      card.querySelector('.details').before(box);
+    });
+  }
+
   async function reload() {
     const start = weekStart(new Date());
-    try { render(start, await fetchWeek(start)); }
-    catch (error) { console.error('Weekly programme failed to load:', error); section.hidden = true; }
+    // Next week only feeds the event cards, so a failure there must not hide this week's programme.
+    const nextWeek = fetchWeek(addDays(start, 7)).catch((error) => { console.error('Next week programme failed to load:', error); return { days: [] }; });
+    try {
+      const current = await fetchWeek(start);
+      render(start, current);
+      renderCardDays([...current.days, ...(await nextWeek).days]);
+    } catch (error) { console.error('Weekly programme failed to load:', error); section.hidden = true; }
   }
 
   window.PlayersSchedule = { reload, fetchWeek, defaultImage, weekStart, addDays, isoDay, parseDay, dayLabel, rangeLabel };

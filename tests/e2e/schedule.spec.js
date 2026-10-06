@@ -202,6 +202,34 @@ test('day cards line up on desktop and tablet, become rows on phones, and nothin
   expect(await fits(), 'fits at 375px').toEqual({ pageFits: true, outside: [] });
 });
 
+test('the big event cards show their next programme day with time, entry and guaranteed prize', async ({ page }) => {
+  await mockSupabase(page, {
+    scheduleDays: {
+      '2026-10-06': { linked_card: 'Seară de Șah', image_url: null, start_time: '18:00:00', buy_in: 0, guaranteed: 500 },
+      '2026-10-08': { linked_card: 'Seară de Șah', image_url: null, start_time: '18:00:00', buy_in: 0, guaranteed: 500 },
+      '2026-10-10': { linked_card: 'Karaoke Club', image_url: null, start_time: '20:00:00', buy_in: 0, guaranteed: 500 },
+      '2026-10-12': { linked_card: 'Remi & Prieteni', image_url: null, start_time: '19:00:00', buy_in: 20, guaranteed: null },
+    },
+  });
+  await gotoLoaded(page, '/#events');
+
+  const card = (name) => page.locator(`#eventGrid .event[data-name="${name}"]`);
+  await expect(card('Seară de Șah').locator('.card-next-day')).toHaveText('Mâine · Joi 8 oct.');
+  await expect(card('Seară de Șah').locator('.card-next .schedule-prize')).toHaveText(['Ora 18:00', 'Free entry', 'Garantat 500 lei']);
+  await expect(card('Karaoke Club').locator('.card-next-day')).toHaveText('Sâmbătă 10 oct.');
+  await expect(card('Karaoke Club').locator('.card-next .schedule-prize')).toHaveText(['Ora 20:00', 'Free entry', 'Garantat 500 lei']);
+  await expect(card('Remi & Prieteni').locator('.card-next-day')).toHaveText('Luni 12 oct.');
+  await expect(card('Remi & Prieteni').locator('.card-next .schedule-prize')).toHaveText(['Ora 19:00', 'Buy-in 20 lei']);
+  await expect(card('Seară de Table').locator('.card-next')).toHaveCount(0);
+  // A card that is in the programme no longer says "În curând"; one that is not keeps saying it.
+  await expect(card('Seară de Șah').locator('.coming-soon-banner')).toBeHidden();
+  await expect(card('Seară de Șah').locator('.event-date')).toBeHidden();
+  await expect(card('Seară de Table').locator('.coming-soon-banner')).toBeVisible();
+  await expect(card('Seară de Table').locator('.event-date')).toBeVisible();
+  const fits = await card('Seară de Șah').evaluate(node => { const box = node.getBoundingClientRect(); return [...node.querySelectorAll('.card-next *')].every(child => { const inner = child.getBoundingClientRect(); return inner.left >= box.left - 1 && inner.right <= box.right + 1; }); });
+  expect(fits).toBe(true);
+});
+
 test('clicking a programme image opens it large in a popup', async ({ page }) => {
   await mockSupabase(page, {
     scheduleDays: { '2026-10-08': { linked_card: 'Seară de Șah', image_url: `${SCHEDULE_BASE}special.jpg` } },
