@@ -3,6 +3,8 @@
 const SUPABASE_ORIGIN = 'https://lxhjfdxowpxzrybxdasi.supabase.co';
 const ADMIN_TOKEN = 'admin-access-token';
 const ADMIN_EMAIL = 'semebitcoin@gmail.com';
+const USER_TOKEN = 'user-access-token';
+const USER = { id: 'user-id', email: 'ana.pop@example.com', user_metadata: { full_name: 'Ana Maria Pop', avatar_url: null } };
 
 const CATEGORY_CARDS = ['Seară de Șah', 'Seară de Table', 'Turneu de Ping-Pong', 'Karaoke Club', 'Stand-up Open Mic', 'Remi & Prieteni', 'Campionat de FIFA', 'Seară Champions League', 'Team Building', 'Evenimente Caritabile'];
 
@@ -46,6 +48,18 @@ function rpcHandlers(state) {
       state.videos = state.videos.filter(video => video.id !== body.p_id);
       return [{ video_url: row.video_url, poster_url: row.poster_url }];
     },
+    players_admin_list_admins: () => state.admins.map(email => ({ email, added_at: '2026-09-19T10:00:00Z', added_by: null })),
+    players_admin_add_admin: (request, body) => {
+      const email = String(body.p_email || '').trim().toLowerCase();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error('Adresă de email invalidă');
+      if (state.admins.includes(email)) throw new Error('Adresa este deja administrator');
+      state.admins.push(email);
+      return true;
+    },
+    players_admin_remove_admin: (request, body) => {
+      state.admins = state.admins.filter(email => email !== body.p_email);
+      return true;
+    },
     players_admin_update_featured_event: (request, body) => {
       state.events = state.events.map(row => row.event_name === body.p_event_name ? { ...row, final_participants: body.p_final_participants, public_recap: body.p_public_recap, admin_notes: body.p_admin_notes, is_hidden: body.p_is_hidden } : row);
       return true;
@@ -62,7 +76,15 @@ async function handle(route, state) {
     if (!handler) return json(route, { message: `unmocked rpc ${name}` }, 404);
     try { return json(route, handler(request, body)); } catch (error) { return json(route, { message: error.message }, 500); }
   }
-  if (path === '/auth/v1/user') return isAdminRequest(request) ? json(route, { id: 'admin-id', email: ADMIN_EMAIL }) : json(route, { message: 'invalid' }, 401);
+  if (path === '/auth/v1/user') {
+    if (isAdminRequest(request)) return json(route, { id: 'admin-id', email: ADMIN_EMAIL, user_metadata: { full_name: 'David Admin' } });
+    return bearer(request) === USER_TOKEN ? json(route, USER) : json(route, { message: 'invalid' }, 401);
+  }
+  if (path === '/auth/v1/otp') {
+    state.calls.push({ name: 'otp', body, redirect: url.searchParams.get('redirect_to') });
+    return json(route, {});
+  }
+  if (path === '/auth/v1/logout') return json(route, {});
   if (path === '/auth/v1/verify') {
     state.calls.push({ name: 'verify', body });
     return body?.token_hash === 'valid-hash' ? json(route, { access_token: ADMIN_TOKEN, refresh_token: 'refresh' }) : json(route, { message: 'expired' }, 403);
@@ -74,11 +96,12 @@ async function handle(route, state) {
   return json(route, { message: `unmocked ${request.method()} ${path}` }, 404);
 }
 
-async function mockSupabase(page, { events = [], registrants = [], videos = [], videosFail = false, admin = false } = {}) {
-  const state = { events: [...CATEGORY_CARDS.map(categoryRow), ...events], registrants, videos: [...videos], videosFail, calls: [] };
+async function mockSupabase(page, { events = [], registrants = [], videos = [], videosFail = false, admin = false, user = false } = {}) {
+  const state = { events: [...CATEGORY_CARDS.map(categoryRow), ...events], registrants, videos: [...videos], videosFail, admins: [ADMIN_EMAIL, 'toma.alinflorin@yahoo.com'], calls: [] };
   await page.route(`${SUPABASE_ORIGIN}/**`, route => handle(route, state));
   await page.route(/fonts\.(googleapis|gstatic)\.com|maps\.google/, route => route.abort());
-  if (admin) await page.addInitScript(token => localStorage.setItem('players-admin-session', JSON.stringify({ access_token: token, refresh_token: 'refresh' })), ADMIN_TOKEN);
+  const sessionToken = admin ? ADMIN_TOKEN : user ? USER_TOKEN : null;
+  if (sessionToken) await page.addInitScript(token => localStorage.setItem('players-admin-session', JSON.stringify({ access_token: token, refresh_token: 'refresh' })), sessionToken);
   return state;
 }
 
@@ -95,4 +118,4 @@ function videoRow(overrides) {
   return { id: 'video-db-1', category: 'remi', video_type: 'event', title: 'Seara de Remi · 10 octombrie', description: 'Momente de la turneu.', video_url: `${VIDEO_BASE}seara-remi.mp4`, poster_url: null, created_at: '2026-10-01T12:00:00Z', ...overrides };
 }
 
-module.exports = { mockSupabase, featuredRow, videoRow, gotoLoaded, ADMIN_TOKEN, VIDEO_BASE };
+module.exports = { mockSupabase, featuredRow, videoRow, gotoLoaded, ADMIN_TOKEN, ADMIN_EMAIL, USER_TOKEN, USER, VIDEO_BASE };

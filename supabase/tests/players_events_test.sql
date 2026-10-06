@@ -83,5 +83,32 @@ begin
     assert not exists (select 1 from public.players_public_videos() v where v.id = video_id), 'deleted video still listed';
   end;
 
+  -- Admin management: only admins list/add/remove; no self-removal; new admins get admin access.
+  perform set_config('role', 'postgres', true);
+  assert not has_function_privilege('anon', 'public.players_admin_list_admins()', 'execute'), 'anon can list admins';
+  assert not has_function_privilege('anon', 'public.players_admin_add_admin(text)', 'execute'), 'anon can add admins';
+  assert not has_function_privilege('anon', 'public.players_admin_remove_admin(text)', 'execute'), 'anon can remove admins';
+  perform set_config('role', 'authenticated', true);
+  perform set_config('request.jwt.claims', admin_claims, true);
+  assert exists (select 1 from public.players_admin_list_admins() a where a.email = 'semebitcoin@gmail.com'), 'admin list missing owner';
+  perform public.players_admin_add_admin('  Regression.Admin@Example.com ');
+  assert exists (select 1 from public.players_admin_list_admins() a where a.email = 'regression.admin@example.com' and a.added_by = 'semebitcoin@gmail.com'), 'added admin not normalised/recorded';
+  failed := false; begin perform public.players_admin_add_admin('regression.admin@example.com'); exception when others then failed := true; end;
+  assert failed, 'duplicate admin accepted';
+  failed := false; begin perform public.players_admin_add_admin('not-an-email'); exception when others then failed := true; end;
+  assert failed, 'invalid admin email accepted';
+  failed := false; begin perform public.players_admin_remove_admin('semebitcoin@gmail.com'); exception when others then failed := true; end;
+  assert failed, 'admin removed themselves';
+  perform set_config('request.jwt.claims', '{"email":"regression.admin@example.com","role":"authenticated"}', true);
+  assert public.is_players_admin(), 'new admin has no admin access';
+  perform set_config('request.jwt.claims', visitor_claims, true);
+  failed := false; begin perform public.players_admin_add_admin('hacker@example.com'); exception when others then failed := true; end;
+  assert failed, 'non-admin added an admin';
+  failed := false; begin perform public.players_admin_list_admins(); exception when others then failed := true; end;
+  assert failed, 'non-admin listed admins';
+  perform set_config('request.jwt.claims', admin_claims, true);
+  perform public.players_admin_remove_admin('regression.admin@example.com');
+  assert not exists (select 1 from public.players_admin_list_admins() a where a.email = 'regression.admin@example.com'), 'admin not removed';
+
   raise exception 'ALL PASSED';
 end $$;

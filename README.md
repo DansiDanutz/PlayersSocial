@@ -16,6 +16,11 @@ python3 -m http.server 8000 --directory dist
 
 Open <http://localhost:8000>. The browser needs network access for Google Fonts, Maps, WhatsApp links, and Supabase features.
 
+## Accounts and admins
+
+- The header always shows **Intră în cont**: sign in with Google (Supabase OAuth, `provider=google`) or an email link. Any member can sign in; their name and email prefill event registration.
+- Admin access comes only from the `players_admins` table (`public.is_players_admin()`); there is no admin list in the page. Admins manage the list in the dashboard (**Administratori**) via `players_admin_list_admins` / `players_admin_add_admin` / `players_admin_remove_admin` (migration `20261006170000_players_admin_management.sql`). Admins cannot remove themselves or the last admin.
+
 ## Videos
 
 - Every game card (Șah, Table, Ping-Pong, Remi) and the hero have a static `▶ Promo` button (`.card-promo-button`, `data-promo-*`) that opens the promo in a dialog. These buttons are plain HTML, so the promos stay up regardless of events or the video list.
