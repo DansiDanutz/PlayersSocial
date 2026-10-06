@@ -624,7 +624,7 @@ test('on phones every day fits on one line and the Azi chip stays readable on th
 
 test('on desktop and tablet the big event cards line up their terms and join buttons in every row', async ({ page }) => {
   test.skip(page.viewportSize().width < 700, 'grid layout');
-  for (const width of [1280, 820]) {
+  for (const width of [1280, 1069, 820]) {
     await page.setViewportSize({ width, height: 900 });
     await mockSupabase(page, { scheduleTemplate: DEFAULT_WEEK });
     await gotoLoaded(page, `/?width=${width}#events`);

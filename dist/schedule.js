@@ -206,6 +206,27 @@
     });
   }
 
+  // Cards in the same visual row give their terms boxes one height, so the boxes and the join buttons
+  // below them line up whatever the card width or the number of terms.
+  function equalizeCardTerms() {
+    const boxes = [...document.querySelectorAll('#eventGrid .card-terms')];
+    boxes.forEach((box) => { box.style.minHeight = ''; });
+    const rows = new Map();
+    boxes.filter((box) => box.closest('.event').offsetParent).forEach((box) => {
+      const top = Math.round(box.closest('.event').getBoundingClientRect().top + window.scrollY);
+      rows.set(top, [...(rows.get(top) || []), box]);
+    });
+    rows.forEach((row) => {
+      const height = Math.max(...row.map((box) => box.getBoundingClientRect().height));
+      row.forEach((box) => { box.style.minHeight = `${height}px`; });
+    });
+  }
+  let equalizeFrame = 0;
+  const scheduleEqualize = () => { cancelAnimationFrame(equalizeFrame); equalizeFrame = requestAnimationFrame(equalizeCardTerms); };
+  window.addEventListener('resize', scheduleEqualize);
+  document.querySelectorAll('.filter').forEach((button) => button.addEventListener('click', scheduleEqualize));
+  document.fonts?.ready.then(scheduleEqualize);
+
   async function reload() {
     const start = weekStart(new Date());
     // Next week only feeds the event cards, so a failure there must not hide this week's programme.
@@ -214,6 +235,7 @@
       const current = await fetchWeek(start);
       render(start, current);
       renderCardDays([...current.days, ...(await nextWeek).days]);
+      scheduleEqualize();
     } catch (error) { console.error('Weekly programme failed to load:', error); section.hidden = true; renderCardDays([]); }
   }
 
