@@ -67,3 +67,36 @@ test('admin dashboard tabs show one section at a time', async ({ page }) => {
   await expect(page.locator('#dashboardProgram')).toBeHidden();
   expect(await hasHorizontalOverflow(page)).toBe(false);
 });
+
+test('on phones the event cards are a swipe carousel, so the page stays short', async ({ page }) => {
+  test.skip(page.viewportSize().width > 600, 'phone layout');
+  await mockSupabase(page);
+  await gotoLoaded(page, '/#events');
+
+  const grid = page.locator('#eventGrid');
+  const layout = await grid.evaluate(node => ({ scrolls: node.scrollWidth > node.clientWidth, snap: getComputedStyle(node).scrollSnapType }));
+  expect(layout.scrolls).toBe(true);
+  expect(layout.snap).toContain('x');
+  const cards = await grid.locator('.event').evaluateAll(nodes => nodes.slice(0, 2).map(node => { const box = node.getBoundingClientRect(); return { top: Math.round(box.top), width: box.width }; }));
+  const viewport = page.viewportSize().width;
+  expect(cards[0].top).toBe(cards[1].top);
+  expect(cards[0].width).toBeGreaterThan(viewport * 0.78);
+  expect(cards[0].width).toBeLessThan(viewport * 0.92);
+  await expect(page.locator('.events-swipe-hint')).toBeVisible();
+  expect(await hasHorizontalOverflow(page)).toBe(false);
+  expect(await page.evaluate(() => document.body.scrollHeight)).toBeLessThan(9000);
+});
+
+test('on phones the small controls are easy to tap and labels stay readable', async ({ page }) => {
+  test.skip(page.viewportSize().width > 600, 'phone layout');
+  await mockSupabase(page);
+  await gotoLoaded(page, '/#events');
+
+  const logo = await page.locator('header a.brand').boundingBox();
+  expect(Math.min(logo.width, logo.height)).toBeGreaterThanOrEqual(44);
+  const joined = await page.locator('#eventGrid .spots.joined').first().boundingBox();
+  expect(joined.height).toBeGreaterThanOrEqual(40);
+  const tiny = await page.evaluate(() => [...document.querySelectorAll('.schedule-when, .card-next-label, .history-chip, .schedule-prize, .spots')]
+    .filter(node => node.getBoundingClientRect().width && parseFloat(getComputedStyle(node).fontSize) < 12).map(node => node.className));
+  expect(tiny).toEqual([]);
+});
