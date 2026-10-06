@@ -179,7 +179,27 @@ async function renderFeaturedAdmin(openName,savedMessage){
 }
 
 document.querySelector('.admin-create-toggle').addEventListener('click',()=>toggleCreatePanel(document.querySelector('#createEventPanel').hidden));
-document.querySelectorAll('.dashboard-nav button[data-section]').forEach(button=>button.addEventListener('click',()=>{
-  document.querySelectorAll('.dashboard-nav button').forEach(other=>other.classList.toggle('active',other===button));
-  document.getElementById(button.dataset.section).scrollIntoView({behavior:'smooth',block:'start'});
-}));
+// Dashboard tabs: only the selected section is shown, so each tool is one tap away (also on phones).
+function showDashboardSection(id){
+  document.querySelectorAll('.dashboard-nav button[data-section]').forEach(button=>{
+    const section=button.dataset.section, active=section===id;
+    button.classList.toggle('active',active);
+    if(active) button.setAttribute('aria-current','page'); else button.removeAttribute('aria-current');
+    document.getElementById(section).hidden=!active;
+    document.querySelectorAll(`[data-panel="${section}"]`).forEach(element=>{ element.hidden=!active; });
+    if(active) button.scrollIntoView({block:'nearest',inline:'center'});
+  });
+  document.querySelector('#adminDashboard').scrollTop=0;
+  document.querySelector('.dashboard-main').scrollTop=0;
+  const current=document.querySelector(`.dashboard-nav button[data-section="${id}"]`);
+  document.querySelector('.dashboard-menu-current').textContent=current?current.textContent:'';
+  toggleDashboardMenu(false);
+}
+// On phones the sections live behind one menu button.
+function toggleDashboardMenu(open){
+  const nav=document.querySelector('.dashboard-nav'), toggle=document.querySelector('.dashboard-menu-toggle');
+  nav.classList.toggle('is-open',open); toggle.setAttribute('aria-expanded',String(open));
+}
+document.querySelector('.dashboard-menu-toggle').addEventListener('click',()=>toggleDashboardMenu(!document.querySelector('.dashboard-nav').classList.contains('is-open')));
+document.querySelectorAll('.dashboard-nav button[data-section]').forEach(button=>button.addEventListener('click',()=>showDashboardSection(button.dataset.section)));
+showDashboardSection('dashboardKpis');

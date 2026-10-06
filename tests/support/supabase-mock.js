@@ -142,4 +142,11 @@ function videoRow(overrides) {
 
 const SCHEDULE_BASE = `${SUPABASE_ORIGIN}/storage/v1/object/public/players-schedule/`;
 
-module.exports = { mockSupabase, featuredRow, videoRow, gotoLoaded, ADMIN_TOKEN, ADMIN_EMAIL, USER_TOKEN, USER, VIDEO_BASE, SCHEDULE_BASE };
+// Opens a dashboard section; on phones the sections sit behind the dashboard menu button.
+async function openDashboardSection(page, section) {
+  const toggle = page.locator('.dashboard-menu-toggle');
+  if (await toggle.isVisible()) await toggle.click();
+  await page.locator(`.dashboard-nav button[data-section="${section}"]`).click();
+}
+
+module.exports = { mockSupabase, openDashboardSection, featuredRow, videoRow, gotoLoaded, ADMIN_TOKEN, ADMIN_EMAIL, USER_TOKEN, USER, VIDEO_BASE, SCHEDULE_BASE };

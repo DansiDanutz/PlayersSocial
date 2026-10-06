@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { mockSupabase, gotoLoaded, ADMIN_EMAIL, USER_TOKEN } = require('../support/supabase-mock');
+const { mockSupabase, gotoLoaded, ADMIN_EMAIL, USER_TOKEN, openDashboardSection } = require('../support/supabase-mock');
 
 test('visitors always see the account button and can continue with Google', async ({ page }) => {
   await mockSupabase(page);
@@ -8,7 +8,7 @@ test('visitors always see the account button and can continue with Google', asyn
   await gotoLoaded(page, '/#events');
 
   const account = page.locator('#adminLogin');
-  await expect(account).toHaveText('Intră în cont');
+  await expect(account).toHaveText('Login');
   await expect(page.locator('#adminToggle')).toBeHidden();
   await account.click();
   await expect(page.locator('#authDialog h2')).toHaveText('Intră în cont');
@@ -36,7 +36,7 @@ test('returning from Google signs a regular member in without admin access', asy
   await page.goto(`/#access_token=${USER_TOKEN}&refresh_token=refresh&token_type=bearer&expires_in=3600`);
   await loaded;
 
-  await expect(page.locator('#adminLogin')).toHaveText('Ieșire');
+  await expect(page.locator('#adminLogin')).toBeHidden();
   await expect(page.locator('#accountName')).toHaveText('Ana Maria Pop');
   await expect(page.locator('#adminToggle')).toBeHidden();
   await expect(page).toHaveURL(/#events$/);
@@ -61,7 +61,7 @@ test('an admin who signs in gets the admin button', async ({ page }) => {
   await mockSupabase(page, { admin: true });
   await gotoLoaded(page, '/#events');
 
-  await expect(page.locator('#adminLogin')).toHaveText('Ieșire');
+  await expect(page.locator('#adminLogin')).toBeHidden();
   await expect(page.locator('#accountName')).toHaveText('David Admin');
   await expect(page.locator('#adminToggle')).toBeVisible();
 });
@@ -69,10 +69,13 @@ test('an admin who signs in gets the admin button', async ({ page }) => {
 test('signing out clears the session', async ({ page }) => {
   await mockSupabase(page);
   await page.goto(`/#access_token=${USER_TOKEN}&refresh_token=refresh&token_type=bearer`);
-  await expect(page.locator('#adminLogin')).toHaveText('Ieșire');
+  await expect(page.locator('#adminLogin')).toBeHidden();
 
-  await page.locator('#adminLogin').click();
-  await expect(page.locator('#adminLogin')).toHaveText('Intră în cont');
+  await page.locator('#menuToggle').click();
+  await page.locator('#menuLogout').click();
+  await expect(page.locator('#adminLogin')).toBeVisible();
+  await expect(page.locator('#adminLogin')).toHaveText('Login');
+  await page.waitForLoadState('load');
   expect(await page.evaluate(() => localStorage.getItem('players-admin-session'))).toBeNull();
 });
 
@@ -92,7 +95,7 @@ test('a signed-in member becomes admin instantly when added, without signing in 
 test.describe('admin management', () => {
   async function openAdmins(page) {
     await page.locator('#adminToggle').click();
-    await page.locator('.dashboard-nav button[data-section="dashboardAdmins"]').click();
+    await openDashboardSection(page, 'dashboardAdmins');
     await expect(page.locator('#dashboardAdmins')).toBeVisible();
   }
 
