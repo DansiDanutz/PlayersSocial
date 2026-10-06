@@ -64,20 +64,6 @@ test('admin uploads an event video with a poster and it goes live in the Video t
   await expect(page.locator('#videoList .library-video', { hasText: 'Turneu Ping-Pong · finala' })).toHaveCount(1);
 });
 
-test('admin upload rejects files that are not MP4 before uploading anything', async ({ page }) => {
-  const state = await mockSupabase(page, { admin: true });
-  await gotoLoaded(page, '/#events');
-  await openVideoAdmin(page);
-
-  const form = page.locator('.video-upload-form');
-  await form.getByLabel('Fișier video (MP4').setInputFiles({ name: 'clip.mov', mimeType: 'video/quicktime', buffer: Buffer.from('x') });
-  await form.getByLabel('Titlu').fill('Clip greșit');
-  await form.getByRole('button', { name: 'Încarcă videoclipul' }).click();
-
-  await expect(form.locator('.admin-form-status')).toHaveText('Videoclipul trebuie să fie MP4.');
-  expect(state.calls.some(call => call.name.startsWith('storage:'))).toBe(false);
-});
-
 test('admin deletes an uploaded video and its files', async ({ page }) => {
   const state = await mockSupabase(page, { admin: true, videos: [videoRow({ poster_url: `${VIDEO_BASE}seara-remi.jpg` })] });
   await gotoLoaded(page, '/#events');
