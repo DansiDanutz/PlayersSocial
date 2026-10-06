@@ -32,6 +32,20 @@ function rpcHandlers(state) {
       state.events.push(featuredRow({ event_name: body.p_event_name, linked_card: body.p_linked_card, event_date: body.p_event_date, start_time: `${body.p_start_time}:00`, participant_target: body.p_target, description: body.p_description, location: body.p_location, banner_url: body.p_banner_url }));
       return true;
     },
+    players_public_videos: () => {
+      if (state.videosFail) throw new Error('videos unavailable');
+      return state.videos;
+    },
+    players_admin_add_video: (request, body) => {
+      const row = { id: `video-${state.videos.length + 1}`, category: body.p_category, video_type: body.p_type, title: body.p_title, description: body.p_description, video_url: body.p_video_url, poster_url: body.p_poster_url, created_at: '2026-10-01T12:00:00Z' };
+      state.videos.unshift(row);
+      return row.id;
+    },
+    players_admin_delete_video: (request, body) => {
+      const row = state.videos.find(video => video.id === body.p_id);
+      state.videos = state.videos.filter(video => video.id !== body.p_id);
+      return [{ video_url: row.video_url, poster_url: row.poster_url }];
+    },
     players_admin_update_featured_event: (request, body) => {
       state.events = state.events.map(row => row.event_name === body.p_event_name ? { ...row, final_participants: body.p_final_participants, public_recap: body.p_public_recap, admin_notes: body.p_admin_notes, is_hidden: body.p_is_hidden } : row);
       return true;
@@ -45,22 +59,23 @@ async function handle(route, state) {
   if (path.startsWith('/rest/v1/rpc/')) {
     const name = path.slice('/rest/v1/rpc/'.length), handler = rpcHandlers(state)[name];
     state.calls.push({ name, body, token: bearer(request) });
-    return handler ? json(route, handler(request, body)) : json(route, { message: `unmocked rpc ${name}` }, 404);
+    if (!handler) return json(route, { message: `unmocked rpc ${name}` }, 404);
+    try { return json(route, handler(request, body)); } catch (error) { return json(route, { message: error.message }, 500); }
   }
   if (path === '/auth/v1/user') return isAdminRequest(request) ? json(route, { id: 'admin-id', email: ADMIN_EMAIL }) : json(route, { message: 'invalid' }, 401);
   if (path === '/auth/v1/verify') {
     state.calls.push({ name: 'verify', body });
     return body?.token_hash === 'valid-hash' ? json(route, { access_token: ADMIN_TOKEN, refresh_token: 'refresh' }) : json(route, { message: 'expired' }, 403);
   }
-  if (path.startsWith('/storage/v1/object/players-event-banners/')) {
+  if (path.startsWith('/storage/v1/object/players-event-banners/') || path.startsWith('/storage/v1/object/players-videos/')) {
     state.calls.push({ name: `storage:${request.method()}`, path });
     return json(route, { Key: path });
   }
   return json(route, { message: `unmocked ${request.method()} ${path}` }, 404);
 }
 
-async function mockSupabase(page, { events = [], registrants = [], admin = false } = {}) {
-  const state = { events: [...CATEGORY_CARDS.map(categoryRow), ...events], registrants, calls: [] };
+async function mockSupabase(page, { events = [], registrants = [], videos = [], videosFail = false, admin = false } = {}) {
+  const state = { events: [...CATEGORY_CARDS.map(categoryRow), ...events], registrants, videos: [...videos], videosFail, calls: [] };
   await page.route(`${SUPABASE_ORIGIN}/**`, route => handle(route, state));
   await page.route(/fonts\.(googleapis|gstatic)\.com|maps\.google/, route => route.abort());
   if (admin) await page.addInitScript(token => localStorage.setItem('players-admin-session', JSON.stringify({ access_token: token, refresh_token: 'refresh' })), ADMIN_TOKEN);
@@ -75,4 +90,9 @@ async function gotoLoaded(page, url) {
   await page.locator('#eventGrid .event .status-chip').first().waitFor({ state: 'attached' });
 }
 
-module.exports = { mockSupabase, featuredRow, gotoLoaded, ADMIN_TOKEN };
+const VIDEO_BASE = `${SUPABASE_ORIGIN}/storage/v1/object/public/players-videos/`;
+function videoRow(overrides) {
+  return { id: 'video-db-1', category: 'remi', video_type: 'event', title: 'Seara de Remi · 10 octombrie', description: 'Momente de la turneu.', video_url: `${VIDEO_BASE}seara-remi.mp4`, poster_url: null, created_at: '2026-10-01T12:00:00Z', ...overrides };
+}
+
+module.exports = { mockSupabase, featuredRow, videoRow, gotoLoaded, ADMIN_TOKEN, VIDEO_BASE };
