@@ -201,3 +201,20 @@ test('the logo always takes you back to the home page', async ({ page }) => {
   await expect(page).toHaveURL('http://127.0.0.1:4173/');
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
 });
+
+test('on phones every day fits on one line and the Azi chip stays readable on the featured card', async ({ page }) => {
+  test.skip(page.viewportSize().width > 600, 'phone layout');
+  await page.clock.setFixedTime(new Date('2026-10-06T12:00:00'));
+  await mockSupabase(page, {
+    scheduleDays: { '2026-10-06': { linked_card: 'Seară de Șah', image_url: null } },
+    scheduleWeeks: { '2026-10-05': { image_url: null, featured_day: '2026-10-06' } },
+  });
+  await gotoLoaded(page, '/#program');
+
+  for (const date of await page.locator('#program .schedule-date').all()) {
+    const lines = await date.evaluate(node => Math.round(node.getBoundingClientRect().height / parseFloat(getComputedStyle(node).lineHeight || '16')));
+    expect(lines, await date.textContent()).toBeLessThanOrEqual(1);
+  }
+  const chip = page.locator('#program .schedule-day.is-today .schedule-when');
+  expect(await chip.evaluate(node => getComputedStyle(node).backgroundColor)).toBe('rgb(255, 255, 255)');
+});
