@@ -1,8 +1,9 @@
 // Admin dashboard: upload event videos (MP4 + optional poster) to the "players-videos" bucket and publish them
-// in the site's Video tab, or delete them again. Authorization is enforced by the Supabase RPCs and storage
-// policies; this file only drives the UI. Loaded with admin-events.js (reuses adminRpc and setFormStatus).
+// in the site's Video tab, or delete them again. Videos that are not MP4 or are over 50 MB are first compressed
+// in the browser by video-compress.js. Authorization is enforced by the Supabase RPCs and storage policies;
+// this file only drives the UI. Loaded with admin-events.js (reuses adminRpc and setFormStatus).
 const VIDEO_BUCKET='players-videos';
-const VIDEO_MAX_BYTES=50*1024*1024;
+const VIDEO_INPUT_MAX_BYTES=4*1024*1024*1024;
 const POSTER_TYPES={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'};
 const POSTER_MAX_BYTES=5*1024*1024;
 const VIDEO_CATEGORY_LABELS={club:'Player’s Poker Club',sah:'Șah',remi:'Remi',table:'Table','ping-pong':'Ping-Pong'};
@@ -36,23 +37,39 @@ async function discardVideoFile(url){
 function validateVideoForm(data){
   const video=data.get('video'), poster=data.get('poster'), title=String(data.get('title')||'').trim();
   if(!video||!video.size) return 'Alege fișierul video.';
-  if(video.type!=='video/mp4') return 'Videoclipul trebuie să fie MP4.';
-  if(video.size>VIDEO_MAX_BYTES) return 'Videoclipul poate avea maximum 50 MB.';
+  if(!video.type.startsWith('video/')) return 'Alege un fișier video (MP4 sau MOV).';
+  if(video.size>VIDEO_INPUT_MAX_BYTES) return 'Fișierul video poate avea maximum 4 GB.';
   if(poster&&poster.size&&!POSTER_TYPES[poster.type]) return 'Coperta trebuie să fie JPG, PNG sau WEBP.';
   if(poster&&poster.size>POSTER_MAX_BYTES) return 'Coperta poate avea maximum 5 MB.';
   if(title.length<3||title.length>90) return 'Titlul trebuie să aibă 3–90 de caractere.';
   return null;
 }
 
+const formatMegabytes=bytes=>`${(bytes/1024/1024).toLocaleString('ro-RO',{maximumFractionDigits:1})} MB`;
+
+// Re-encodes the video in the browser when it is not MP4 or exceeds the storage limit.
+async function compressIfNeeded(form,video,progress){
+  const compressor=window.PlayersVideoCompressor;
+  if(!compressor) throw new Error('Compresia video nu s-a încărcat. Reîncarcă pagina.');
+  if(!compressor.needsCompression(video)) return video;
+  setFormStatus(form,'Se comprimă videoclipul… 0%','');
+  const compressed=await compressor.compress(video,{onProgress:share=>{ progress.value=Math.round(share*100); setFormStatus(form,`Se comprimă videoclipul… ${Math.round(share*100)}%`,''); }});
+  setFormStatus(form,`Comprimat: ${formatMegabytes(video.size)} → ${formatMegabytes(compressed.size)}. Se încarcă…`,'');
+  return compressed;
+}
+
 async function submitVideoForm(form){
   const data=new FormData(form), problem=validateVideoForm(data);
   if(problem){ setFormStatus(form,problem,'error'); return; }
   const button=form.querySelector('button[type="submit"]'), progress=form.querySelector('.video-upload-progress');
-  const video=data.get('video'), poster=data.get('poster');
+  const poster=data.get('poster');
+  let video=data.get('video');
   const uploaded=[];
   button.disabled=true; progress.hidden=false; progress.value=0;
-  setFormStatus(form,'Se încarcă videoclipul…','');
   try {
+    video=await compressIfNeeded(form,video,progress);
+    setFormStatus(form,'Se încarcă videoclipul…','');
+    progress.value=0;
     const videoUrl=await uploadVideoFile(video,'mp4',share=>{ progress.value=Math.round(share*100); });
     uploaded.push(videoUrl);
     let posterUrl=null;
