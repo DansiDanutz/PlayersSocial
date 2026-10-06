@@ -110,20 +110,45 @@ test('the site is an installable app: manifest, icons and service worker', async
   expect(await page.evaluate(async () => (await navigator.serviceWorker.ready).active.scriptURL)).toMatch(/\/sw\.js$/);
 });
 
-test('the admin dashboard uses one menu button with its sections on phones', async ({ page }) => {
+test('on phones the admin dashboard is an app: compact header, 2×2 KPIs and a bottom tab bar', async ({ page }) => {
   test.skip(page.viewportSize().width > 600, 'phone layout');
   await mockSupabase(page, { admin: true });
   await gotoLoaded(page, '/');
   await page.locator('#adminToggle').click();
 
-  const toggle = page.locator('.dashboard-menu-toggle');
-  await expect(toggle).toContainText('Prezentare');
-  await expect(page.locator('.dashboard-nav')).toBeHidden();
-  await toggle.click();
-  await page.locator('.dashboard-nav button[data-section="dashboardProgram"]').click();
+  const viewport = page.viewportSize();
+  const nav = page.locator('.dashboard-nav');
+  await expect(nav).toBeVisible();
+  const bar = await nav.boundingBox();
+  expect(Math.round(bar.y + bar.height)).toBeGreaterThanOrEqual(viewport.height - 2);
+  expect(bar.width).toBeLessThanOrEqual(viewport.width);
+  const tabs = nav.locator('button[data-section]');
+  await expect(tabs).toHaveCount(6);
+  for (const tab of await tabs.all()) {
+    const box = await tab.boundingBox();
+    expect(box.height).toBeGreaterThanOrEqual(44);
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(viewport.width + 1);
+  }
+  await expect(page.locator('.dashboard-menu-toggle')).toHaveCount(0);
+
+  const title = page.locator('.dashboard-current-title');
+  await expect(title).toHaveText('Prezentare');
+  const header = await page.locator('.dashboard-topbar').boundingBox();
+  expect(header.height).toBeLessThanOrEqual(72);
+  const kpis = await page.locator('.dashboard-kpi').evaluateAll(nodes => nodes.map(node => Math.round(node.getBoundingClientRect().top)));
+  expect(kpis[0]).toBe(kpis[1]);
+  expect(kpis[2]).toBe(kpis[3]);
+
+  await tabs.filter({ hasText: 'Program' }).click();
   await expect(page.locator('#dashboardProgram')).toBeVisible();
-  await expect(page.locator('.dashboard-nav')).toBeHidden();
-  await expect(toggle).toContainText('Program');
+  await expect(title).toHaveText('Program');
+  await expect(tabs.filter({ hasText: 'Program' })).toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('#dashboardProgramTitle')).toBeHidden();
+  await expect(page.locator('#dashboardProgram .program-week-nav')).toBeVisible();
+  const padding = await page.locator('.dashboard-main').evaluate(node => parseFloat(getComputedStyle(node).paddingBottom));
+  expect(padding).toBeGreaterThanOrEqual(bar.height);
+  expect(await page.evaluate(() => document.querySelector('#adminDashboard').scrollWidth <= innerWidth)).toBe(true);
 });
 
 const SAMSUNG = 'Mozilla/5.0 (Linux; Android 15; SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/28.0 Chrome/130.0.0.0 Mobile Safari/537.36';

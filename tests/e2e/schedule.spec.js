@@ -362,6 +362,19 @@ test.describe('admin Program tab', () => {
     await expect(page.locator('#program .schedule-day').filter({ hasText: 'Vineri 9 oct.' }).locator('.schedule-prize')).toHaveText(['Free entry', 'Garantat 500 lei', 'Min. 16 jucători']);
   });
 
+  test('the buy-in, guaranteed and minimum players fields never overlap', async ({ page }) => {
+    await mockSupabase(page, { admin: true });
+    await gotoLoaded(page, '/#events');
+    await openProgram(page);
+
+    const labels = await page.locator('#dashboardProgram .program-day').first().locator('.program-prizes label').evaluateAll(nodes => nodes.map(node => { const box = node.getBoundingClientRect(); return { left: box.left, right: box.right, top: box.top, bottom: box.bottom, overflow: node.scrollWidth > node.clientWidth + 1 }; }));
+    const overlap = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
+    for (let i = 0; i < labels.length; i += 1) {
+      expect(labels[i].overflow, `label ${i} overflows`).toBe(false);
+      for (let j = i + 1; j < labels.length; j += 1) expect(overlap(labels[i], labels[j]), `labels ${i} and ${j} overlap`).toBe(false);
+    }
+  });
+
   test('the buy-in and guaranteed prize must be whole amounts in lei', async ({ page }) => {
     const state = await mockSupabase(page, { admin: true });
     await gotoLoaded(page, '/#events');

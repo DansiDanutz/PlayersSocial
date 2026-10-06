@@ -144,8 +144,6 @@ const SCHEDULE_BASE = `${SUPABASE_ORIGIN}/storage/v1/object/public/players-sched
 
 // Opens a dashboard section; on phones the sections sit behind the dashboard menu button.
 async function openDashboardSection(page, section) {
-  const toggle = page.locator('.dashboard-menu-toggle');
-  if (await toggle.isVisible()) await toggle.click();
   await page.locator(`.dashboard-nav button[data-section="${section}"]`).click();
 }
 

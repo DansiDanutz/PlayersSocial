@@ -192,14 +192,7 @@ function showDashboardSection(id){
   document.querySelector('#adminDashboard').scrollTop=0;
   document.querySelector('.dashboard-main').scrollTop=0;
   const current=document.querySelector(`.dashboard-nav button[data-section="${id}"]`);
-  document.querySelector('.dashboard-menu-current').textContent=current?current.textContent:'';
-  toggleDashboardMenu(false);
+  document.querySelector('.dashboard-current-title').textContent=current?current.textContent:'';
 }
-// On phones the sections live behind one menu button.
-function toggleDashboardMenu(open){
-  const nav=document.querySelector('.dashboard-nav'), toggle=document.querySelector('.dashboard-menu-toggle');
-  nav.classList.toggle('is-open',open); toggle.setAttribute('aria-expanded',String(open));
-}
-document.querySelector('.dashboard-menu-toggle').addEventListener('click',()=>toggleDashboardMenu(!document.querySelector('.dashboard-nav').classList.contains('is-open')));
 document.querySelectorAll('.dashboard-nav button[data-section]').forEach(button=>button.addEventListener('click',()=>showDashboardSection(button.dataset.section)));
 showDashboardSection('dashboardKpis');
