@@ -18,7 +18,7 @@ self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET' || request.mode !== 'navigate' || new URL(request.url).origin !== self.location.origin) return;
   event.respondWith(fetch(request).then((response) => {
-    if (response.ok) { const copy = response.clone(); caches.open(CACHE).then((cache) => cache.put('/', copy)); }
+    if (response.ok && new URL(request.url).pathname === '/') { const copy = response.clone(); caches.open(CACHE).then((cache) => cache.put('/', copy)); }
     return response;
   }).catch(() => caches.match('/')));
 });

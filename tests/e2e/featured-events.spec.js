@@ -61,3 +61,44 @@ test('uses Romanian plural forms for participant counts', async ({ page }) => {
   const labels = await page.evaluate(() => [1, 7, 19, 20, 101, 120].map(participantsLabel));
   expect(labels).toEqual(['1 participant', '7 participanți', '19 participanți', '20 de participanți', '101 participanți', '120 de participanți']);
 });
+
+test('featured event shares a link with its own preview page on WhatsApp', async ({ page }) => {
+  await mockSupabase(page, { events: [featuredRow({ event_name: 'Turneu de Remi', event_date: '2026-10-10' })] });
+  await gotoLoaded(page, '/#events');
+
+  const whatsapp = page.locator('#eveniment-turneu-de-remi .share-whatsapp');
+  const href = new URL(await whatsapp.getAttribute('href'));
+  expect(href.origin + href.pathname).toBe('https://wa.me/');
+  expect(href.searchParams.get('text')).toBe('Turneu de Remi · sâmbătă, 10 octombrie 2026 · ora 18:00 — Players Club http://127.0.0.1:4173/e/turneu-de-remi');
+  await expect(whatsapp).toHaveAttribute('target', '_blank');
+});
+
+test('featured event Distribuie opens the phone share sheet', async ({ page }) => {
+  await page.addInitScript(() => { navigator.share = data => { window.sharedData = data; return Promise.resolve(); }; });
+  await mockSupabase(page, { events: [featuredRow({ event_name: 'Turneu de Remi', event_date: '2026-10-10' })] });
+  await gotoLoaded(page, '/#events');
+
+  await page.locator('#eveniment-turneu-de-remi .share-native').click();
+  await expect.poll(() => page.evaluate(() => window.sharedData)).toEqual({ title: 'Turneu de Remi', text: 'Turneu de Remi · sâmbătă, 10 octombrie 2026 · ora 18:00 — Players Club', url: 'http://127.0.0.1:4173/e/turneu-de-remi' });
+});
+
+test('featured event Distribuie copies the link without a share sheet', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'share', { value: undefined });
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText: text => { window.copied = text; return Promise.resolve(); } } });
+  });
+  await mockSupabase(page, { events: [featuredRow({ event_name: 'Turneu de Remi', event_date: '2026-10-10' })] });
+  await gotoLoaded(page, '/#events');
+
+  await page.locator('#eveniment-turneu-de-remi .share-native').click();
+  await expect(page.locator('#eveniment-turneu-de-remi .share-status')).toHaveText('Link copiat. Îl poți lipi oriunde.');
+  expect(await page.evaluate(() => window.copied)).toBe('http://127.0.0.1:4173/e/turneu-de-remi');
+});
+
+test('home page announces a link preview image', async ({ page }) => {
+  await mockSupabase(page);
+  await page.goto('/');
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', 'https://playersclub.live/og-image.jpg');
+  const image = await page.request.get('/og-image.jpg');
+  expect(image.ok()).toBe(true);
+});
