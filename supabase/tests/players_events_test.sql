@@ -93,8 +93,8 @@ begin
   assert exists (select 1 from public.players_admin_list_admins() a where a.email = 'semebitcoin@gmail.com'), 'admin list missing owner';
   perform public.players_admin_add_admin('  Regression.Admin@Example.com ');
   assert exists (select 1 from public.players_admin_list_admins() a where a.email = 'regression.admin@example.com' and a.added_by = 'semebitcoin@gmail.com'), 'added admin not normalised/recorded';
-  failed := false; begin perform public.players_admin_add_admin('regression.admin@example.com'); exception when others then failed := true; end;
-  assert failed, 'duplicate admin accepted';
+  assert public.players_admin_add_admin('regression.admin@example.com'), 'adding an existing admin should simply succeed';
+  assert (select count(*) from public.players_admin_list_admins() a where a.email = 'regression.admin@example.com') = 1, 'existing admin duplicated';
   failed := false; begin perform public.players_admin_add_admin('not-an-email'); exception when others then failed := true; end;
   assert failed, 'invalid admin email accepted';
   failed := false; begin perform public.players_admin_remove_admin('semebitcoin@gmail.com'); exception when others then failed := true; end;

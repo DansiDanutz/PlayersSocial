@@ -26,7 +26,7 @@ function rpcHandlers(state) {
     players_registration_status: () => [],
     players_notifications_for_token: () => [],
     players_public_registrants: () => [],
-    is_players_admin: request => isAdminRequest(request),
+    is_players_admin: request => isAdminRequest(request) || (bearer(request) === USER_TOKEN && state.admins.includes(USER.email)),
     players_admin_event_notes: () => state.events.filter(row => row.is_featured).map(row => ({ event_name: row.event_name, admin_notes: row.admin_notes || null })),
     players_admin_registrants: () => state.registrants,
     players_register: (request, body) => ({ token: `token-${state.calls.length}`, status: 'registered' }),
@@ -75,8 +75,7 @@ function rpcHandlers(state) {
     players_admin_add_admin: (request, body) => {
       const email = String(body.p_email || '').trim().toLowerCase();
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error('Adresă de email invalidă');
-      if (state.admins.includes(email)) throw new Error('Adresa este deja administrator');
-      state.admins.push(email);
+      if (!state.admins.includes(email)) state.admins.push(email);
       return true;
     },
     players_admin_remove_admin: (request, body) => {
