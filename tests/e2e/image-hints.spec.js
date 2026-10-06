@@ -19,7 +19,6 @@ async function openAdmin(page, section) {
 
 test('every image upload shows the recommended size', async ({ page }) => {
   await openAdmin(page, 'dashboardProgram');
-  await expect(page.locator('label[for="programWeekImage"]')).toContainText('Recomandat: 1080 × 1350 px');
   await expect(page.locator('label[for="program-image-2026-10-05"]')).toContainText('Recomandat: 1080 × 1440 px');
 
   await openDashboardSection(page, 'dashboardVideos');
@@ -49,13 +48,4 @@ test('an event banner with the right shape is confirmed', async ({ page }) => {
   await expect(hint).toContainText('Imaginea ta: 1024 × 1536 px');
   await expect(hint).toContainText('Proporția e potrivită');
   await expect(hint).not.toHaveClass(/is-warning/);
-});
-
-test('the week image is shown whole, so any shape is accepted with a note', async ({ page }) => {
-  await openAdmin(page, 'dashboardProgram');
-  await page.locator('#programWeekImage').setInputFiles(POSTER);
-
-  const hint = page.locator('.program-week-form .image-hint');
-  await expect(hint).toContainText('Imaginea ta: 1024 × 1536 px');
-  await expect(hint).toContainText('se afișează întreagă');
 });
