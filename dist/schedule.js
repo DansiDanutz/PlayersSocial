@@ -72,13 +72,18 @@
     return [...week.filter(({ when }) => when !== 'past'), ...week.filter(({ when }) => when === 'past')];
   }
 
-  // "Ora 18:00", "Buy-in 10 lei" (or "Free entry" when it is 0) and "Garantat 500 lei", whichever the admin set.
+  // Club terms that apply unless the admin set something else for the day.
+  const CLUB_TERMS = { buy_in: 0, guaranteed: 500, min_players: 10 };
+  const withClubTerms = (entry) => Object.fromEntries(Object.entries(CLUB_TERMS).map(([key, value]) => [key, Number.isInteger(entry[key]) ? entry[key] : value]));
+  // "Ora 18:00", "Free entry" (or "Buy-in 10 lei"), "Garantat 500 lei" and "Min. 10 jucători".
   function prizeChips(entry) {
     const lei = (amount) => `${amount.toLocaleString('ro-RO')} lei`;
+    const terms = withClubTerms(entry);
     const items = [];
     if (entry.start_time) items.push(['is-time', `Ora ${entry.start_time.slice(0, 5)}`]);
-    if (Number.isInteger(entry.buy_in)) items.push(['is-entry', entry.buy_in === 0 ? 'Free entry' : `Buy-in ${lei(entry.buy_in)}`]);
-    if (Number.isInteger(entry.guaranteed)) items.push(['is-prize', `Garantat ${lei(entry.guaranteed)}`]);
+    items.push(['is-entry', terms.buy_in === 0 ? 'Free entry' : `Buy-in ${lei(terms.buy_in)}`]);
+    items.push(['is-prize', `Garantat ${lei(terms.guaranteed)}`]);
+    items.push(['is-players', `Min. ${terms.min_players} jucători`]);
     return items.map(([kind, label]) => element('span', `schedule-prize ${kind}`, label));
   }
   function prizeRow(entry) {
@@ -177,17 +182,20 @@
     section.hidden = false;
   }
 
-  // The big event cards show their next programme day (this week or next) with its time, entry and prize.
+  // Every big event card shows the terms; a card in the programme also shows its next day (this week or next).
   function renderCardDays(days) {
     const today = isoDay(new Date()), tomorrow = isoDay(addDays(new Date(), 1));
     const upcoming = days.filter((entry) => entry.day >= today).sort((a, b) => a.day.localeCompare(b.day));
     document.querySelectorAll('#eventGrid .event').forEach((card) => {
-      card.querySelector('.card-next')?.remove();
+      card.querySelector('.card-terms')?.remove();
       const entry = upcoming.find((day) => day.linked_card === card.dataset.name);
-      if (!entry) return;
-      const when = entry.day === today ? 'Azi · ' : entry.day === tomorrow ? 'Mâine · ' : '';
-      const box = element('div', 'card-next');
-      box.append(element('span', 'card-next-label', 'În Program'), element('strong', 'card-next-day', `${when}${dayLabel(parseDay(entry.day))}`), ...prizeRow(entry));
+      const box = element('div', entry ? 'card-terms card-next' : 'card-terms');
+      box.append(element('span', 'card-next-label', entry ? 'În Program' : 'Condiții'));
+      if (entry) {
+        const when = entry.day === today ? 'Azi · ' : entry.day === tomorrow ? 'Mâine · ' : '';
+        box.append(element('strong', 'card-next-day', `${when}${dayLabel(parseDay(entry.day))}`));
+      }
+      box.append(...prizeRow(entry || {}));
       card.querySelector('.details').before(box);
     });
   }
@@ -200,10 +208,10 @@
       const current = await fetchWeek(start);
       render(start, current);
       renderCardDays([...current.days, ...(await nextWeek).days]);
-    } catch (error) { console.error('Weekly programme failed to load:', error); section.hidden = true; }
+    } catch (error) { console.error('Weekly programme failed to load:', error); section.hidden = true; renderCardDays([]); }
   }
 
-  window.PlayersSchedule = { reload, fetchWeek, defaultImage, weekStart, addDays, isoDay, parseDay, dayLabel, rangeLabel };
+  window.PlayersSchedule = { reload, fetchWeek, defaultImage, CLUB_TERMS, weekStart, addDays, isoDay, parseDay, dayLabel, rangeLabel };
   reload().then(() => {
     if (location.hash === '#program' && !section.hidden) section.scrollIntoView({ block: 'start' });
   });

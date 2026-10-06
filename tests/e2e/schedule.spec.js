@@ -125,16 +125,16 @@ test('the day card and the event of the week always show the start time, buy-in 
   await gotoLoaded(page, '/#program');
 
   const thursday = page.locator('#program .schedule-day').filter({ hasText: 'Joi 8 oct.' });
-  await expect(thursday.locator('.schedule-prize')).toHaveText(['Ora 18:00', 'Buy-in 10 lei', 'Garantat 500 lei']);
-  await expect(page.locator('#program .schedule-featured .schedule-prize')).toHaveText(['Ora 18:00', 'Buy-in 10 lei', 'Garantat 500 lei']);
-  await expect(page.locator('#program .schedule-day').filter({ hasText: 'Vineri 9 oct.' }).locator('.schedule-prize')).toHaveCount(0);
+  await expect(thursday.locator('.schedule-prize')).toHaveText(['Ora 18:00', 'Buy-in 10 lei', 'Garantat 500 lei', 'Min. 10 jucători']);
+  await expect(page.locator('#program .schedule-featured .schedule-prize')).toHaveText(['Ora 18:00', 'Buy-in 10 lei', 'Garantat 500 lei', 'Min. 10 jucători']);
+  await expect(page.locator('#program .schedule-day').filter({ hasText: 'Vineri 9 oct.' }).locator('.schedule-prize')).toHaveText(['Free entry', 'Garantat 500 lei', 'Min. 10 jucători']);
 });
 
 test('a buy-in of 0 lei is shown as Free entry', async ({ page }) => {
   await mockSupabase(page, { scheduleDays: { '2026-10-08': { linked_card: 'Seară de Șah', image_url: null, start_time: '18:00:00', buy_in: 0, guaranteed: 500 } } });
   await gotoLoaded(page, '/#program');
 
-  await expect(page.locator('#program .schedule-day').filter({ hasText: 'Joi 8 oct.' }).locator('.schedule-prize')).toHaveText(['Ora 18:00', 'Free entry', 'Garantat 500 lei']);
+  await expect(page.locator('#program .schedule-day').filter({ hasText: 'Joi 8 oct.' }).locator('.schedule-prize')).toHaveText(['Ora 18:00', 'Free entry', 'Garantat 500 lei', 'Min. 10 jucători']);
 });
 
 test('the image popup shows the event, day, start time, buy-in and guaranteed prize', async ({ page }) => {
@@ -148,11 +148,11 @@ test('the image popup shows the event, day, start time, buy-in and guaranteed pr
   await page.locator('#program .schedule-day').filter({ hasText: 'Joi 8 oct.' }).getByRole('button', { name: 'Mărește imaginea' }).click();
   await expect(viewer).toBeVisible();
   await expect(viewer.locator('.image-viewer-title')).toHaveText('Seară de Șah · Joi 8 oct.');
-  await expect(viewer.locator('.schedule-prize')).toHaveText(['Ora 18:00', 'Free entry', 'Garantat 500 lei']);
+  await expect(viewer.locator('.schedule-prize')).toHaveText(['Ora 18:00', 'Free entry', 'Garantat 500 lei', 'Min. 10 jucători']);
   await page.keyboard.press('Escape');
 
   await page.locator('#program .schedule-featured').getByRole('button', { name: 'Mărește imaginea' }).click();
-  await expect(viewer.locator('.schedule-prize')).toHaveText(['Ora 18:00', 'Free entry', 'Garantat 500 lei']);
+  await expect(viewer.locator('.schedule-prize')).toHaveText(['Ora 18:00', 'Free entry', 'Garantat 500 lei', 'Min. 10 jucători']);
   await page.keyboard.press('Escape');
 
   await page.locator('#program .schedule-day').filter({ hasText: 'Vineri 9 oct.' }).getByRole('button', { name: 'Mărește imaginea' }).click();
@@ -192,8 +192,8 @@ test('day cards line up on desktop and tablet, become rows on phones, and nothin
   }
 
   const info = page.locator('#program .schedule-day').filter({ hasText: 'Sâmbătă 10 oct.' }).locator('.schedule-prize');
-  await expect(info).toHaveText(['Ora 20:00', 'Free entry', 'Garantat 500 lei']);
-  expect(await info.evaluateAll(nodes => nodes.map(node => getComputedStyle(node, '::before').content))).toEqual(['"⏰"', '"🎟"', '"🏆"']);
+  await expect(info).toHaveText(['Ora 20:00', 'Free entry', 'Garantat 500 lei', 'Min. 10 jucători']);
+  expect(await info.evaluateAll(nodes => nodes.map(node => getComputedStyle(node, '::before').content))).toEqual(['"⏰"', '"🎟"', '"🏆"', '"👥"']);
 
   await page.setViewportSize({ width: 375, height: 812 });
   await gotoLoaded(page, '/?width=375#program');
@@ -215,11 +215,11 @@ test('the big event cards show their next programme day with time, entry and gua
 
   const card = (name) => page.locator(`#eventGrid .event[data-name="${name}"]`);
   await expect(card('Seară de Șah').locator('.card-next-day')).toHaveText('Mâine · Joi 8 oct.');
-  await expect(card('Seară de Șah').locator('.card-next .schedule-prize')).toHaveText(['Ora 18:00', 'Free entry', 'Garantat 500 lei']);
+  await expect(card('Seară de Șah').locator('.card-next .schedule-prize')).toHaveText(['Ora 18:00', 'Free entry', 'Garantat 500 lei', 'Min. 10 jucători']);
   await expect(card('Karaoke Club').locator('.card-next-day')).toHaveText('Sâmbătă 10 oct.');
-  await expect(card('Karaoke Club').locator('.card-next .schedule-prize')).toHaveText(['Ora 20:00', 'Free entry', 'Garantat 500 lei']);
+  await expect(card('Karaoke Club').locator('.card-next .schedule-prize')).toHaveText(['Ora 20:00', 'Free entry', 'Garantat 500 lei', 'Min. 10 jucători']);
   await expect(card('Remi & Prieteni').locator('.card-next-day')).toHaveText('Luni 12 oct.');
-  await expect(card('Remi & Prieteni').locator('.card-next .schedule-prize')).toHaveText(['Ora 19:00', 'Buy-in 20 lei']);
+  await expect(card('Remi & Prieteni').locator('.card-next .schedule-prize')).toHaveText(['Ora 19:00', 'Buy-in 20 lei', 'Garantat 500 lei', 'Min. 10 jucători']);
   await expect(card('Seară de Table').locator('.card-next')).toHaveCount(0);
   // A card that is in the programme no longer says "În curând"; one that is not keeps saying it.
   await expect(card('Seară de Șah').locator('.coming-soon-banner')).toBeHidden();
@@ -228,6 +228,20 @@ test('the big event cards show their next programme day with time, entry and gua
   await expect(card('Seară de Table').locator('.event-date')).toBeVisible();
   const fits = await card('Seară de Șah').evaluate(node => { const box = node.getBoundingClientRect(); return [...node.querySelectorAll('.card-next *')].every(child => { const inner = child.getBoundingClientRect(); return inner.left >= box.left - 1 && inner.right <= box.right + 1; }); });
   expect(fits).toBe(true);
+});
+
+test('every big card shows the club defaults — Free entry, Garantat 500 lei, Min. 10 jucători — even without a programme day', async ({ page }) => {
+  await mockSupabase(page, { scheduleDays: { '2026-10-08': { linked_card: 'Seară de Șah', image_url: null, start_time: '18:00:00', min_players: 12 } } });
+  await gotoLoaded(page, '/#events');
+
+  const cards = page.locator('#eventGrid .event');
+  await expect(cards.locator('.card-terms')).toHaveCount(await cards.count());
+  const table = page.locator('#eventGrid .event[data-name="Seară de Table"]');
+  await expect(table.locator('.card-terms .schedule-prize')).toHaveText(['Free entry', 'Garantat 500 lei', 'Min. 10 jucători']);
+  await expect(table.locator('.card-next')).toHaveCount(0);
+  await expect(table.locator('.event-date')).toBeVisible();
+  const chess = page.locator('#eventGrid .event[data-name="Seară de Șah"]');
+  await expect(chess.locator('.card-next .schedule-prize')).toHaveText(['Ora 18:00', 'Free entry', 'Garantat 500 lei', 'Min. 12 jucători']);
 });
 
 test('clicking a programme image opens it large in a popup', async ({ page }) => {
@@ -291,7 +305,7 @@ test.describe('admin Program tab', () => {
     await expect(thursday.locator('.admin-form-status')).toHaveText('Ziua a fost salvată.');
     const upload = state.calls.find(call => call.name === 'storage:POST');
     expect(upload.path).toMatch(/^\/storage\/v1\/object\/players-schedule\/[A-Za-z0-9._-]+\.jpg$/);
-    expect(state.calls.find(call => call.name === 'players_admin_set_schedule_day').body).toEqual({ p_day: '2026-10-08', p_linked_card: 'Remi & Prieteni', p_image_url: `${SCHEDULE_BASE}${upload.path.split('/').pop()}`, p_start_time: null, p_buy_in: null, p_guaranteed: null });
+    expect(state.calls.find(call => call.name === 'players_admin_set_schedule_day').body).toEqual({ p_day: '2026-10-08', p_linked_card: 'Remi & Prieteni', p_image_url: `${SCHEDULE_BASE}${upload.path.split('/').pop()}`, p_start_time: null, p_buy_in: 0, p_guaranteed: 500, p_min_players: 10 });
     await expect(page.locator('#program .schedule-day').filter({ hasText: 'Joi 8 oct.' }).locator('.schedule-event')).toHaveText('Remi & Prieteni');
   });
 
@@ -322,12 +336,30 @@ test.describe('admin Program tab', () => {
     await tuesday.getByRole('button', { name: 'Salvează ziua' }).click();
 
     await expect(page.locator('#dashboardProgram .program-day').nth(1).locator('.admin-form-status')).toHaveText('Ziua a fost salvată.');
-    expect(state.calls.find(call => call.name === 'players_admin_set_schedule_day').body).toEqual({ p_day: '2026-10-06', p_linked_card: 'Seară de Șah', p_image_url: null, p_start_time: '18:00', p_buy_in: 10, p_guaranteed: 500 });
+    expect(state.calls.find(call => call.name === 'players_admin_set_schedule_day').body).toEqual({ p_day: '2026-10-06', p_linked_card: 'Seară de Șah', p_image_url: null, p_start_time: '18:00', p_buy_in: 10, p_guaranteed: 500, p_min_players: 10 });
     const saved = page.locator('#dashboardProgram .program-day').nth(1);
     await expect(saved.getByLabel('Ora de început')).toHaveValue('18:00');
     await expect(saved.getByLabel('Buy-in (lei)')).toHaveValue('10');
     await expect(saved.getByLabel('Garantat (lei)')).toHaveValue('500');
-    await expect(page.locator('#program .schedule-day').filter({ hasText: 'Marți 6 oct.' }).locator('.schedule-prize')).toHaveText(['Ora 18:00', 'Buy-in 10 lei', 'Garantat 500 lei']);
+    await expect(page.locator('#program .schedule-day').filter({ hasText: 'Marți 6 oct.' }).locator('.schedule-prize')).toHaveText(['Ora 18:00', 'Buy-in 10 lei', 'Garantat 500 lei', 'Min. 10 jucători']);
+  });
+
+  test('a new day starts with the club defaults and the admin can change the minimum players', async ({ page }) => {
+    const state = await mockSupabase(page, { admin: true });
+    await gotoLoaded(page, '/#events');
+    await openProgram(page);
+
+    const friday = page.locator('#dashboardProgram .program-day').nth(4);
+    await expect(friday.getByLabel('Buy-in (lei)')).toHaveValue('0');
+    await expect(friday.getByLabel('Garantat (lei)')).toHaveValue('500');
+    await expect(friday.getByLabel('Minim jucători')).toHaveValue('10');
+    await friday.getByLabel('Eveniment', { exact: true }).selectOption('Karaoke Club');
+    await friday.getByLabel('Minim jucători').fill('16');
+    await friday.getByRole('button', { name: 'Salvează ziua' }).click();
+
+    await expect(page.locator('#dashboardProgram .program-day').nth(4).locator('.admin-form-status')).toHaveText('Ziua a fost salvată.');
+    expect(state.calls.find(call => call.name === 'players_admin_set_schedule_day').body).toEqual({ p_day: '2026-10-09', p_linked_card: 'Karaoke Club', p_image_url: null, p_start_time: null, p_buy_in: 0, p_guaranteed: 500, p_min_players: 16 });
+    await expect(page.locator('#program .schedule-day').filter({ hasText: 'Vineri 9 oct.' }).locator('.schedule-prize')).toHaveText(['Free entry', 'Garantat 500 lei', 'Min. 16 jucători']);
   });
 
   test('the buy-in and guaranteed prize must be whole amounts in lei', async ({ page }) => {
@@ -379,7 +411,7 @@ test.describe('admin Program tab', () => {
     await thursday.getByRole('button', { name: 'Folosește bannerul implicit' }).click();
 
     await expect(thursday.locator('.admin-form-status')).toHaveText('Ziua folosește bannerul implicit.');
-    expect(state.calls.find(call => call.name === 'players_admin_set_schedule_day').body).toEqual({ p_day: '2026-10-08', p_linked_card: 'Seară de Șah', p_image_url: null, p_start_time: '18:00', p_buy_in: 10, p_guaranteed: 500 });
+    expect(state.calls.find(call => call.name === 'players_admin_set_schedule_day').body).toEqual({ p_day: '2026-10-08', p_linked_card: 'Seară de Șah', p_image_url: null, p_start_time: '18:00', p_buy_in: 10, p_guaranteed: 500, p_min_players: null });
     expect(state.calls.some(call => call.name === 'storage:DELETE' && call.path.endsWith('/special.jpg'))).toBe(true);
     await expect(page.locator('#dashboardProgram .program-day').nth(3).locator('.program-day-preview')).toHaveAttribute('src', '/program/seara-de-sah.jpg');
   });
