@@ -125,3 +125,61 @@ test('the admin dashboard uses one menu button with its sections on phones', asy
   await expect(page.locator('.dashboard-nav')).toBeHidden();
   await expect(toggle).toContainText('Program');
 });
+
+const SAMSUNG = 'Mozilla/5.0 (Linux; Android 15; SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/28.0 Chrome/130.0.0.0 Mobile Safari/537.36';
+const ANDROID_CHROME = 'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36';
+const useAgent = (page, agent) => page.addInitScript(value => Object.defineProperty(navigator, 'userAgent', { get: () => value }), agent);
+
+test('Samsung Internet gets its own install steps and a one-tap way to install with Chrome', async ({ page }) => {
+  await useAgent(page, SAMSUNG);
+  await mockSupabase(page, { user: true });
+  await gotoLoaded(page, '/');
+
+  await page.locator('#installApp').click();
+  const help = page.locator('#installHelp');
+  await expect(help).toBeVisible();
+  await expect(help.locator('.install-steps[data-platform="samsung"]')).toBeVisible();
+  await expect(help.locator('.install-steps[data-platform="samsung"]')).toContainText('Ecran de pornire');
+  await expect(help.locator('.install-steps[data-platform="other"]')).toBeHidden();
+  await expect(help.locator('.install-open-chrome')).toHaveAttribute('href', 'intent://127.0.0.1:4173/#Intent;scheme=http;package=com.android.chrome;end');
+});
+
+test('on Android Chrome a tap that comes before Chrome is ready waits for the install prompt', async ({ page }) => {
+  await useAgent(page, ANDROID_CHROME);
+  await mockSupabase(page, { user: true });
+  await gotoLoaded(page, '/');
+
+  await page.locator('#installApp').click();
+  await page.waitForTimeout(400);
+  await page.evaluate(() => {
+    const event = new Event('beforeinstallprompt');
+    event.prompt = () => { window.installPrompted = true; return Promise.resolve(); };
+    event.userChoice = Promise.resolve({ outcome: 'accepted' });
+    window.dispatchEvent(event);
+  });
+  await expect.poll(() => page.evaluate(() => window.installPrompted)).toBe(true);
+  await expect(page.locator('#installHelp')).toBeHidden();
+});
+
+test('on Android Chrome without a prompt the Chrome steps are shown', async ({ page }) => {
+  await useAgent(page, ANDROID_CHROME);
+  await mockSupabase(page, { user: true });
+  await gotoLoaded(page, '/');
+
+  await page.locator('#installApp').click();
+  const help = page.locator('#installHelp');
+  await expect(help).toBeVisible({ timeout: 8000 });
+  await expect(help.locator('.install-steps[data-platform="android"]')).toBeVisible();
+  await expect(help.locator('.install-steps[data-platform="android"]')).toContainText('Instalează aplicația');
+});
+
+test('when the app is already installed the button says so', async ({ page }) => {
+  await useAgent(page, ANDROID_CHROME);
+  await page.addInitScript(() => { navigator.getInstalledRelatedApps = () => Promise.resolve([{ platform: 'webapp', url: 'https://playersclub.live/manifest.webmanifest' }]); });
+  await mockSupabase(page, { user: true });
+  await gotoLoaded(page, '/');
+
+  await page.locator('#installApp').click();
+  await expect(page.locator('#installHelp .install-installed')).toBeVisible();
+  await expect(page.locator('#installHelp .install-installed')).toContainText('Aplicația este deja instalată');
+});
