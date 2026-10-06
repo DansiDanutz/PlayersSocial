@@ -393,7 +393,7 @@
   .schedule-day.is-past { opacity:.55; }
   /* programme images open large in a popup */
   .image-zoom { display:block; width:100%; padding:0; border:0; background:none; cursor:zoom-in; border-radius:12px; } .image-zoom img { display:block; }
-  .image-viewer { width:auto; min-width:120px; min-height:120px; max-width:min(94vw,900px); max-height:94vh; padding:0; border:0; border-radius:18px; background:transparent; overflow:visible; } .image-viewer::backdrop { background:rgba(10,10,20,.82); }
+  .image-viewer { width:fit-content; min-width:120px; min-height:120px; max-width:min(94vw,900px); max-height:94vh; padding:0; border:0; border-radius:18px; background:transparent; overflow:visible; } .image-viewer::backdrop { background:rgba(10,10,20,.82); }
   .image-viewer img { display:block; max-width:min(94vw,900px); max-height:90vh; width:auto; height:auto; border-radius:18px; box-shadow:0 20px 60px rgba(0,0,0,.5); }
   .image-viewer-close { position:absolute; top:-14px; right:-14px; width:44px; height:44px; border:2px solid #fff; border-radius:50%; background:var(--ink); color:#fff; font-size:1.6rem; line-height:1; cursor:pointer; } @media (max-width:600px) { .image-viewer-close { top:8px; right:8px; } }
   @media (prefers-reduced-motion:reduce) { .schedule-day.is-today::before { animation-duration:14s; } }
