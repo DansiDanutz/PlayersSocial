@@ -59,9 +59,9 @@ function rpcHandlers(state) {
       const days = [...own, ...template].sort((a, b) => a.day.localeCompare(b.day));
       return { week_start: body.p_week_start, image_url: week.image_url || null, featured_day: week.featured_day || null, days };
     },
-    players_admin_list_schedule_template: () => Object.entries(state.scheduleTemplate).map(([weekday, row]) => ({ weekday: Number(weekday), linked_card: row.linked_card, start_time: row.start_time || null })),
+    players_admin_list_schedule_template: () => Object.entries(state.scheduleTemplate).map(([weekday, row]) => ({ weekday: Number(weekday), linked_card: row.linked_card, start_time: row.start_time || null, buy_in: row.buy_in ?? null, guaranteed: row.guaranteed ?? null, min_players: row.min_players ?? null })),
     players_admin_set_schedule_template_day: (request, body) => {
-      if (body.p_linked_card) state.scheduleTemplate[body.p_weekday] = { linked_card: body.p_linked_card, start_time: body.p_start_time ? `${body.p_start_time}:00`.slice(0, 8) : null };
+      if (body.p_linked_card) state.scheduleTemplate[body.p_weekday] = { linked_card: body.p_linked_card, start_time: body.p_start_time ? `${body.p_start_time}:00`.slice(0, 8) : null, buy_in: body.p_buy_in ?? null, guaranteed: body.p_guaranteed ?? null, min_players: body.p_min_players ?? null };
       else delete state.scheduleTemplate[body.p_weekday];
       return null;
     },

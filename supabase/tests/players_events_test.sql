@@ -172,8 +172,11 @@ begin
 
     -- Admins edit the default programme; visitors cannot.
     assert (select count(*) from public.players_admin_list_schedule_template()) between 0 and 7, 'admin cannot list the default programme';
-    perform public.players_admin_set_schedule_template_day(1::smallint, 'Campionat de FIFA', '21:00');
+    perform public.players_admin_set_schedule_template_day(1::smallint, 'Campionat de FIFA', '21:00', 20, 1000, 8);
     assert public.players_public_schedule(week) -> 'days' -> 0 ->> 'linked_card' = 'Campionat de FIFA' and public.players_public_schedule(week) -> 'days' -> 0 ->> 'start_time' = '21:00:00', 'default programme change not applied';
+    assert (public.players_public_schedule(week) -> 'days' -> 0 ->> 'buy_in')::int = 20 and (public.players_public_schedule(week) -> 'days' -> 0 ->> 'guaranteed')::int = 1000 and (public.players_public_schedule(week) -> 'days' -> 0 ->> 'min_players')::int = 8, 'default terms not public';
+    failed := false; begin perform public.players_admin_set_schedule_template_day(1::smallint, 'Campionat de FIFA', null, null, null, 0); exception when others then failed := true; end;
+    assert failed, 'zero default minimum players accepted';
     perform public.players_admin_set_schedule_template_day(1::smallint, null, null);
     assert not exists (select 1 from jsonb_array_elements(public.players_public_schedule(week) -> 'days') d where d ->> 'day' = week::text), 'cleared weekday still has a default event';
     failed := false; begin perform public.players_admin_set_schedule_template_day(1::smallint, 'Turneu inventat', null); exception when others then failed := true; end;

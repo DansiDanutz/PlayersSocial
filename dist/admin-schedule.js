@@ -85,12 +85,20 @@ async function useDefaultBanner(form){
 const WEEKDAY_NAMES=['Luni','Marți','Miercuri','Joi','Vineri','Sâmbătă','Duminică'];
 let programTemplate=new Map();
 
+// The values a weekday shows on the site: its own, or the club defaults where it has none.
+function templateValues(row){
+  const terms=PlayersSchedule.CLUB_TERMS;
+  return { card:row?.linked_card??null, time:row?.start_time?.slice(0,5)??null, buy_in:row?.buy_in??terms.buy_in, guaranteed:row?.guaranteed??terms.guaranteed, min_players:row?.min_players??terms.min_players };
+}
+
 function programTemplateRow(weekday,name){
-  const row=programTemplate.get(weekday), item=document.createElement('div');
+  const values=templateValues(programTemplate.get(weekday)), item=document.createElement('div');
+  const number=(field,label,min)=>`<label class="program-template-number">${label}<input name="${field}" type="number" min="${min}" step="1" inputmode="numeric" aria-label="${label} implicit ${name}" value="${values[field]}"></label>`;
   item.className='program-template-day'; item.dataset.weekday=String(weekday);
   item.innerHTML=`<span class="program-template-name">${name}</span>`
-    +`<select name="card" aria-label="Eveniment implicit ${name}">${eventOptions(row?.linked_card)}</select>`
-    +`<input name="time" type="time" aria-label="Ora implicită ${name}" value="${row?.start_time?.slice(0,5)??''}">`;
+    +`<select name="card" aria-label="Eveniment implicit ${name}">${eventOptions(values.card)}</select>`
+    +`<input name="time" type="time" aria-label="Ora implicită ${name}" value="${values.time??''}">`
+    +`<div class="program-template-terms">${number('buy_in','Buy-in',0)}${number('guaranteed','Garantat',0)}${number('min_players','Minim jucători',1)}</div>`;
   return item;
 }
 
@@ -103,14 +111,19 @@ async function renderProgramTemplate(){
 
 // Saves only the weekdays that changed, then redraws the tab and the public programme.
 async function saveProgramTemplate(form){
-  const changes=[...form.querySelectorAll('.program-template-day')].map(item=>{
-    const weekday=Number(item.dataset.weekday), card=item.querySelector('select').value||null, time=card?(item.querySelector('input').value||null):null, row=programTemplate.get(weekday);
-    return { weekday, card, time, changed:card!==(row?.linked_card??null)||time!==(row?.start_time?.slice(0,5)??null) };
-  }).filter(change=>change.changed);
+  const rows=[...form.querySelectorAll('.program-template-day')].map(item=>{
+    const weekday=Number(item.dataset.weekday), card=item.querySelector('select').value||null, field=name=>item.querySelector(`[name="${name}"]`).value;
+    const values={ card, time:card?(field('time')||null):null, buy_in:card?parseLei(field('buy_in')):null, guaranteed:card?parseLei(field('guaranteed')):null, min_players:card?parseLei(field('min_players')):null };
+    const before=templateValues(programTemplate.get(weekday)), saved=before.card?before:{ card:null, time:null, buy_in:null, guaranteed:null, min_players:null };
+    return { weekday, name:WEEKDAY_NAMES[weekday-1], values, changed:Object.keys(values).some(key=>values[key]!==saved[key]) };
+  });
+  const invalid=rows.find(row=>row.values.card&&(row.values.buy_in===undefined||row.values.guaranteed===undefined||!row.values.min_players));
+  if(invalid){ setFormStatus(form,`${invalid.name}: buy-in-ul și garantatul trebuie să fie sume întregi în lei, iar minimul de jucători cel puțin 1.`,'error'); return; }
+  const changes=rows.filter(row=>row.changed);
   if(!changes.length){ setFormStatus(form,'Nu ai schimbat nimic.','ok'); return; }
   const button=form.querySelector('button[type="submit"]'); button.disabled=true;
   try {
-    for(const change of changes) await adminRpc('players_admin_set_schedule_template_day',{p_weekday:change.weekday,p_linked_card:change.card,p_start_time:change.time});
+    for(const { weekday, values } of changes) await adminRpc('players_admin_set_schedule_template_day',{p_weekday:weekday,p_linked_card:values.card,p_start_time:values.time,p_buy_in:values.buy_in,p_guaranteed:values.guaranteed,p_min_players:values.min_players});
     await Promise.all([renderProgramTemplate(),afterProgramChange()]);
     setFormStatus(form,'Programul implicit a fost salvat.','ok');
   } catch(error){ setFormStatus(form,error.message,'error'); }

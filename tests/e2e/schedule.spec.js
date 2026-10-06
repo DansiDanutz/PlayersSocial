@@ -349,14 +349,41 @@ test('admin changes the weekly default programme for any weekday, and the site f
   await expect(panel.locator('.admin-form-status')).toHaveText('Programul implicit a fost salvat.');
   const saves = state.calls.filter(call => call.name === 'players_admin_set_schedule_template_day').map(call => call.body);
   expect(saves).toEqual([
-    { p_weekday: 3, p_linked_card: 'Campionat de FIFA', p_start_time: '21:00' },
-    { p_weekday: 7, p_linked_card: null, p_start_time: null },
+    { p_weekday: 3, p_linked_card: 'Campionat de FIFA', p_start_time: '21:00', p_buy_in: 0, p_guaranteed: 500, p_min_players: 10 },
+    { p_weekday: 7, p_linked_card: null, p_start_time: null, p_buy_in: null, p_guaranteed: null, p_min_players: null },
   ]);
   const day = (label) => page.locator('#program .schedule-day').filter({ hasText: label });
   await expect(day('Miercuri 7 oct.').locator('.schedule-event')).toHaveText('Campionat de FIFA');
   await expect(day('Miercuri 7 oct.').locator('.schedule-prize').first()).toHaveText('Ora 21:00');
   await expect(day('Duminică 11 oct.')).toHaveClass(/is-empty/);
   await expect(page.locator('#dashboardProgram .program-day').nth(2).getByLabel('Eveniment', { exact: true })).toHaveValue('Campionat de FIFA');
+});
+
+test('the default programme also sets buy-in, guaranteed prize and minimum players per weekday', async ({ page }) => {
+  const state = await mockSupabase(page, { admin: true, scheduleTemplate: DEFAULT_WEEK });
+  await openProgramAsAdmin(page);
+
+  const panel = page.locator('#dashboardProgram .program-template');
+  await panel.locator('summary').click();
+  const friday = panel.locator('.program-template-day').nth(4);
+  await expect(friday.getByLabel('Buy-in implicit Vineri')).toHaveValue('0');
+  await expect(friday.getByLabel('Garantat implicit Vineri')).toHaveValue('500');
+  await expect(friday.getByLabel('Minim jucători implicit Vineri')).toHaveValue('10');
+  await friday.getByLabel('Buy-in implicit Vineri').fill('20');
+  await friday.getByLabel('Garantat implicit Vineri').fill('1000');
+  await friday.getByLabel('Minim jucători implicit Vineri').fill('8');
+  await panel.getByRole('button', { name: 'Salvează programul implicit' }).click();
+
+  await expect(panel.locator('.admin-form-status')).toHaveText('Programul implicit a fost salvat.');
+  expect(state.calls.filter(call => call.name === 'players_admin_set_schedule_template_day').map(call => call.body)).toEqual([
+    { p_weekday: 5, p_linked_card: 'Turneu de Ping-Pong', p_start_time: null, p_buy_in: 20, p_guaranteed: 1000, p_min_players: 8 },
+  ]);
+  await expect(page.locator('#program .schedule-day').filter({ hasText: 'Vineri 9 oct.' }).locator('.schedule-prize')).toHaveText(['Buy-in 20 lei', 'Garantat 1.000 lei', 'Min. 8 jucători']);
+  await expect(page.locator('#dashboardProgram .program-day').nth(4).getByLabel('Buy-in (lei)')).toHaveValue('20');
+
+  await friday.getByLabel('Minim jucători implicit Vineri').fill('0');
+  await panel.getByRole('button', { name: 'Salvează programul implicit' }).click();
+  await expect(panel.locator('.admin-form-status')).toHaveText('Vineri: buy-in-ul și garantatul trebuie să fie sume întregi în lei, iar minimul de jucători cel puțin 1.');
 });
 
 test('the programme stays hidden when the week has nothing planned', async ({ page }) => {
