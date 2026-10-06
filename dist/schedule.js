@@ -75,11 +75,11 @@
   // "Ora 18:00", "Buy-in 10 lei" (or "Free entry" when it is 0) and "Garantat 500 lei", whichever the admin set.
   function prizeChips(entry) {
     const lei = (amount) => `${amount.toLocaleString('ro-RO')} lei`;
-    const labels = [];
-    if (entry.start_time) labels.push(`Ora ${entry.start_time.slice(0, 5)}`);
-    if (Number.isInteger(entry.buy_in)) labels.push(entry.buy_in === 0 ? 'Free entry' : `Buy-in ${lei(entry.buy_in)}`);
-    if (Number.isInteger(entry.guaranteed)) labels.push(`Garantat ${lei(entry.guaranteed)}`);
-    return labels.map((label) => element('span', 'schedule-prize', label));
+    const items = [];
+    if (entry.start_time) items.push(['is-time', `Ora ${entry.start_time.slice(0, 5)}`]);
+    if (Number.isInteger(entry.buy_in)) items.push(['is-entry', entry.buy_in === 0 ? 'Free entry' : `Buy-in ${lei(entry.buy_in)}`]);
+    if (Number.isInteger(entry.guaranteed)) items.push(['is-prize', `Garantat ${lei(entry.guaranteed)}`]);
+    return items.map(([kind, label]) => element('span', `schedule-prize ${kind}`, label));
   }
   function prizeRow(entry) {
     const chips = prizeChips(entry);

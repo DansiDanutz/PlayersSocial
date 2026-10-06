@@ -381,10 +381,10 @@
   .schedule-featured-badge { padding:6px 14px; border-radius:999px; background:#fff; color:#d1005d; font-weight:900; font-size:.85rem; letter-spacing:.08em; text-transform:uppercase; } .schedule-featured-day { font-weight:800; font-size:1.05rem; } .schedule-featured-link { margin-top:6px; padding:11px 18px; border-radius:999px; background:var(--ink); color:#fff; font-weight:800; text-decoration:none; }
   @keyframes featuredGlow { from { box-shadow:8px 8px 0 var(--ink),0 0 0 4px rgba(255,31,122,.15); } to { box-shadow:8px 8px 0 var(--ink),0 0 26px 8px rgba(255,90,40,.45); } } @media (prefers-reduced-motion:reduce) { .schedule-featured { animation:none; } }
   .schedule-layout { display:grid; grid-template-columns:1fr; gap:22px; } .schedule-days { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:12px; }
-  .schedule-day { display:flex; flex-direction:column; gap:8px; padding:10px; border:1px solid var(--ink); border-radius:18px; background:#fff9e9; min-height:100%; } .schedule-date { font-weight:900; font-size:.86rem; } .schedule-link { display:grid; gap:8px; color:inherit; text-decoration:none; } .schedule-day .image-zoom img { width:100%; aspect-ratio:3/4; object-fit:cover; border-radius:12px; background:var(--ink); } .schedule-event { font:800 1rem/1.15 "Fraunces",serif; } .schedule-free { color:var(--muted); font-size:.85rem; margin:auto 0; }
-  .schedule-day.is-empty { background:transparent; border-style:dashed; } .schedule-day.is-featured { background:linear-gradient(160deg,#ff1f7a,#ff7a00); color:#fff; border-width:2px; box-shadow:0 0 0 4px rgba(255,31,122,.25),5px 5px 0 var(--ink); transform:translateY(-4px); } .schedule-star { font-weight:900; font-size:.78rem; }
+  .schedule-day { display:grid; grid-template-rows:22px auto auto 1fr; grid-template-areas:"when" "date" "img" "body"; align-content:start; gap:8px; padding:10px; border:1px solid var(--ink); border-radius:18px; background:#fff9e9; min-width:0; } .schedule-date { grid-area:date; font-weight:900; font-size:.82rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .schedule-link { grid-area:body; align-self:start; display:grid; gap:6px; min-width:0; color:inherit; text-decoration:none; } .schedule-day .image-zoom { grid-area:img; } .schedule-day .image-zoom img { width:100%; aspect-ratio:3/4; object-fit:cover; border-radius:12px; background:var(--ink); } .schedule-event { font:800 1rem/1.15 "Fraunces",serif; } .schedule-free { grid-area:body; align-self:start; color:var(--muted); font-size:.82rem; }
+  .schedule-day.is-empty { background:transparent; border-style:dashed; } .schedule-day.is-featured { background:linear-gradient(160deg,#ff1f7a,#ff7a00); color:#fff; border-width:2px; box-shadow:0 0 0 4px rgba(255,31,122,.25),5px 5px 0 var(--ink); } .schedule-day.is-featured:not(.is-today) { padding:9px; } .schedule-star { font-weight:900; font-size:.78rem; }
   /* today first: "Azi"/"Mâine" chips, today's card wears the rotating neon ring of the promo button, past days fade */
-  .schedule-day { position:relative; } .schedule-when { align-self:flex-start; padding:3px 10px; border-radius:999px; background:var(--ink); color:#fff; font-weight:900; font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; }
+  .schedule-day { position:relative; } .schedule-when { grid-area:when; justify-self:start; align-self:center; padding:3px 10px; border-radius:999px; background:var(--ink); color:#fff; font-weight:900; font-size:.72rem; letter-spacing:.06em; text-transform:uppercase; }
   .schedule-day.is-today { isolation:isolate; overflow:hidden; border-color:transparent; background:transparent; box-shadow:0 0 18px rgba(255,61,139,.45); }
   .schedule-day.is-today::before { content:""; position:absolute; z-index:-2; inset:-150%; background:conic-gradient(from 0deg,#ff3d8b,#7cf7ff,#ffd84a,#ff3d8b); animation:promoNeonSpin 2.4s linear infinite; }
   .schedule-day.is-today::after { content:""; position:absolute; z-index:-1; inset:3px; border-radius:15px; background:#fff9e9; }
@@ -396,7 +396,9 @@
   .image-viewer-title { font:800 1.05rem/1.2 "Fraunces",serif; } .image-viewer-info .schedule-prize { font-size:.85rem; padding:4px 12px; border:1px solid #d6a943; background:rgba(255,209,102,.12); color:#ffd166; }
   .image-viewer:has(.image-viewer-info:not([hidden])) img { max-height:calc(88vh - 110px); border-radius:18px 18px 0 0; }
   .schedule-prizes { display:flex; flex-wrap:wrap; gap:4px; } .schedule-prize { padding:2px 8px; border-radius:999px; background:var(--ink); color:#ffd166; font-weight:800; font-size:.72rem; white-space:nowrap; }
-  .schedule-day.is-featured .schedule-prize { background:#fff; color:#c2003f; } .schedule-featured .schedule-prize { font-size:.95rem; padding:5px 14px; background:#fff; color:#c2003f; }
+  .schedule-prize.is-time::before { content:"⏰"; } .schedule-prize.is-entry::before { content:"🎟"; } .schedule-prize.is-prize::before { content:"🏆"; } .schedule-prize::before { margin-right:6px; font-size:.95em; }
+  .schedule-day .schedule-prizes { display:grid; gap:3px; padding:7px 8px; border-radius:10px; background:rgba(25,20,17,.06); } .schedule-day .schedule-prize { display:flex; align-items:center; padding:0; border-radius:0; background:none; color:var(--ink); font-size:.76rem; font-weight:800; overflow:hidden; text-overflow:ellipsis; }
+  .schedule-day.is-featured .schedule-prizes { background:rgba(255,255,255,.2); } .schedule-day.is-featured .schedule-prize { color:#fff; } .schedule-featured .schedule-prize { font-size:.95rem; padding:5px 14px; background:#fff; color:#c2003f; }
   .program-prizes { display:grid; grid-template-columns:1fr 1fr; gap:8px; } .program-prizes input { width:100%; } .schedule-day .schedule-logo img { object-fit:contain; background:#0d1020; padding:10%; }
   /* programme images open large in a popup */
   .image-zoom { display:block; width:100%; padding:0; border:0; background:none; cursor:zoom-in; border-radius:12px; } .image-zoom img { display:block; }
@@ -421,11 +423,11 @@
   @media (max-width:420px) { a.brand > span:last-child { display:none; } }
   @media (max-width:640px) {
     .schedule-days { grid-template-columns:1fr; gap:8px; }
-    .schedule-day { flex-direction:row; align-items:center; gap:12px; padding:8px 12px; min-height:64px; } .schedule-day.is-featured { transform:none; }
-    .schedule-day { display:grid; grid-template-columns:112px 56px minmax(0,1fr); grid-template-areas:"when img link" "date img link"; column-gap:12px; row-gap:3px; }
-    .schedule-when { grid-area:when; justify-self:start; } .schedule-date { grid-area:date; font-size:.8rem; white-space:nowrap; } .schedule-day:not(:has(.schedule-when)) .schedule-date { grid-row:1 / span 2; }
-    .schedule-free { margin:0; grid-column:3; grid-row:1 / span 2; }
-    .schedule-link { grid-area:link; display:grid; gap:2px; align-items:center; } .schedule-day .image-zoom { grid-area:img; width:56px; } .schedule-day .image-zoom img { width:56px; aspect-ratio:1; border-radius:10px; }
+    .schedule-day { grid-template-columns:104px 64px minmax(0,1fr); grid-template-rows:auto auto; grid-template-areas:"when img body" "date img body"; align-items:center; column-gap:12px; row-gap:4px; padding:10px 12px; min-height:84px; }
+    .schedule-when { align-self:end; } .schedule-date { font-size:.8rem; align-self:start; } .schedule-day:not(:has(.schedule-when)) .schedule-date { grid-row:1 / span 2; align-self:center; }
+    .schedule-free, .schedule-link { grid-row:1 / span 2; align-self:center; }
+    .schedule-day .image-zoom { grid-row:1 / span 2; width:64px; } .schedule-day .image-zoom img { width:64px; aspect-ratio:1; border-radius:10px; }
+    .schedule-day .schedule-prizes { display:flex; flex-wrap:wrap; gap:2px 10px; padding:0; background:none; } .schedule-day.is-featured .schedule-prizes { background:none; }
     .video-list { grid-template-columns:none; grid-auto-flow:column; grid-auto-columns:82%; overflow-x:auto; scroll-snap-type:x mandatory; overscroll-behavior-x:contain; padding:4px 10px 16px 2px; -webkit-overflow-scrolling:touch; } .library-video { scroll-snap-align:start; }
     .video-swipe-hint { display:block; margin:-14px 0 14px; color:var(--muted); font-size:.88rem; font-weight:700; }
   }

@@ -162,6 +162,44 @@ test('the image popup shows the event, day, start time, buy-in and guaranteed pr
   await page.keyboard.press('Escape');
 });
 
+test('day cards line up on desktop and tablet, become rows on phones, and nothing overflows', async ({ page }) => {
+  test.skip(page.viewportSize().width < 600, 'resizes itself through every size');
+  await mockSupabase(page, {
+    scheduleDays: {
+      '2026-10-06': { linked_card: 'Seară de Șah', image_url: null, start_time: '18:00:00', buy_in: 0, guaranteed: 500 },
+      '2026-10-08': { linked_card: 'Seară de Șah', image_url: null, buy_in: 0, guaranteed: 500 },
+      '2026-10-10': { linked_card: 'Karaoke Club', image_url: null, start_time: '20:00:00', buy_in: 0, guaranteed: 500 },
+    },
+    scheduleWeeks: { '2026-10-05': { image_url: null, featured_day: '2026-10-06' } },
+  });
+  const tops = (selector) => page.locator(`#program .schedule-day ${selector}`).evaluateAll(nodes => nodes.map(node => Math.round(node.getBoundingClientRect().top)));
+  const fits = () => page.evaluate(() => {
+    const days = document.querySelector('#program .schedule-days').getBoundingClientRect();
+    const outside = [...document.querySelectorAll('#program .schedule-day *')].filter(node => { const box = node.getBoundingClientRect(); return box.width && (box.left < days.left - 1 || box.right > days.right + 1); });
+    return { pageFits: document.documentElement.scrollWidth <= innerWidth, outside: outside.map(node => node.className || node.tagName) };
+  });
+
+  for (const [width, columns] of [[1280, 7], [768, 4]]) {
+    await page.setViewportSize({ width, height: 900 });
+    await gotoLoaded(page, `/?width=${width}#program`);
+    const dateTops = await tops('.schedule-date'), imageTops = await tops('.image-zoom');
+    const firstRow = (values) => values.slice(0, columns);
+    expect(new Set(firstRow(dateTops)).size, `dates aligned at ${width}px`).toBe(1);
+    expect(new Set(firstRow(imageTops)).size, `images aligned at ${width}px`).toBe(1);
+    expect(await fits(), `fits at ${width}px`).toEqual({ pageFits: true, outside: [] });
+  }
+
+  const info = page.locator('#program .schedule-day').filter({ hasText: 'Sâmbătă 10 oct.' }).locator('.schedule-prize');
+  await expect(info).toHaveText(['Ora 20:00', 'Free entry', 'Garantat 500 lei']);
+  expect(await info.evaluateAll(nodes => nodes.map(node => getComputedStyle(node, '::before').content))).toEqual(['"⏰"', '"🎟"', '"🏆"']);
+
+  await page.setViewportSize({ width: 375, height: 812 });
+  await gotoLoaded(page, '/?width=375#program');
+  const rows = await page.locator('#program .schedule-day').evaluateAll(nodes => nodes.map(node => { const box = node.getBoundingClientRect(); return { left: Math.round(box.left), width: Math.round(box.width) }; }));
+  expect(new Set(rows.map(row => row.left)).size, 'one card per row on phones').toBe(1);
+  expect(await fits(), 'fits at 375px').toEqual({ pageFits: true, outside: [] });
+});
+
 test('clicking a programme image opens it large in a popup', async ({ page }) => {
   await mockSupabase(page, {
     scheduleDays: { '2026-10-08': { linked_card: 'Seară de Șah', image_url: `${SCHEDULE_BASE}special.jpg` } },
