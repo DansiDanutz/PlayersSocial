@@ -102,3 +102,29 @@ test('home page announces a link preview image', async ({ page }) => {
   const image = await page.request.get('/og-image.jpg');
   expect(image.ok()).toBe(true);
 });
+
+test('event history sits right above the videos as a swiper with arrows', async ({ page }) => {
+  const ended = ['2026-09-10', '2026-09-12', '2026-09-14', '2026-09-16', '2026-09-18'].map((date, index) => featuredRow({ event_name: `Turneu ${index + 1}`, event_date: date, joined_count: 10 }));
+  await mockSupabase(page, { events: ended });
+  await gotoLoaded(page, '/#events');
+
+  const history = page.locator('#eventHistory');
+  await expect(history.locator('.history-card')).toHaveCount(5);
+  const order = await page.evaluate(() => [...document.querySelectorAll('#eventGrid, #eventHistory, #videos')].map(node => node.id));
+  expect(order).toEqual(['eventGrid', 'eventHistory', 'videos']);
+
+  const list = page.locator('#eventHistoryList');
+  const layout = await list.evaluate(node => ({ overflowX: getComputedStyle(node).overflowX, snap: getComputedStyle(node).scrollSnapType, scrollable: node.scrollWidth > node.clientWidth }));
+  expect(layout.overflowX).toBe('auto');
+  expect(layout.snap).toContain('x');
+  expect(layout.scrollable).toBe(true);
+  const first = await history.locator('.history-card').first().boundingBox();
+  const second = await history.locator('.history-card').nth(1).boundingBox();
+  expect(second.x).toBeGreaterThan(first.x + first.width);
+  expect(second.y).toBeLessThan(first.y + first.height);
+
+  await history.getByRole('button', { name: 'Următorul eveniment' }).click();
+  await expect.poll(() => list.evaluate(node => node.scrollLeft)).toBeGreaterThan(50);
+  await history.getByRole('button', { name: 'Evenimentul anterior' }).click();
+  await expect.poll(() => list.evaluate(node => node.scrollLeft)).toBeLessThan(5);
+});

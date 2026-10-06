@@ -1,5 +1,5 @@
 // "Programul săptămânii": the current week's programme (Monday–Sunday) from players_public_schedule, with
-// the event of the week highlighted and the optional image of the whole week. Loaded after the main inline
+// the event of the week highlighted. Loaded after the main inline
 // script (uses SUPABASE_URL and authHeaders). Exposes window.PlayersSchedule for the admin "Program" tab.
 (() => {
   const DAY_MS = 24 * 60 * 60 * 1000;
@@ -7,7 +7,6 @@
   const range = section.querySelector('.schedule-range');
   const featuredSlot = section.querySelector('.schedule-featured-slot');
   const daysList = section.querySelector('.schedule-days');
-  const weekImage = section.querySelector('.schedule-week-image');
 
   // ---------- dates (local time, weeks start on Monday) ----------
   function weekStart(date) {
@@ -37,10 +36,25 @@
   // ---------- links to the site's own cards ----------
   function cardFor(name) { return [...document.querySelectorAll('#eventGrid .event')].find((card) => card.dataset.name === name) || null; }
   function cardLink(name) { const card = cardFor(name); return card?.id ? `#${card.id}` : '#events'; }
+  // Banner shown for a day without its own image: the event's default programme banner, else the card poster.
+  const DEFAULT_DAY_IMAGES = { 'Seară de Șah': '/program/seara-de-sah.jpg' };
+  function defaultImage(name) { return DEFAULT_DAY_IMAGES[name] || cardPoster(name); }
   function cardPoster(name) {
     const banner = cardFor(name)?.querySelector('.event-banner');
     const match = banner?.getAttribute('style')?.match(/--poster-image:url\('([^']+)'\)/);
     return match ? match[1] : '';
+  }
+
+  // Today first, then tomorrow and the rest of the week; days already gone go last.
+  const WHEN_LABELS = { today: 'Azi', tomorrow: 'Mâine' };
+  function dayOrder(start, now) {
+    const today = isoDay(now), tomorrow = isoDay(addDays(now, 1));
+    const week = Array.from({ length: 7 }, (_, index) => {
+      const date = addDays(start, index), iso = isoDay(date);
+      const when = iso === today ? 'today' : iso === tomorrow ? 'tomorrow' : iso < today ? 'past' : '';
+      return { date, when };
+    });
+    return [...week.filter(({ when }) => when !== 'past'), ...week.filter(({ when }) => when === 'past')];
   }
 
   function element(tag, className, text) {
@@ -49,23 +63,47 @@
     if (text) node.textContent = text;
     return node;
   }
+  // The image is a button that opens it large in the #imageViewer popup.
   function eventImage(entry) {
     const image = element('img');
-    image.src = entry.image_url || cardPoster(entry.linked_card);
+    image.src = entry.image_url || defaultImage(entry.linked_card);
     image.alt = '';
     image.loading = 'lazy';
-    return image;
+    return zoomButton(image);
+  }
+  function zoomButton(image) {
+    const button = element('button', 'image-zoom');
+    button.type = 'button';
+    button.setAttribute('aria-label', 'Mărește imaginea');
+    button.append(image);
+    return button;
   }
 
-  function dayTile(date, entry, isFeatured) {
-    const tile = element('article', `schedule-day${entry ? '' : ' is-empty'}${isFeatured ? ' is-featured' : ''}`);
+  // ---------- image popup ----------
+  const viewer = document.getElementById('imageViewer');
+  function openViewer(src) {
+    viewer.querySelector('img').src = src;
+    if (!viewer.open) viewer.showModal();
+  }
+  viewer.querySelector('.image-viewer-close').addEventListener('click', () => viewer.close());
+  viewer.addEventListener('click', (event) => { if (event.target === viewer) viewer.close(); });
+  section.addEventListener('click', (event) => {
+    const button = event.target.closest('.image-zoom');
+    if (button) openViewer(button.querySelector('img').src);
+  });
+
+  // when: 'today' | 'tomorrow' | 'past' | '' (a later day this week).
+  function dayTile(date, entry, isFeatured, when) {
+    const classes = ['schedule-day', entry ? '' : 'is-empty', isFeatured ? 'is-featured' : '', when === 'today' ? 'is-today' : '', when === 'past' ? 'is-past' : ''];
+    const tile = element('article', classes.filter(Boolean).join(' '));
+    if (WHEN_LABELS[when]) tile.append(element('span', 'schedule-when', WHEN_LABELS[when]));
     tile.append(element('span', 'schedule-date', dayLabel(date)));
     if (!entry) { tile.append(element('span', 'schedule-free', 'Fără eveniment')); return tile; }
     const link = element('a', 'schedule-link');
     link.href = cardLink(entry.linked_card);
-    link.append(eventImage(entry), element('strong', 'schedule-event', entry.linked_card));
+    link.append(element('strong', 'schedule-event', entry.linked_card));
     if (isFeatured) link.append(element('span', 'schedule-star', '★ Evenimentul săptămânii'));
-    tile.append(link);
+    tile.append(eventImage(entry), link);
     return tile;
   }
 
@@ -84,16 +122,14 @@
 
   function render(start, data) {
     const days = new Map(data.days.map((entry) => [entry.day, entry]));
-    if (!days.size && !data.image_url) { section.hidden = true; return; }
+    if (!days.size) { section.hidden = true; return; }
     range.textContent = rangeLabel(start);
     const featured = data.featured_day && days.get(data.featured_day);
     featuredSlot.replaceChildren(...(featured ? [featuredCard(parseDay(data.featured_day), featured)] : []));
-    daysList.replaceChildren(...Array.from({ length: 7 }, (_, index) => {
-      const date = addDays(start, index), iso = isoDay(date);
-      return dayTile(date, days.get(iso), iso === data.featured_day);
+    daysList.replaceChildren(...dayOrder(start, new Date()).map(({ date, when }) => {
+      const iso = isoDay(date);
+      return dayTile(date, days.get(iso), iso === data.featured_day, when);
     }));
-    weekImage.hidden = !data.image_url;
-    if (data.image_url) { weekImage.querySelector('a').href = data.image_url; weekImage.querySelector('img').src = data.image_url; }
     section.hidden = false;
   }
 
@@ -103,7 +139,7 @@
     catch (error) { console.error('Weekly programme failed to load:', error); section.hidden = true; }
   }
 
-  window.PlayersSchedule = { reload, fetchWeek, weekStart, addDays, isoDay, parseDay, dayLabel, rangeLabel };
+  window.PlayersSchedule = { reload, fetchWeek, defaultImage, weekStart, addDays, isoDay, parseDay, dayLabel, rangeLabel };
   reload().then(() => {
     if (location.hash === '#program' && !section.hidden) section.scrollIntoView({ block: 'start' });
   });

@@ -110,4 +110,19 @@ function renderEventHistory(){
   document.querySelectorAll('#featuredEvents .event-featured').forEach(card=>card.classList.toggle('event-ended',endedNames.has(card.dataset.name)));
   document.querySelector('#eventHistoryList').replaceChildren(...ended.map(historyCard));
   document.querySelector('#eventHistory').hidden=ended.length===0;
+  syncHistoryNav();
 }
+
+// History swiper: arrows scroll by one card, are disabled at either end and hidden when everything fits.
+const historyList=document.querySelector('#eventHistoryList'), historyPrev=document.querySelector('.history-prev'), historyNext=document.querySelector('.history-next');
+function syncHistoryNav(){
+  const fits=historyList.scrollWidth<=historyList.clientWidth+2;
+  historyPrev.parentElement.hidden=fits;
+  historyPrev.disabled=historyList.scrollLeft<=2;
+  historyNext.disabled=historyList.scrollLeft+historyList.clientWidth>=historyList.scrollWidth-2;
+}
+const historyStep=()=>(historyList.firstElementChild?.getBoundingClientRect().width||historyList.clientWidth)+12;
+historyPrev.addEventListener('click',()=>historyList.scrollBy({left:-historyStep()}));
+historyNext.addEventListener('click',()=>historyList.scrollBy({left:historyStep()}));
+historyList.addEventListener('scroll',syncHistoryNav,{passive:true});
+window.addEventListener('resize',syncHistoryNav);
