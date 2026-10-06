@@ -12,14 +12,43 @@
   const dialogVideo = dialog.querySelector('video');
   const dialogTitle = dialog.querySelector('.promo-title');
 
+  // ---------- sharing ----------
+  // A shared link (?video=<id>) opens the site with that video already playing.
+  const shareUrl = (video) => `${location.origin}/?video=${encodeURIComponent(video.id)}`;
+  const whatsappHref = (video) => `https://wa.me/?text=${encodeURIComponent(`${video.title} 🎬 ${shareUrl(video)}`)}`;
+  async function shareVideo(video, status) {
+    const url = shareUrl(video);
+    if (navigator.share) {
+      try { await navigator.share({ title: video.title, text: `Uită-te la ${video.title} — Players Club`, url }); }
+      catch (error) { if (error.name !== 'AbortError') status.textContent = `Copiază linkul: ${url}`; }
+      return;
+    }
+    try { await navigator.clipboard.writeText(url); status.textContent = 'Link copiat. Îl poți lipi oriunde.'; }
+    catch { status.textContent = `Copiază linkul: ${url}`; }
+  }
+  function shareRow(video) {
+    const row = element('div', 'share-row'), native = element('button', 'share-native', 'Distribuie'), whatsapp = element('a', 'share-whatsapp', 'WhatsApp'), status = element('p', 'share-status');
+    native.type = 'button';
+    status.setAttribute('role', 'status');
+    native.addEventListener('click', () => shareVideo(video, status));
+    whatsapp.href = whatsappHref(video);
+    whatsapp.target = '_blank';
+    whatsapp.rel = 'noopener noreferrer';
+    row.append(native, whatsapp);
+    return [row, status];
+  }
+
   // ---------- promo dialog ----------
-  function openPromo(button) {
-    dialogTitle.textContent = button.dataset.promoTitle || 'Promo video';
-    dialogVideo.poster = button.dataset.promoPoster || '';
-    dialogVideo.src = button.dataset.promoSrc;
-    dialog.showModal();
+  function openVideo(video) {
+    dialogTitle.textContent = video.title || 'Promo video';
+    dialogVideo.poster = video.poster || '';
+    dialogVideo.src = video.src;
+    dialog.querySelector('.promo-share').replaceChildren(...shareRow(video));
+    if (!dialog.open) dialog.showModal();
     dialogVideo.play().catch(() => {});
   }
+  const videoFromButton = (button) => ({ id: button.dataset.promoId, title: button.dataset.promoTitle, src: button.dataset.promoSrc, poster: button.dataset.promoPoster });
+  function openPromo(button) { openVideo(videoFromButton(button)); }
   function stopPromo() {
     dialogVideo.pause();
     dialogVideo.removeAttribute('src');
@@ -51,6 +80,7 @@
     info.append(element('span', `video-type video-type-${video.type}`, TYPE_LABELS[video.type] || video.type));
     info.append(element('h3', '', video.title));
     if (video.description) info.append(element('p', '', video.description));
+    info.append(...shareRow(video));
     if (category && category.card) {
       const link = element('a', 'video-card-link', `Vezi cardul ${category.label}`);
       link.href = category.card;
@@ -83,6 +113,19 @@
     status.hidden = true;
     const linked = location.hash.startsWith('#video-') && document.getElementById(location.hash.slice(1));
     if (linked) linked.scrollIntoView({ block: 'start' });
+    openSharedVideo(videos);
+  }
+
+  // Opens the video named in ?video=<id> once (from the library, or a card's promo button as a fallback).
+  let sharedVideoPending = new URLSearchParams(location.search).get('video');
+  function openSharedVideo(videos) {
+    if (!sharedVideoPending) return;
+    const id = sharedVideoPending;
+    const video = videos.find((entry) => entry.id === id);
+    const button = [...document.querySelectorAll('.card-promo-button')].find((entry) => entry.dataset.promoId === id);
+    if (!video && !button) return;
+    sharedVideoPending = null;
+    openVideo(video || videoFromButton(button));
   }
 
   async function loadSiteVideos() {
@@ -116,6 +159,7 @@
     if (site.status === 'rejected') console.error('Site videos failed to load:', site.reason);
     if (uploaded.status === 'rejected') console.error('Uploaded videos failed to load:', uploaded.reason);
     if (site.status === 'rejected' && uploaded.status === 'rejected') {
+      openSharedVideo([]);
       status.textContent = 'Videoclipurile nu au putut fi încărcate. Reîncarcă pagina.';
       status.hidden = false;
       return;
