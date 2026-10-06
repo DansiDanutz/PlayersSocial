@@ -40,7 +40,7 @@ test('phone programme is a compact list and videos swipe sideways', async ({ pag
   const list = page.locator('#videoList');
   expect(await list.evaluate(element => element.scrollWidth > element.clientWidth + 100)).toBe(true);
   expect((await page.locator('#videos').boundingBox()).height).toBeLessThan(1300);
-  const link = (await page.locator('#videoList .video-card-link').first().boundingBox());
+  const link = (await page.locator('#videoList .video-card-link:not(.is-placeholder)').first().boundingBox());
   expect(link.height).toBeGreaterThanOrEqual(40);
   expect(await hasHorizontalOverflow(page)).toBe(false);
 });

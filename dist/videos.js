@@ -85,6 +85,11 @@
       const link = element('a', 'video-card-link', `Vezi cardul ${category.label}`);
       link.href = category.card;
       info.append(link);
+    } else {
+      // Keeps the share buttons on the same line as in cards that have a card link.
+      const spacer = element('span', 'video-card-link is-placeholder');
+      spacer.setAttribute('aria-hidden', 'true');
+      info.append(spacer);
     }
     card.append(frame, info);
     return card;

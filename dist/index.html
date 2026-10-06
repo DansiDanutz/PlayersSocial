@@ -500,7 +500,9 @@
   .play-icon { position:relative; flex:none; width:38px; height:38px; border-radius:50%; background:#ff3d8b; box-shadow:0 0 12px rgba(255,61,139,.9); } .play-icon::after { content:""; position:absolute; left:15px; top:11px; border-left:13px solid #fff; border-top:8px solid transparent; border-bottom:8px solid transparent; }
   @media (prefers-reduced-motion:reduce) { .card-video-link.card-promo-button::before { animation-duration:14s; } }
   .promo-share { display:grid; gap:6px; margin-top:12px; } .share-row { display:flex; flex-wrap:wrap; gap:10px; } .share-native,.share-whatsapp { display:inline-flex; align-items:center; justify-content:center; gap:8px; flex:1 1 140px; min-height:46px; padding:0 16px; border:1px solid var(--ink); border-radius:999px; font-weight:800; text-decoration:none; cursor:pointer; } .share-native { background:#fff; color:var(--ink); } .share-whatsapp { background:#25d366; color:#08311a; } .share-whatsapp::before { content:"✆"; font-size:1.1rem; } .share-native::before { content:"↗"; } .share-status { margin:0; min-height:1.2em; color:var(--muted); font-size:.88rem; }
-  .library-video .share-row { margin:0 0 6px; }
+  .library-video .share-row { margin:auto 0 6px; }
+  /* cards in a row line up: text on top, share buttons and card link at the bottom */
+  .library-video .video-info { display:flex; flex-direction:column; flex:1; } .library-video .video-card-link { display:flex; align-items:center; min-height:44px; } .video-card-link.is-placeholder { visibility:hidden; } .library-video .video-type { align-self:flex-start; }
   .event-share { display:grid; gap:6px; margin-top:12px; }
   @media (max-width:600px) {
     .hero { padding:20px 0 26px; } .hero h1 { font-size:clamp(2.2rem,11vw,2.75rem); line-height:.98; margin-bottom:12px; } .hero p { font-size:1rem; margin-bottom:0; } .hero-grid { gap:20px; }

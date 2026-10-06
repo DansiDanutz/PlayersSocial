@@ -56,3 +56,27 @@ test('hero button plays the Player’s Poker Club promo', async ({ page }) => {
   await page.keyboard.press('Escape');
   await expect(page.locator('#promoDialog')).toBeHidden();
 });
+
+test('on desktop and tablet the video cards line up their share buttons and card links', async ({ page }) => {
+  test.skip(page.viewportSize().width < 700, 'grid layout');
+  for (const width of [1280, 820]) {
+    await page.setViewportSize({ width, height: 900 });
+    await mockSupabase(page);
+    await gotoLoaded(page, `/?width=${width}#videos`);
+    const rows = await page.locator('#videos .library-video:not([hidden])').evaluateAll(cards => {
+      const byRow = new Map();
+      for (const card of cards) {
+        const top = Math.round(card.getBoundingClientRect().top), share = card.querySelector('.share-row').getBoundingClientRect(), link = card.querySelector('.video-card-link').getBoundingClientRect();
+        byRow.set(top, [...(byRow.get(top) || []), { share: Math.round(share.top), link: Math.round(link.top) }]);
+      }
+      return [...byRow.values()].filter(row => row.length > 1);
+    });
+    expect(rows.length, `rows at ${width}px`).toBeGreaterThan(0);
+    const badge = await page.locator('#videos .library-video .video-type').first().evaluate(node => node.getBoundingClientRect().width / node.closest('.video-info').getBoundingClientRect().width);
+    expect(badge, 'type badge keeps its own size').toBeLessThan(0.6);
+    for (const row of rows) {
+      expect(new Set(row.map(card => card.share)).size, `share buttons aligned at ${width}px`).toBe(1);
+      expect(new Set(row.map(card => card.link)).size, `card links aligned at ${width}px`).toBe(1);
+    }
+  }
+});
