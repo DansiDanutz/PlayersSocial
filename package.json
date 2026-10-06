@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "serve": "python3 -m http.server 4173 --directory dist",
-    "test": "playwright test"
+    "test": "node --test tests/unit/ && playwright test",
+    "test:unit": "node --test tests/unit/"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0"

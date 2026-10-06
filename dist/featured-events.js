@@ -21,6 +21,27 @@ function finalParticipants(row){ return row.final_participants??Number(row.joine
 
 function featuredSignature(row){ return JSON.stringify([row.event_name,row.linked_card,row.event_date,row.start_time,row.participant_target,row.description,row.location,row.banner_url]); }
 
+// Share links go through /e/<slug> (api/share.js) so WhatsApp and Facebook show this event's banner and date.
+const eventShareUrl=row=>`${location.origin}/e/${eventSlug(row.event_name)}`;
+const eventShareText=row=>`${row.event_name} · ${eventWhen(row)} — Players Club`;
+async function shareEvent(row,status){
+  const url=eventShareUrl(row);
+  if(navigator.share){ try { await navigator.share({title:row.event_name,text:eventShareText(row),url}); } catch(error){ if(error.name!=='AbortError') status.textContent='Nu am putut deschide distribuirea.'; } return; }
+  try { await navigator.clipboard.writeText(url); status.textContent='Link copiat. Îl poți lipi oriunde.'; }
+  catch { status.textContent=url; }
+}
+function eventShareRow(row){
+  const wrapper=document.createElement('div'), buttons=document.createElement('div'), native=document.createElement('button'), whatsapp=document.createElement('a'), status=document.createElement('p');
+  wrapper.className='event-share'; buttons.className='share-row';
+  native.className='share-native'; native.type='button'; native.textContent='Distribuie';
+  whatsapp.className='share-whatsapp'; whatsapp.textContent='Trimite pe WhatsApp'; whatsapp.target='_blank'; whatsapp.rel='noopener noreferrer';
+  whatsapp.href=`https://wa.me/?text=${encodeURIComponent(`${eventShareText(row)} ${eventShareUrl(row)}`)}`;
+  status.className='share-status'; status.setAttribute('aria-live','polite');
+  native.addEventListener('click',()=>shareEvent(row,status));
+  buttons.append(native,whatsapp); wrapper.append(buttons,status);
+  return wrapper;
+}
+
 function buildFeaturedCard(row){
   const source=linkedCategoryCard(row), card=document.createElement('article'), poster=document.createElement('a'), image=document.createElement('img'), content=document.createElement('div');
   card.className='event event-featured';
@@ -44,6 +65,7 @@ function buildFeaturedCard(row){
   content.querySelector('.event-location').textContent=`⌖ ${row.location||''}`;
   const whatsapp=source?.querySelector('.whatsapp-group-link');
   if(whatsapp) content.querySelector('.event-actions').append(whatsapp.cloneNode(true));
+  content.append(eventShareRow(row));
   card.append(poster,content);
   return card;
 }
