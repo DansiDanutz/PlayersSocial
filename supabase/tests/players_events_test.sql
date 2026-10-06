@@ -110,5 +110,48 @@ begin
   perform public.players_admin_remove_admin('regression.admin@example.com');
   assert not exists (select 1 from public.players_admin_list_admins() a where a.email = 'regression.admin@example.com'), 'admin not removed';
 
+  -- Weekly programme: public read, admin-only writes, events limited to category cards, featured day within the week.
+  perform set_config('role', 'postgres', true);
+  assert has_function_privilege('anon', 'public.players_public_schedule(date)', 'execute'), 'anon cannot read the schedule';
+  assert not has_function_privilege('anon', 'public.players_admin_set_schedule_day(date,text,text)', 'execute'), 'anon can set schedule days';
+  assert not has_function_privilege('anon', 'public.players_admin_clear_schedule_day(date)', 'execute'), 'anon can clear schedule days';
+  assert not has_function_privilege('anon', 'public.players_admin_set_schedule_week(date,text,date)', 'execute'), 'anon can set the schedule week';
+  perform set_config('role', 'authenticated', true);
+  perform set_config('request.jwt.claims', admin_claims, true);
+  declare
+    week constant date := date_trunc('week', current_date + 3650)::date;
+    schedule_base constant text := 'https://lxhjfdxowpxzrybxdasi.supabase.co/storage/v1/object/public/players-schedule/';
+    schedule jsonb;
+  begin
+    assert public.players_admin_set_schedule_day(week + 2, 'Remi & Prieteni', schedule_base || 'remi.jpg') is null, 'first save returned an old image';
+    assert public.players_admin_set_schedule_day(week + 2, 'Seară de Șah', schedule_base || 'sah.jpg') = schedule_base || 'remi.jpg', 'replaced image not returned';
+    perform public.players_admin_set_schedule_day(week + 4, 'Karaoke Club', null);
+    failed := false; begin perform public.players_admin_set_schedule_day(week + 5, 'Turneu inventat', null); exception when others then failed := true; end;
+    assert failed, 'unknown event accepted';
+    failed := false; begin perform public.players_admin_set_schedule_day(week + 5, 'Remi & Prieteni', 'https://evil.example/x.jpg'); exception when others then failed := true; end;
+    assert failed, 'foreign schedule image accepted';
+    perform public.players_admin_set_schedule_week(week, schedule_base || 'week.jpg', week + 2);
+    failed := false; begin perform public.players_admin_set_schedule_week(week, null, week + 5); exception when others then failed := true; end;
+    assert failed, 'featured day without an event accepted';
+    failed := false; begin perform public.players_admin_set_schedule_week(week + 1, null, null); exception when others then failed := true; end;
+    assert failed, 'week not starting on Monday accepted';
+
+    perform set_config('role', 'anon', true);
+    perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+    schedule := public.players_public_schedule(week);
+    assert schedule ->> 'image_url' = schedule_base || 'week.jpg', 'week image not public';
+    assert (schedule ->> 'featured_day')::date = week + 2, 'featured day not public';
+    assert jsonb_array_length(schedule -> 'days') = 2 and schedule -> 'days' -> 0 ->> 'linked_card' = 'Seară de Șah', 'days not public or not ordered';
+
+    perform set_config('role', 'authenticated', true);
+    perform set_config('request.jwt.claims', visitor_claims, true);
+    failed := false; begin perform public.players_admin_set_schedule_day(week + 3, 'Remi & Prieteni', null); exception when others then failed := true; end;
+    assert failed, 'non-admin set a schedule day';
+
+    perform set_config('request.jwt.claims', admin_claims, true);
+    assert public.players_admin_clear_schedule_day(week + 2) = schedule_base || 'sah.jpg', 'clear did not return the image';
+    assert public.players_public_schedule(week) ->> 'featured_day' is null, 'featured day kept after its day was cleared';
+  end;
+
   raise exception 'ALL PASSED';
 end $$;
