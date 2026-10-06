@@ -75,19 +75,23 @@
   // Club terms that apply unless the admin set something else for the day.
   const CLUB_TERMS = { buy_in: 0, guaranteed: 500, min_players: 10 };
   const withClubTerms = (entry) => Object.fromEntries(Object.entries(CLUB_TERMS).map(([key, value]) => [key, Number.isInteger(entry[key]) ? entry[key] : value]));
-  // "Ora 18:00", "Free entry" (or "Buy-in 10 lei"), "Garantat 500 lei" and "Min. 10 jucători".
-  function prizeChips(entry) {
+  // Team Building and charity events (contact cards) are arranged on request: they have no club terms.
+  const hasClubTerms = (name) => !cardFor(name)?.classList.contains('contact-event');
+  // "Ora 18:00", then for games "Free entry" (or "Buy-in 10 lei"), "Garantat 500 lei" and "Min. 10 jucători".
+  function prizeChips(entry, name = entry.linked_card) {
     const lei = (amount) => `${amount.toLocaleString('ro-RO')} lei`;
-    const terms = withClubTerms(entry);
     const items = [];
     if (entry.start_time) items.push(['is-time', `Ora ${entry.start_time.slice(0, 5)}`]);
-    items.push(['is-entry', terms.buy_in === 0 ? 'Free entry' : `Buy-in ${lei(terms.buy_in)}`]);
-    items.push(['is-prize', `Garantat ${lei(terms.guaranteed)}`]);
-    items.push(['is-players', `Min. ${terms.min_players} jucători`]);
+    if (hasClubTerms(name)) {
+      const terms = withClubTerms(entry);
+      items.push(['is-entry', terms.buy_in === 0 ? 'Free entry' : `Buy-in ${lei(terms.buy_in)}`]);
+      items.push(['is-prize', `Garantat ${lei(terms.guaranteed)}`]);
+      items.push(['is-players', `Min. ${terms.min_players} jucători`]);
+    }
     return items.map(([kind, label]) => element('span', `schedule-prize ${kind}`, label));
   }
-  function prizeRow(entry) {
-    const chips = prizeChips(entry);
+  function prizeRow(entry, name) {
+    const chips = prizeChips(entry, name);
     if (!chips.length) return [];
     const row = element('div', 'schedule-prizes');
     row.append(...chips);
@@ -189,13 +193,14 @@
     document.querySelectorAll('#eventGrid .event').forEach((card) => {
       card.querySelector('.card-terms')?.remove();
       const entry = upcoming.find((day) => day.linked_card === card.dataset.name);
+      if (!entry && !hasClubTerms(card.dataset.name)) return;
       const box = element('div', entry ? 'card-terms card-next' : 'card-terms');
       box.append(element('span', 'card-next-label', entry ? 'În Program' : 'Condiții'));
       if (entry) {
         const when = entry.day === today ? 'Azi · ' : entry.day === tomorrow ? 'Mâine · ' : '';
         box.append(element('strong', 'card-next-day', `${when}${dayLabel(parseDay(entry.day))}`));
       }
-      box.append(...prizeRow(entry || {}));
+      box.append(...prizeRow(entry || {}, card.dataset.name));
       card.querySelector('.details').before(box);
     });
   }

@@ -164,6 +164,8 @@ test('the image popup shows the event, day, start time, buy-in and guaranteed pr
 
 test('day cards line up on desktop and tablet, become rows on phones, and nothing overflows', async ({ page }) => {
   test.skip(page.viewportSize().width < 600, 'resizes itself through every size');
+  // Tuesday: the event of the week is also today, so its card has both the neon ring and the featured colours.
+  await page.clock.setFixedTime(new Date('2026-10-06T12:00:00'));
   await mockSupabase(page, {
     scheduleDays: {
       '2026-10-06': { linked_card: 'Seară de Șah', image_url: null, start_time: '18:00:00', buy_in: 0, guaranteed: 500 },
@@ -179,7 +181,7 @@ test('day cards line up on desktop and tablet, become rows on phones, and nothin
     return { pageFits: document.documentElement.scrollWidth <= innerWidth, outside: outside.map(node => node.className || node.tagName) };
   });
 
-  for (const [width, columns] of [[1280, 7], [1200, 7], [1060, 4], [768, 4]]) {
+  for (const [width, columns] of [[1280, 7], [1200, 7], [1185, 7], [1060, 4], [768, 4]]) {
     await page.setViewportSize({ width, height: 900 });
     await gotoLoaded(page, `/?width=${width}#program`);
     const dateTops = await tops('.schedule-date'), imageTops = await tops('.image-zoom');
@@ -230,18 +232,31 @@ test('the big event cards show their next programme day with time, entry and gua
   expect(fits).toBe(true);
 });
 
-test('every big card shows the club defaults — Free entry, Garantat 500 lei, Min. 10 jucători — even without a programme day', async ({ page }) => {
+test('every game card shows the club defaults — Free entry, Garantat 500 lei, Min. 10 jucători — even without a programme day', async ({ page }) => {
   await mockSupabase(page, { scheduleDays: { '2026-10-08': { linked_card: 'Seară de Șah', image_url: null, start_time: '18:00:00', min_players: 12 } } });
   await gotoLoaded(page, '/#events');
 
-  const cards = page.locator('#eventGrid .event');
-  await expect(cards.locator('.card-terms')).toHaveCount(await cards.count());
+  const games = page.locator('#eventGrid .event:not(.contact-event)');
+  await expect(games.locator('.card-terms')).toHaveCount(await games.count());
+  // Team Building and charity events are arranged on request: no entry, prize or minimum players there.
+  await expect(page.locator('#eventGrid .contact-event .card-terms')).toHaveCount(0);
   const table = page.locator('#eventGrid .event[data-name="Seară de Table"]');
   await expect(table.locator('.card-terms .schedule-prize')).toHaveText(['Free entry', 'Garantat 500 lei', 'Min. 10 jucători']);
   await expect(table.locator('.card-next')).toHaveCount(0);
   await expect(table.locator('.event-date')).toBeVisible();
   const chess = page.locator('#eventGrid .event[data-name="Seară de Șah"]');
   await expect(chess.locator('.card-next .schedule-prize')).toHaveText(['Ora 18:00', 'Free entry', 'Garantat 500 lei', 'Min. 12 jucători']);
+});
+
+test('Team Building and charity days in the programme show only their day and time, without club terms', async ({ page }) => {
+  await mockSupabase(page, { scheduleDays: { '2026-10-09': { linked_card: 'Team Building', image_url: null, start_time: '17:00:00', buy_in: 0, guaranteed: 500, min_players: 10 } } });
+  await gotoLoaded(page, '/#program');
+
+  await expect(page.locator('#program .schedule-day').filter({ hasText: 'Vineri 9 oct.' }).locator('.schedule-prize')).toHaveText(['Ora 17:00']);
+  const card = page.locator('#eventGrid .event[data-name="Team Building"]');
+  await expect(card.locator('.card-next-day')).toHaveText('Vineri 9 oct.');
+  await expect(card.locator('.card-terms .schedule-prize')).toHaveText(['Ora 17:00']);
+  await expect(page.locator('#eventGrid .event[data-name="Evenimente Caritabile"] .card-terms')).toHaveCount(0);
 });
 
 test('clicking a programme image opens it large in a popup', async ({ page }) => {
