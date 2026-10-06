@@ -57,7 +57,7 @@ function rpcHandlers(state) {
     },
     players_admin_set_schedule_day: (request, body) => {
       const previous = state.scheduleDays[body.p_day]?.image_url || null;
-      state.scheduleDays[body.p_day] = { linked_card: body.p_linked_card, image_url: body.p_image_url || null, buy_in: body.p_buy_in ?? null, guaranteed: body.p_guaranteed ?? null };
+      state.scheduleDays[body.p_day] = { linked_card: body.p_linked_card, image_url: body.p_image_url || null, start_time: body.p_start_time ? `${body.p_start_time}:00`.slice(0, 8) : null, buy_in: body.p_buy_in ?? null, guaranteed: body.p_guaranteed ?? null };
       return previous !== (body.p_image_url || null) ? previous : null;
     },
     players_admin_clear_schedule_day: (request, body) => {

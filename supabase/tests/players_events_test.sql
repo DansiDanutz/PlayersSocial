@@ -113,7 +113,7 @@ begin
   -- Weekly programme: public read, admin-only writes, events limited to category cards, featured day within the week.
   perform set_config('role', 'postgres', true);
   assert has_function_privilege('anon', 'public.players_public_schedule(date)', 'execute'), 'anon cannot read the schedule';
-  assert not has_function_privilege('anon', 'public.players_admin_set_schedule_day(date,text,text,integer,integer)', 'execute'), 'anon can set schedule days';
+  assert not has_function_privilege('anon', 'public.players_admin_set_schedule_day(date,text,text,time,integer,integer)', 'execute'), 'anon can set schedule days';
   assert not has_function_privilege('anon', 'public.players_admin_clear_schedule_day(date)', 'execute'), 'anon can clear schedule days';
   assert not has_function_privilege('anon', 'public.players_admin_set_schedule_week(date,text,date)', 'execute'), 'anon can set the schedule week';
   perform set_config('role', 'authenticated', true);
@@ -126,8 +126,8 @@ begin
     assert public.players_admin_set_schedule_day(week + 2, 'Remi & Prieteni', schedule_base || 'remi.jpg') is null, 'first save returned an old image';
     assert public.players_admin_set_schedule_day(week + 2, 'Seară de Șah', schedule_base || 'sah.jpg') = schedule_base || 'remi.jpg', 'replaced image not returned';
     perform public.players_admin_set_schedule_day(week + 4, 'Karaoke Club', null);
-    perform public.players_admin_set_schedule_day(week + 3, 'Seară de Table', null, 10, 500);
-    failed := false; begin perform public.players_admin_set_schedule_day(week + 5, 'Remi & Prieteni', null, -1, null); exception when others then failed := true; end;
+    perform public.players_admin_set_schedule_day(week + 3, 'Seară de Table', null, '18:30', 10, 500);
+    failed := false; begin perform public.players_admin_set_schedule_day(week + 5, 'Remi & Prieteni', null, null, -1, null); exception when others then failed := true; end;
     assert failed, 'negative buy-in accepted';
     failed := false; begin perform public.players_admin_set_schedule_day(week + 5, 'Turneu inventat', null); exception when others then failed := true; end;
     assert failed, 'unknown event accepted';
@@ -146,6 +146,7 @@ begin
     assert (schedule ->> 'featured_day')::date = week + 2, 'featured day not public';
     assert jsonb_array_length(schedule -> 'days') = 3 and schedule -> 'days' -> 0 ->> 'linked_card' = 'Seară de Șah', 'days not public or not ordered';
     assert (schedule -> 'days' -> 1 ->> 'buy_in')::int = 10 and (schedule -> 'days' -> 1 ->> 'guaranteed')::int = 500, 'buy-in and guaranteed not public';
+    assert schedule -> 'days' -> 1 ->> 'start_time' = '18:30:00', 'start time not public';
 
     perform set_config('role', 'authenticated', true);
     perform set_config('request.jwt.claims', visitor_claims, true);

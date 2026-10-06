@@ -42,6 +42,12 @@
     'Remi & Prieteni': '/program/remi.jpg',
     'Seară de Table': '/program/table.jpg',
     'Turneu de Ping-Pong': '/program/ping-pong.jpg',
+    'Karaoke Club': '/program/karaoke.jpg',
+    'Stand-up Open Mic': '/program/stand-up.jpg',
+    'Campionat de FIFA': '/program/fifa.jpg',
+    'Seară Champions League': '/program/champions.jpg',
+    'Team Building': '/program/team-building.jpg',
+    'Evenimente Caritabile': '/program/caritabile.jpg',
   };
   function defaultImage(name) { return DEFAULT_DAY_IMAGES[name] || cardPoster(name); }
   // A day without an event shows one of the club logos: picked by date, so neighbouring days differ
@@ -66,12 +72,14 @@
     return [...week.filter(({ when }) => when !== 'past'), ...week.filter(({ when }) => when === 'past')];
   }
 
-  // "Buy-in 10 lei" and "Garantat 500 lei", whichever the admin set.
+  // "Ora 18:00", "Buy-in 10 lei" (or "Free entry" when it is 0) and "Garantat 500 lei", whichever the admin set.
   function prizeChips(entry) {
     const lei = (amount) => `${amount.toLocaleString('ro-RO')} lei`;
-    return [['buy_in', 'Buy-in'], ['guaranteed', 'Garantat']]
-      .filter(([key]) => Number.isInteger(entry[key]))
-      .map(([key, label]) => element('span', 'schedule-prize', `${label} ${lei(entry[key])}`));
+    const labels = [];
+    if (entry.start_time) labels.push(`Ora ${entry.start_time.slice(0, 5)}`);
+    if (Number.isInteger(entry.buy_in)) labels.push(entry.buy_in === 0 ? 'Free entry' : `Buy-in ${lei(entry.buy_in)}`);
+    if (Number.isInteger(entry.guaranteed)) labels.push(`Garantat ${lei(entry.guaranteed)}`);
+    return labels.map((label) => element('span', 'schedule-prize', label));
   }
   function prizeRow(entry) {
     const chips = prizeChips(entry);
@@ -87,13 +95,16 @@
     if (text) node.textContent = text;
     return node;
   }
-  // The image is a button that opens it large in the #imageViewer popup.
-  function eventImage(entry) {
+  // The image is a button that opens it large in the #imageViewer popup, with the day's details when it has an event.
+  const viewerDetails = new WeakMap();
+  function eventImage(entry, date) {
     const image = element('img');
     image.src = entry.image_url || defaultImage(entry.linked_card);
     image.alt = '';
     image.loading = 'lazy';
-    return zoomButton(image);
+    const button = zoomButton(image);
+    if (entry.linked_card && date) viewerDetails.set(button, { title: `${entry.linked_card} · ${dayLabel(date)}`, entry });
+    return button;
   }
   function zoomButton(image) {
     const button = element('button', 'image-zoom');
@@ -105,15 +116,19 @@
 
   // ---------- image popup ----------
   const viewer = document.getElementById('imageViewer');
-  function openViewer(src) {
+  function openViewer(src, details) {
     viewer.querySelector('img').src = src;
+    const info = viewer.querySelector('.image-viewer-info');
+    info.hidden = !details;
+    viewer.querySelector('.image-viewer-title').textContent = details?.title || '';
+    viewer.querySelector('.image-viewer-info .schedule-prizes').replaceChildren(...(details ? prizeChips(details.entry) : []));
     if (!viewer.open) viewer.showModal();
   }
   viewer.querySelector('.image-viewer-close').addEventListener('click', () => viewer.close());
   viewer.addEventListener('click', (event) => { if (event.target === viewer) viewer.close(); });
   section.addEventListener('click', (event) => {
     const button = event.target.closest('.image-zoom');
-    if (button) openViewer(button.querySelector('img').src);
+    if (button) openViewer(button.querySelector('img').src, viewerDetails.get(button));
   });
 
   // when: 'today' | 'tomorrow' | 'past' | '' (a later day this week).
@@ -132,7 +147,7 @@
     link.href = cardLink(entry.linked_card);
     link.append(element('strong', 'schedule-event', entry.linked_card), ...prizeRow(entry));
     if (isFeatured) link.append(element('span', 'schedule-star', '★ Evenimentul săptămânii'));
-    tile.append(eventImage(entry), link);
+    tile.append(eventImage(entry, date), link);
     return tile;
   }
 
@@ -145,7 +160,7 @@
     const link = element('a', 'schedule-featured-link', 'Vezi evenimentul');
     link.href = cardLink(entry.linked_card);
     body.append(link);
-    card.append(eventImage(entry), body);
+    card.append(eventImage(entry, date), body);
     return card;
   }
 
