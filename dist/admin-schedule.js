@@ -41,7 +41,10 @@ function eventOptions(selected){
 function programDayForm(date){
   const iso=PlayersSchedule.isoDay(date), entry=programDays().get(iso), form=document.createElement('form');
   form.className='admin-controls program-day'; form.dataset.day=iso; form.noValidate=true;
+  // A day from the weekly default programme has no row of its own yet: saving it creates one.
+  const saved=entry&&!entry.is_default;
   form.innerHTML=`<h4>${escapeHtml(PlayersSchedule.dayLabel(date))}</h4>`
+    +(entry?.is_default?'<p class="program-default-note">Din programul implicit · salvează ca să schimbi ziua</p>':'')
     +`<label for="program-event-${iso}">Eveniment</label><select id="program-event-${iso}" name="linked_card">${eventOptions(entry?.linked_card)}</select>`
     +`<label for="program-time-${iso}">Ora de început<input id="program-time-${iso}" name="start_time" type="time" value="${entry?.start_time?.slice(0,5)??''}"></label>`
     +`<div class="program-prizes"><label for="program-buyin-${iso}">Buy-in (lei)<input id="program-buyin-${iso}" name="buy_in" type="number" min="0" step="1" inputmode="numeric" value="${entry?.buy_in??PlayersSchedule.CLUB_TERMS.buy_in}"></label>`
@@ -50,8 +53,8 @@ function programDayForm(date){
     +`<label for="program-image-${iso}">Imagine (opțional · JPG, PNG sau WEBP, max. 5 MB) · Recomandat: 1080 × 1440 px (portret 3:4)<input id="program-image-${iso}" name="image" type="file" accept="image/jpeg,image/png,image/webp" data-recommended="1080x1440" data-fit="cover"></label>`
     +`<img class="program-day-preview" alt="" hidden><p class="program-banner-note"></p>`
     +(entry?.image_url?`<button class="program-use-default" type="button">Folosește bannerul implicit</button>`:'')
-    +`<label class="admin-check" for="program-featured-${iso}"><input id="program-featured-${iso}" type="radio" name="featured" value="${iso}"${programData?.featured_day===iso?' checked':''}${entry?'':' disabled'}>Evenimentul săptămânii</label>`
-    +`<p class="admin-form-status" aria-live="polite"></p><div class="admin-actions"><button class="primary" type="submit">Salvează ziua</button><button class="program-clear" type="button"${entry?'':' disabled'}>Golește</button></div>`;
+    +`<label class="admin-check" for="program-featured-${iso}"><input id="program-featured-${iso}" type="radio" name="featured" value="${iso}"${programData?.featured_day===iso?' checked':''}${saved?'':' disabled'}>Evenimentul săptămânii</label>`
+    +`<p class="admin-form-status" aria-live="polite"></p><div class="admin-actions"><button class="primary" type="submit">Salvează ziua</button><button class="program-clear" type="button"${saved?'':' disabled'}>Golește</button></div>`;
   form.addEventListener('submit',event=>{ event.preventDefault(); saveProgramDay(form); });
   form.querySelector('.program-clear').addEventListener('click',()=>clearProgramDay(form));
   form.querySelector('input[name="featured"]').addEventListener('change',()=>setFeaturedDay(iso));

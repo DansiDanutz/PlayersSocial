@@ -122,7 +122,11 @@ begin
     week constant date := date_trunc('week', current_date + 3650)::date;
     schedule_base constant text := 'https://lxhjfdxowpxzrybxdasi.supabase.co/storage/v1/object/public/players-schedule/';
     schedule jsonb;
+    monday_default text;
   begin
+    perform set_config('role', 'postgres', true);
+    select linked_card into monday_default from public.players_schedule_template where weekday = 1;
+    perform set_config('role', 'authenticated', true);
     assert public.players_admin_set_schedule_day(week + 2, 'Remi & Prieteni', schedule_base || 'remi.jpg') is null, 'first save returned an old image';
     assert public.players_admin_set_schedule_day(week + 2, 'Seară de Șah', schedule_base || 'sah.jpg') = schedule_base || 'remi.jpg', 'replaced image not returned';
     perform public.players_admin_set_schedule_day(week + 4, 'Karaoke Club', null);
@@ -146,10 +150,15 @@ begin
     schedule := public.players_public_schedule(week);
     assert schedule ->> 'image_url' = schedule_base || 'week.jpg', 'week image not public';
     assert (schedule ->> 'featured_day')::date = week + 2, 'featured day not public';
-    assert jsonb_array_length(schedule -> 'days') = 3 and schedule -> 'days' -> 0 ->> 'linked_card' = 'Seară de Șah', 'days not public or not ordered';
-    assert (schedule -> 'days' -> 1 ->> 'buy_in')::int = 10 and (schedule -> 'days' -> 1 ->> 'guaranteed')::int = 500, 'buy-in and guaranteed not public';
-    assert schedule -> 'days' -> 1 ->> 'start_time' = '18:30:00', 'start time not public';
-    assert (schedule -> 'days' -> 1 ->> 'min_players')::int = 12, 'minimum players not public';
+    -- 7 days: the 3 saved ones plus the weekly default programme for the others.
+    assert jsonb_array_length(schedule -> 'days') = 7, 'week does not have 7 days';
+    assert (select count(*) from jsonb_array_elements(schedule -> 'days') d where not (d ->> 'is_default')::boolean) = 3, 'saved days not public';
+    assert schedule -> 'days' -> 2 ->> 'linked_card' = 'Seară de Șah' and not (schedule -> 'days' -> 2 ->> 'is_default')::boolean, 'saved day not public or not ordered';
+    assert (schedule -> 'days' -> 3 ->> 'buy_in')::int = 10 and (schedule -> 'days' -> 3 ->> 'guaranteed')::int = 500, 'buy-in and guaranteed not public';
+    assert schedule -> 'days' -> 3 ->> 'start_time' = '18:30:00', 'start time not public';
+    assert (schedule -> 'days' -> 3 ->> 'min_players')::int = 12, 'minimum players not public';
+    assert (schedule -> 'days' -> 0 ->> 'is_default')::boolean and schedule -> 'days' -> 0 ->> 'linked_card' = monday_default, 'Monday does not follow the default programme';
+    assert not has_table_privilege('anon', 'public.players_schedule_template', 'select'), 'anon can read the template directly';
 
     perform set_config('role', 'authenticated', true);
     perform set_config('request.jwt.claims', visitor_claims, true);
@@ -159,6 +168,7 @@ begin
     perform set_config('request.jwt.claims', admin_claims, true);
     assert public.players_admin_clear_schedule_day(week + 2) = schedule_base || 'sah.jpg', 'clear did not return the image';
     assert public.players_public_schedule(week) ->> 'featured_day' is null, 'featured day kept after its day was cleared';
+    assert (public.players_public_schedule(week) -> 'days' -> 2 ->> 'is_default')::boolean, 'cleared day does not fall back to the default programme';
   end;
 
   -- Storage deletes need admins to see the object first: each admin bucket has an admin-only SELECT policy.

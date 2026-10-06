@@ -52,7 +52,11 @@ function rpcHandlers(state) {
       const start = new Date(`${body.p_week_start}T00:00:00Z`), end = new Date(start.getTime() + 6 * 86400000);
       const inWeek = day => { const date = new Date(`${day}T00:00:00Z`); return date >= start && date <= end; };
       const week = state.scheduleWeeks[body.p_week_start] || {};
-      const days = Object.entries(state.scheduleDays).filter(([day]) => inWeek(day)).sort().map(([day, row]) => ({ day, ...row }));
+      const own = Object.entries(state.scheduleDays).filter(([day]) => inWeek(day)).map(([day, row]) => ({ day, ...row }));
+      const template = Array.from({ length: 7 }, (_, index) => new Date(start.getTime() + index * 86400000).toISOString().slice(0, 10))
+        .filter(day => !state.scheduleDays[day] && state.scheduleTemplate[new Date(`${day}T00:00:00Z`).getUTCDay() || 7])
+        .map(day => ({ day, image_url: null, buy_in: null, guaranteed: null, min_players: null, ...state.scheduleTemplate[new Date(`${day}T00:00:00Z`).getUTCDay() || 7], is_default: true }));
+      const days = [...own, ...template].sort((a, b) => a.day.localeCompare(b.day));
       return { week_start: body.p_week_start, image_url: week.image_url || null, featured_day: week.featured_day || null, days };
     },
     players_admin_set_schedule_day: (request, body) => {
@@ -118,8 +122,8 @@ async function handle(route, state) {
   return json(route, { message: `unmocked ${request.method()} ${path}` }, 404);
 }
 
-async function mockSupabase(page, { events = [], registrants = [], videos = [], videosFail = false, scheduleDays = {}, scheduleWeeks = {}, admin = false, user = false } = {}) {
-  const state = { events: [...CATEGORY_CARDS.map(categoryRow), ...events], registrants, videos: [...videos], videosFail, scheduleDays: { ...scheduleDays }, scheduleWeeks: { ...scheduleWeeks }, admins: [ADMIN_EMAIL, 'toma.alinflorin@yahoo.com'], calls: [] };
+async function mockSupabase(page, { events = [], registrants = [], videos = [], videosFail = false, scheduleDays = {}, scheduleWeeks = {}, scheduleTemplate = {}, admin = false, user = false } = {}) {
+  const state = { events: [...CATEGORY_CARDS.map(categoryRow), ...events], registrants, videos: [...videos], videosFail, scheduleDays: { ...scheduleDays }, scheduleWeeks: { ...scheduleWeeks }, scheduleTemplate: { ...scheduleTemplate }, admins: [ADMIN_EMAIL, 'toma.alinflorin@yahoo.com'], calls: [] };
   await page.route(`${SUPABASE_ORIGIN}/**`, route => handle(route, state));
   await page.route(/fonts\.(googleapis|gstatic)\.com|maps\.google/, route => route.abort());
   const sessionToken = admin ? ADMIN_TOKEN : user ? USER_TOKEN : null;

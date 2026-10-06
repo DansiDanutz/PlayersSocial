@@ -3,6 +3,12 @@ const { mockSupabase, gotoLoaded, SCHEDULE_BASE, openDashboardSection } = requir
 
 // Wednesday 7 October 2026: the current week runs Monday 5 – Sunday 11 October.
 const NOW = new Date('2026-10-07T12:00:00');
+async function openProgramAsAdmin(page) {
+  await gotoLoaded(page, '/#events');
+  await page.locator('#adminToggle').click();
+  await openDashboardSection(page, 'dashboardProgram');
+  await expect(page.locator('#dashboardProgram')).toBeVisible();
+}
 const IMAGE = { name: 'seara.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('fake jpg bytes') };
 
 test.beforeEach(async ({ page }) => {
@@ -279,6 +285,49 @@ test('clicking a programme image opens it large in a popup', async ({ page }) =>
   await expect(viewer).toBeHidden();
 
   await expect(page.locator('#program .schedule-day').filter({ hasText: 'Joi 8 oct.' }).getByRole('link')).toHaveAttribute('href', '#players-sah');
+});
+
+// Weekly default programme (ISO weekday → event), as seeded in players_schedule_template.
+const DEFAULT_WEEK = {
+  1: { linked_card: 'Remi & Prieteni', start_time: null }, 2: { linked_card: 'Seară de Șah', start_time: '18:00:00' }, 3: { linked_card: 'Seară de Table', start_time: null },
+  4: { linked_card: 'Seară de Șah', start_time: '18:00:00' }, 5: { linked_card: 'Turneu de Ping-Pong', start_time: null }, 6: { linked_card: 'Karaoke Club', start_time: '20:00:00' }, 7: { linked_card: 'Remi & Prieteni', start_time: null },
+};
+
+test('every day without its own setting follows the weekly default programme', async ({ page }) => {
+  await mockSupabase(page, { scheduleTemplate: DEFAULT_WEEK, scheduleDays: { '2026-10-09': { linked_card: 'Campionat de FIFA', image_url: null, start_time: '21:00:00' } } });
+  await gotoLoaded(page, '/#program');
+
+  const event = (day) => page.locator('#program .schedule-day').filter({ hasText: day }).locator('.schedule-event');
+  await expect(page.locator('#program')).toBeVisible();
+  await expect(page.locator('#program .schedule-day.is-empty')).toHaveCount(0);
+  await expect(event('Luni 5 oct.')).toHaveText('Remi & Prieteni');
+  await expect(event('Marți 6 oct.')).toHaveText('Seară de Șah');
+  await expect(event('Miercuri 7 oct.')).toHaveText('Seară de Table');
+  await expect(event('Joi 8 oct.')).toHaveText('Seară de Șah');
+  await expect(event('Vineri 9 oct.')).toHaveText('Campionat de FIFA');
+  await expect(event('Sâmbătă 10 oct.')).toHaveText('Karaoke Club');
+  await expect(event('Duminică 11 oct.')).toHaveText('Remi & Prieteni');
+  await expect(page.locator('#program .schedule-day').filter({ hasText: 'Sâmbătă 10 oct.' }).locator('.schedule-prize')).toHaveText(['Ora 20:00', 'Free entry', 'Garantat 500 lei', 'Min. 10 jucători']);
+  await expect(page.locator('#program .schedule-day').filter({ hasText: 'Sâmbătă 10 oct.' }).locator('img')).toHaveAttribute('src', '/program/karaoke.jpg');
+});
+
+test('in admin a default day shows its event, says it comes from the default programme and becomes the day\'s own once saved', async ({ page }) => {
+  const state = await mockSupabase(page, { admin: true, scheduleTemplate: DEFAULT_WEEK });
+  await openProgramAsAdmin(page);
+
+  const wednesday = page.locator('#dashboardProgram .program-day').nth(2);
+  await expect(wednesday.getByLabel('Eveniment', { exact: true })).toHaveValue('Seară de Table');
+  await expect(wednesday.locator('.program-default-note')).toHaveText('Din programul implicit · salvează ca să schimbi ziua');
+  await expect(wednesday.getByRole('button', { name: 'Golește' })).toBeDisabled();
+  await expect(wednesday.getByLabel('Evenimentul săptămânii')).toBeDisabled();
+  await wednesday.getByLabel('Eveniment', { exact: true }).selectOption('Turneu de Ping-Pong');
+  await wednesday.getByRole('button', { name: 'Salvează ziua' }).click();
+
+  const saved = page.locator('#dashboardProgram .program-day').nth(2);
+  await expect(saved.locator('.admin-form-status')).toHaveText('Ziua a fost salvată.');
+  expect(state.calls.find(call => call.name === 'players_admin_set_schedule_day').body.p_linked_card).toBe('Turneu de Ping-Pong');
+  await expect(saved.locator('.program-default-note')).toHaveCount(0);
+  await expect(saved.getByRole('button', { name: 'Golește' })).toBeEnabled();
 });
 
 test('the programme stays hidden when the week has nothing planned', async ({ page }) => {
