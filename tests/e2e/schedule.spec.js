@@ -179,7 +179,7 @@ test('day cards line up on desktop and tablet, become rows on phones, and nothin
     return { pageFits: document.documentElement.scrollWidth <= innerWidth, outside: outside.map(node => node.className || node.tagName) };
   });
 
-  for (const [width, columns] of [[1280, 7], [768, 4]]) {
+  for (const [width, columns] of [[1280, 7], [1200, 7], [1060, 4], [768, 4]]) {
     await page.setViewportSize({ width, height: 900 });
     await gotoLoaded(page, `/?width=${width}#program`);
     const dateTops = await tops('.schedule-date'), imageTops = await tops('.image-zoom');
@@ -187,6 +187,8 @@ test('day cards line up on desktop and tablet, become rows on phones, and nothin
     expect(new Set(firstRow(dateTops)).size, `dates aligned at ${width}px`).toBe(1);
     expect(new Set(firstRow(imageTops)).size, `images aligned at ${width}px`).toBe(1);
     expect(await fits(), `fits at ${width}px`).toEqual({ pageFits: true, outside: [] });
+    const cut = await page.locator('#program .schedule-day .schedule-prize, #program .schedule-day .schedule-date').evaluateAll(nodes => nodes.filter(node => node.scrollWidth > node.clientWidth + 1).map(node => node.textContent));
+    expect(cut, `no truncated text at ${width}px`).toEqual([]);
   }
 
   const info = page.locator('#program .schedule-day').filter({ hasText: 'Sâmbătă 10 oct.' }).locator('.schedule-prize');
