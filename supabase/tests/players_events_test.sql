@@ -153,5 +153,18 @@ begin
     assert public.players_public_schedule(week) ->> 'featured_day' is null, 'featured day kept after its day was cleared';
   end;
 
+  -- Storage deletes need admins to see the object first: each admin bucket has an admin-only SELECT policy.
+  declare
+    bucket text;
+  begin
+    foreach bucket in array array['players-event-banners', 'players-videos', 'players-schedule'] loop
+      assert exists (
+        select 1 from pg_policies
+        where schemaname = 'storage' and tablename = 'objects' and cmd = 'SELECT' and roles = '{authenticated}'
+          and qual like '%' || bucket || '%' and qual like '%is_players_admin()%'
+      ), 'admins cannot read (and so cannot delete) objects in ' || bucket;
+    end loop;
+  end;
+
   raise exception 'ALL PASSED';
 end $$;
