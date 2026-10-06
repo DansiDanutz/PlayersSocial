@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { mockSupabase, videoRow, gotoLoaded, VIDEO_BASE } = require('../support/supabase-mock');
+const { mockSupabase, videoRow, gotoLoaded, VIDEO_BASE, openDashboardSection } = require('../support/supabase-mock');
 
 const MP4 = { name: 'seara-remi.mp4', mimeType: 'video/mp4', buffer: Buffer.from('fake mp4 bytes') };
 const POSTER = { name: 'coperta.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('fake jpg bytes') };
@@ -11,7 +11,7 @@ test.beforeEach(async ({ page }) => {
 async function openVideoAdmin(page) {
   await page.locator('#adminToggle').click();
   await expect(page.locator('#adminDashboard')).toBeVisible();
-  await page.locator('.dashboard-nav button[data-section="dashboardVideos"]').click();
+  await openDashboardSection(page, 'dashboardVideos');
   await expect(page.locator('#dashboardVideos')).toBeVisible();
 }
 

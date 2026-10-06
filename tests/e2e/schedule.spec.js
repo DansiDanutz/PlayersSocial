@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { mockSupabase, gotoLoaded, SCHEDULE_BASE } = require('../support/supabase-mock');
+const { mockSupabase, gotoLoaded, SCHEDULE_BASE, openDashboardSection } = require('../support/supabase-mock');
 
 // Wednesday 7 October 2026: the current week runs Monday 5 – Sunday 11 October.
 const NOW = new Date('2026-10-07T12:00:00');
@@ -43,7 +43,7 @@ test('the programme stays hidden when the week has nothing planned', async ({ pa
 test.describe('admin Program tab', () => {
   async function openProgram(page) {
     await page.locator('#adminToggle').click();
-    await page.locator('.dashboard-nav button[data-section="dashboardProgram"]').click();
+    await openDashboardSection(page, 'dashboardProgram');
     await expect(page.locator('#dashboardProgram')).toBeVisible();
   }
 

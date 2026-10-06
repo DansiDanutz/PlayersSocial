@@ -1,6 +1,6 @@
 const path = require('path');
 const { test, expect } = require('@playwright/test');
-const { mockSupabase, featuredRow, gotoLoaded, ADMIN_TOKEN } = require('../support/supabase-mock');
+const { mockSupabase, featuredRow, gotoLoaded, ADMIN_TOKEN, openDashboardSection } = require('../support/supabase-mock');
 
 const BANNER = path.join(__dirname, '..', '..', 'dist', 'poster-remi.webp');
 
@@ -11,6 +11,7 @@ test.beforeEach(async ({ page }) => {
 async function openFeaturedAdmin(page) {
   await page.locator('#adminToggle').click();
   await expect(page.locator('#adminDashboard')).toBeVisible();
+  await openDashboardSection(page, 'dashboardFeatured');
 }
 
 test('expired magic link explains what to do', async ({ page }) => {
@@ -30,7 +31,7 @@ test('email link logs the admin in only after confirming', async ({ page }) => {
   expect(state.calls.some(call => call.name === 'verify')).toBe(false);
   await page.locator('#authConfirm').click();
 
-  await expect(page.locator('#adminLogin')).toHaveText('Ieșire');
+  await expect(page.locator('#adminLogin')).toBeHidden();
   expect(state.calls.find(call => call.name === 'verify').body).toEqual({ type: 'email', token_hash: 'valid-hash' });
 });
 

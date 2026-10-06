@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { mockSupabase, gotoLoaded, VIDEO_BASE } = require('../support/supabase-mock');
+const { mockSupabase, gotoLoaded, VIDEO_BASE, openDashboardSection } = require('../support/supabase-mock');
 
 const MB = 1024 * 1024;
 
@@ -46,7 +46,7 @@ test.describe('compression plan', () => {
 test.describe('admin upload with compression', () => {
   async function openVideoAdmin(page) {
     await page.locator('#adminToggle').click();
-    await page.locator('.dashboard-nav button[data-section="dashboardVideos"]').click();
+    await openDashboardSection(page, 'dashboardVideos');
     await expect(page.locator('#dashboardVideos')).toBeVisible();
   }
 
