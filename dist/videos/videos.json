@@ -1,0 +1,83 @@
+{
+  "categories": [
+    { "id": "club", "label": "Player's Poker Club", "card": "" },
+    { "id": "sah", "label": "Șah", "card": "#players-sah" },
+    { "id": "remi", "label": "Remi", "card": "#players-remi" },
+    { "id": "table", "label": "Table", "card": "#players-backgammon" },
+    { "id": "ping-pong", "label": "Ping-Pong", "card": "#players-ping-pong" }
+  ],
+  "videos": [
+    {
+      "id": "players-club-promo",
+      "category": "club",
+      "type": "promo",
+      "title": "Player's Poker Club · Cluj-Napoca",
+      "description": "Texas Hold'em, Omaha, turnee și cash game, plus remi, șah, table și ping-pong. Clubul unde oamenii se întâlnesc, socializează și se întrec.",
+      "src": "/videos/players-club-promo.mp4",
+      "poster": "/videos/players-club-promo-poster.jpg"
+    },
+    {
+      "id": "players-sah-promo",
+      "category": "sah",
+      "type": "event",
+      "title": "Primul turneu Players Șah",
+      "description": "Povestea primei seri de șah organizate de Player’s Poker Club: mese pline, ceasuri pornite și un șah mat la masa unu.",
+      "src": "/videos/players-sah-promo.mp4",
+      "poster": "/videos/players-sah-promo-poster.jpg"
+    },
+    {
+      "id": "players-remi-promo",
+      "category": "remi",
+      "type": "promo",
+      "title": "Players Remi · Promo",
+      "description": "Mese pregătite, piese amestecate și jokerul care schimbă totul. Primul nostru turneu de remi.",
+      "src": "/videos/players-remi-promo.mp4",
+      "poster": "/videos/players-remi-promo-poster.jpg"
+    },
+    {
+      "id": "players-remi-premium",
+      "category": "remi",
+      "type": "premium",
+      "title": "Players Remi · Premium",
+      "description": "De la masa bunicilor la o masă mai mare: povestea remi-ului, spusă cinematic.",
+      "src": "/videos/players-remi-premium.mp4",
+      "poster": "/videos/players-remi-premium-poster.jpg"
+    },
+    {
+      "id": "players-backgammon-promo",
+      "category": "table",
+      "type": "promo",
+      "title": "Players Backgammon · Promo",
+      "description": "Zaruri, porți și duble. Prima noastră seară de table.",
+      "src": "/videos/players-backgammon-promo.mp4",
+      "poster": "/videos/players-backgammon-promo-poster.jpg"
+    },
+    {
+      "id": "players-backgammon-premium",
+      "category": "table",
+      "type": "premium",
+      "title": "Players Backgammon · Premium",
+      "description": "Din curtea bunicilor până la mesele clubului: povestea tablelor, spusă cinematic.",
+      "src": "/videos/players-backgammon-premium.mp4",
+      "poster": "/videos/players-backgammon-premium-poster.jpg"
+    },
+    {
+      "id": "players-ping-pong-promo",
+      "category": "ping-pong",
+      "type": "promo",
+      "title": "Players Ping Pong · Promo",
+      "description": "Servicii, efecte și smash-uri. Primul nostru turneu de ping-pong.",
+      "src": "/videos/players-ping-pong-promo.mp4",
+      "poster": "/videos/players-ping-pong-promo-poster.jpg"
+    },
+    {
+      "id": "players-ping-pong-premium",
+      "category": "ping-pong",
+      "type": "premium",
+      "title": "Players Ping Pong · Premium",
+      "description": "De la masa de beton din fața blocului la turneul din club: povestea ping-pongului, spusă cinematic.",
+      "src": "/videos/players-ping-pong-premium.mp4",
+      "poster": "/videos/players-ping-pong-premium-poster.jpg"
+    }
+  ]
+}
