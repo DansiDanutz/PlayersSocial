@@ -96,11 +96,11 @@ test('Remi, Table and Ping-Pong days without their own image show their default 
   }
 });
 
-test('days without an event still show one of the default banners, different on neighbouring days and stable on reload', async ({ page }) => {
+test('days without an event show one of the club logos, different on neighbouring days and stable on reload', async ({ page }) => {
   await mockSupabase(page, { scheduleDays: { '2026-10-06': { linked_card: 'Seară de Șah', image_url: null } } });
   await gotoLoaded(page, '/#program');
 
-  const DEFAULTS = ['/program/seara-de-sah.jpg', '/program/remi.jpg', '/program/table.jpg', '/program/ping-pong.jpg'];
+  const DEFAULTS = ['/players-sah-logo.jpg', '/players-backgammon-logo.jpg', '/players-ping-pong-logo.jpg', '/players-remi-logo.jpg', '/players-poker-club-logo.jpg'];
   const empty = page.locator('#program .schedule-day.is-empty');
   await expect(empty).toHaveCount(6);
   const sources = await empty.locator('img').evaluateAll(images => images.map(image => image.getAttribute('src')));
@@ -110,6 +110,7 @@ test('days without an event still show one of the default banners, different on 
   expect(byDay['Miercuri 7 oct.']).not.toBe(byDay['Joi 8 oct.']);
   expect(byDay['Joi 8 oct.']).not.toBe(byDay['Vineri 9 oct.']);
   await expect(empty.first()).toContainText('Fără eveniment');
+  expect(await empty.first().locator('img').evaluate(image => getComputedStyle(image).objectFit)).toBe('contain');
 
   await page.reload();
   await expect(page.locator('#program .schedule-day.is-empty img')).toHaveCount(6);

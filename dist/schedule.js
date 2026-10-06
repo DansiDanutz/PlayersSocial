@@ -44,9 +44,9 @@
     'Turneu de Ping-Pong': '/program/ping-pong.jpg',
   };
   function defaultImage(name) { return DEFAULT_DAY_IMAGES[name] || cardPoster(name); }
-  // A day without an event still shows one of the default banners: picked by date, so neighbouring days
-  // differ and the same day keeps its banner on every visit.
-  const FILLER_IMAGES = Object.values(DEFAULT_DAY_IMAGES);
+  // A day without an event shows one of the club logos: picked by date, so neighbouring days differ
+  // and the same day keeps its logo on every visit.
+  const FILLER_IMAGES = ['/players-sah-logo.jpg', '/players-backgammon-logo.jpg', '/players-ping-pong-logo.jpg', '/players-remi-logo.jpg', '/players-poker-club-logo.jpg'];
   function fillerImage(date) { return FILLER_IMAGES[Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / DAY_MS) % FILLER_IMAGES.length]; }
   function cardPoster(name) {
     const banner = cardFor(name)?.querySelector('.event-banner');
@@ -107,7 +107,12 @@
     const tile = element('article', classes.filter(Boolean).join(' '));
     if (WHEN_LABELS[when]) tile.append(element('span', 'schedule-when', WHEN_LABELS[when]));
     tile.append(element('span', 'schedule-date', dayLabel(date)));
-    if (!entry) { tile.append(eventImage({ image_url: fillerImage(date) }), element('span', 'schedule-free', 'Fără eveniment')); return tile; }
+    if (!entry) {
+      const logo = eventImage({ image_url: fillerImage(date) });
+      logo.classList.add('schedule-logo');
+      tile.append(logo, element('span', 'schedule-free', 'Fără eveniment'));
+      return tile;
+    }
     const link = element('a', 'schedule-link');
     link.href = cardLink(entry.linked_card);
     link.append(element('strong', 'schedule-event', entry.linked_card));
