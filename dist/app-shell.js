@@ -2,7 +2,7 @@
 // Install: where the browser supports it (Chrome/Edge on Android, Windows, macOS) the button opens the native
 // install prompt. Chrome only allows it after some use of the site, so an early tap waits a few seconds for it.
 // Browsers that never allow sites to start the install (Samsung Internet 27+, Safari, Firefox) get the exact
-// steps for that browser; Samsung users also get a one-tap "install with Chrome" link.
+// steps for that browser. Samsung Internet also blocks links that open Chrome, so it gets a "copy link" button.
 // Account state arrives through the "players:account" event dispatched by the main inline script.
 (() => {
   const menu = document.getElementById('siteMenu');
@@ -60,6 +60,17 @@
     if (/Macintosh/.test(agent) && /Safari/.test(agent) && !/Chrome|Chromium|Edg/.test(agent)) return 'mac-safari';
     return 'other';
   }
+  // Shown in the install help so a screenshot tells exactly which browser someone uses.
+  function browserName() {
+    const agent = navigator.userAgent, version = (pattern) => (agent.match(pattern) || [])[1] || '';
+    if (/SamsungBrowser/.test(agent)) return `Samsung Internet ${version(/SamsungBrowser\/(\d+)/)}`.trim();
+    if (/EdgA?\//.test(agent)) return `Edge ${version(/EdgA?\/(\d+)/)}`.trim();
+    if (/OPR\/|Opera/.test(agent)) return 'Opera';
+    if (/Firefox|FxiOS/.test(agent)) return `Firefox ${version(/(?:Firefox|FxiOS)\/(\d+)/)}`.trim();
+    if (/CriOS|Chrome\//.test(agent)) return `Chrome ${version(/(?:CriOS|Chrome)\/(\d+)/)}`.trim();
+    if (/Safari/.test(agent)) return 'Safari';
+    return 'necunoscut';
+  }
   // Chromium browsers can fire the install event a little after the tap; wait briefly for it.
   function waitForPrompt(milliseconds) {
     if (installPrompt) return Promise.resolve(installPrompt);
@@ -77,7 +88,8 @@
     installHelp.querySelector('.install-installed').hidden = kind !== 'installed';
     const known = [...installHelp.querySelectorAll('.install-steps')].some((steps) => steps.dataset.platform === kind);
     installHelp.querySelectorAll('.install-steps').forEach((steps) => { steps.hidden = steps.dataset.platform !== (known ? kind : 'other') || kind === 'installed'; });
-    installHelp.querySelector('.install-open-chrome').href = `intent://${location.host}${location.pathname}#Intent;scheme=${location.protocol.replace(':', '')};package=com.android.chrome;end`;
+    installHelp.querySelector('.install-browser').textContent = `Browser detectat: ${browserName()}`;
+    installHelp.querySelector('.install-copy-status').textContent = '';
     if (!installHelp.open) installHelp.showModal();
   }
   function refresh() {
@@ -116,6 +128,11 @@
   installButton.addEventListener('click', install);
   menuInstall.addEventListener('click', install);
   installHelp.querySelector('.install-help-close').addEventListener('click', () => installHelp.close());
+  installHelp.querySelector('.install-copy-link').addEventListener('click', async () => {
+    const status = installHelp.querySelector('.install-copy-status'), url = `${location.origin}/`;
+    try { await navigator.clipboard.writeText(url); status.textContent = 'Link copiat. Deschide Chrome, lipește-l în bara de adrese și apasă Install App.'; }
+    catch { status.textContent = `Copiază manual: ${url}`; }
+  });
   installHelp.addEventListener('click', (event) => { if (event.target === installHelp) installHelp.close(); });
 
   window.addEventListener('players:account', (event) => { account = event.detail; refresh(); });

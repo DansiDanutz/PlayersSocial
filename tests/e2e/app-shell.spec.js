@@ -130,18 +130,27 @@ const SAMSUNG = 'Mozilla/5.0 (Linux; Android 15; SM-S928B) AppleWebKit/537.36 (K
 const ANDROID_CHROME = 'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36';
 const useAgent = (page, agent) => page.addInitScript(value => Object.defineProperty(navigator, 'userAgent', { get: () => value }), agent);
 
-test('Samsung Internet gets its own install steps and a one-tap way to install with Chrome', async ({ page }) => {
+test('Samsung Internet gets steps for its own menu and can copy the link for Chrome', async ({ page }) => {
   await useAgent(page, SAMSUNG);
+  await page.addInitScript(() => Object.defineProperty(navigator, 'clipboard', { value: { writeText: text => { window.copied = text; return Promise.resolve(); } } }));
   await mockSupabase(page, { user: true });
   await gotoLoaded(page, '/');
 
   await page.locator('#installApp').click();
   const help = page.locator('#installHelp');
   await expect(help).toBeVisible();
-  await expect(help.locator('.install-steps[data-platform="samsung"]')).toBeVisible();
-  await expect(help.locator('.install-steps[data-platform="samsung"]')).toContainText('Ecran de pornire');
+  const steps = help.locator('.install-steps[data-platform="samsung"]');
+  await expect(steps).toBeVisible();
+  await expect(steps).toContainText('⋮');
+  await expect(steps).toContainText('Adăugați pagina la');
+  await expect(steps).toContainText('Ecran de pornire');
   await expect(help.locator('.install-steps[data-platform="other"]')).toBeHidden();
-  await expect(help.locator('.install-open-chrome')).toHaveAttribute('href', 'intent://127.0.0.1:4173/#Intent;scheme=http;package=com.android.chrome;end');
+  await expect(help.locator('.install-browser')).toHaveText('Browser detectat: Samsung Internet 28');
+  await expect(help.locator('a[href^="intent:"]')).toHaveCount(0);
+
+  await help.getByRole('button', { name: 'Copiază linkul pentru Chrome' }).click();
+  await expect(help.locator('.install-copy-status')).toHaveText('Link copiat. Deschide Chrome, lipește-l în bara de adrese și apasă Install App.');
+  expect(await page.evaluate(() => window.copied)).toBe('http://127.0.0.1:4173/');
 });
 
 test('on Android Chrome a tap that comes before Chrome is ready waits for the install prompt', async ({ page }) => {
