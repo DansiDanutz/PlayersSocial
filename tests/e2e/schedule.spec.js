@@ -117,6 +117,19 @@ test('days without an event show one of the club logos, different on neighbourin
   expect(await page.locator('#program .schedule-day.is-empty img').evaluateAll(images => images.map(image => image.getAttribute('src')))).toEqual(sources);
 });
 
+test('the day card and the event of the week always show the buy-in and the guaranteed prize', async ({ page }) => {
+  await mockSupabase(page, {
+    scheduleDays: { '2026-10-08': { linked_card: 'Seară de Șah', image_url: null, buy_in: 10, guaranteed: 500 }, '2026-10-09': { linked_card: 'Seară de Table', image_url: null } },
+    scheduleWeeks: { '2026-10-05': { image_url: null, featured_day: '2026-10-08' } },
+  });
+  await gotoLoaded(page, '/#program');
+
+  const thursday = page.locator('#program .schedule-day').filter({ hasText: 'Joi 8 oct.' });
+  await expect(thursday.locator('.schedule-prize')).toHaveText(['Buy-in 10 lei', 'Garantat 500 lei']);
+  await expect(page.locator('#program .schedule-featured .schedule-prize')).toHaveText(['Buy-in 10 lei', 'Garantat 500 lei']);
+  await expect(page.locator('#program .schedule-day').filter({ hasText: 'Vineri 9 oct.' }).locator('.schedule-prize')).toHaveCount(0);
+});
+
 test('clicking a programme image opens it large in a popup', async ({ page }) => {
   await mockSupabase(page, {
     scheduleDays: { '2026-10-08': { linked_card: 'Seară de Șah', image_url: `${SCHEDULE_BASE}special.jpg` } },
@@ -178,7 +191,7 @@ test.describe('admin Program tab', () => {
     await expect(thursday.locator('.admin-form-status')).toHaveText('Ziua a fost salvată.');
     const upload = state.calls.find(call => call.name === 'storage:POST');
     expect(upload.path).toMatch(/^\/storage\/v1\/object\/players-schedule\/[A-Za-z0-9._-]+\.jpg$/);
-    expect(state.calls.find(call => call.name === 'players_admin_set_schedule_day').body).toEqual({ p_day: '2026-10-08', p_linked_card: 'Remi & Prieteni', p_image_url: `${SCHEDULE_BASE}${upload.path.split('/').pop()}` });
+    expect(state.calls.find(call => call.name === 'players_admin_set_schedule_day').body).toEqual({ p_day: '2026-10-08', p_linked_card: 'Remi & Prieteni', p_image_url: `${SCHEDULE_BASE}${upload.path.split('/').pop()}`, p_buy_in: null, p_guaranteed: null });
     await expect(page.locator('#program .schedule-day').filter({ hasText: 'Joi 8 oct.' }).locator('.schedule-event')).toHaveText('Remi & Prieteni');
   });
 
@@ -196,8 +209,41 @@ test.describe('admin Program tab', () => {
     await expect(page.locator('#program .schedule-day').filter({ hasText: 'Sâmbătă 10 oct.' })).toHaveClass(/is-featured/);
   });
 
+  test('admin sets the buy-in and the guaranteed prize of a day', async ({ page }) => {
+    const state = await mockSupabase(page, { admin: true });
+    await gotoLoaded(page, '/#events');
+    await openProgram(page);
+
+    const tuesday = page.locator('#dashboardProgram .program-day').nth(1);
+    await tuesday.getByLabel('Eveniment', { exact: true }).selectOption('Seară de Șah');
+    await tuesday.getByLabel('Buy-in (lei)').fill('10');
+    await tuesday.getByLabel('Garantat (lei)').fill('500');
+    await tuesday.getByRole('button', { name: 'Salvează ziua' }).click();
+
+    await expect(page.locator('#dashboardProgram .program-day').nth(1).locator('.admin-form-status')).toHaveText('Ziua a fost salvată.');
+    expect(state.calls.find(call => call.name === 'players_admin_set_schedule_day').body).toEqual({ p_day: '2026-10-06', p_linked_card: 'Seară de Șah', p_image_url: null, p_buy_in: 10, p_guaranteed: 500 });
+    const saved = page.locator('#dashboardProgram .program-day').nth(1);
+    await expect(saved.getByLabel('Buy-in (lei)')).toHaveValue('10');
+    await expect(saved.getByLabel('Garantat (lei)')).toHaveValue('500');
+    await expect(page.locator('#program .schedule-day').filter({ hasText: 'Marți 6 oct.' }).locator('.schedule-prize')).toHaveText(['Buy-in 10 lei', 'Garantat 500 lei']);
+  });
+
+  test('the buy-in and guaranteed prize must be whole amounts in lei', async ({ page }) => {
+    const state = await mockSupabase(page, { admin: true });
+    await gotoLoaded(page, '/#events');
+    await openProgram(page);
+
+    const tuesday = page.locator('#dashboardProgram .program-day').nth(1);
+    await tuesday.getByLabel('Eveniment', { exact: true }).selectOption('Seară de Șah');
+    await tuesday.getByLabel('Buy-in (lei)').fill('-5');
+    await tuesday.getByRole('button', { name: 'Salvează ziua' }).click();
+
+    await expect(tuesday.locator('.admin-form-status')).toHaveText('Buy-in-ul și garantatul trebuie să fie sume întregi în lei (0 sau mai mult).');
+    expect(state.calls.some(call => call.name === 'players_admin_set_schedule_day')).toBe(false);
+  });
+
   test('the day form previews the default banner for the chosen event and can go back to it from a custom one', async ({ page }) => {
-    const state = await mockSupabase(page, { admin: true, scheduleDays: { '2026-10-08': { linked_card: 'Seară de Șah', image_url: `${SCHEDULE_BASE}special.jpg` } } });
+    const state = await mockSupabase(page, { admin: true, scheduleDays: { '2026-10-08': { linked_card: 'Seară de Șah', image_url: `${SCHEDULE_BASE}special.jpg`, buy_in: 10, guaranteed: 500 } } });
     await gotoLoaded(page, '/#events');
     await openProgram(page);
 
@@ -212,7 +258,7 @@ test.describe('admin Program tab', () => {
     await thursday.getByRole('button', { name: 'Folosește bannerul implicit' }).click();
 
     await expect(thursday.locator('.admin-form-status')).toHaveText('Ziua folosește bannerul implicit.');
-    expect(state.calls.find(call => call.name === 'players_admin_set_schedule_day').body).toEqual({ p_day: '2026-10-08', p_linked_card: 'Seară de Șah', p_image_url: null });
+    expect(state.calls.find(call => call.name === 'players_admin_set_schedule_day').body).toEqual({ p_day: '2026-10-08', p_linked_card: 'Seară de Șah', p_image_url: null, p_buy_in: 10, p_guaranteed: 500 });
     expect(state.calls.some(call => call.name === 'storage:DELETE' && call.path.endsWith('/special.jpg'))).toBe(true);
     await expect(page.locator('#dashboardProgram .program-day').nth(3).locator('.program-day-preview')).toHaveAttribute('src', '/program/seara-de-sah.jpg');
   });

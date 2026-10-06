@@ -391,7 +391,10 @@
   .schedule-day.is-today.is-featured::after { background:linear-gradient(160deg,#ff1f7a,#ff7a00); }
   .schedule-day.is-today .schedule-when { background:#ff3d8b; box-shadow:0 0 10px rgba(255,61,139,.8); }
   .schedule-day.is-today.is-featured .schedule-when { background:#fff; color:#e0115f; box-shadow:0 0 10px rgba(255,255,255,.7); }
-  .schedule-day.is-past { opacity:.55; } .schedule-day .schedule-logo img { object-fit:contain; background:#0d1020; padding:10%; }
+  .schedule-day.is-past { opacity:.55; }
+  .schedule-prizes { display:flex; flex-wrap:wrap; gap:4px; } .schedule-prize { padding:2px 8px; border-radius:999px; background:var(--ink); color:#ffd166; font-weight:800; font-size:.72rem; white-space:nowrap; }
+  .schedule-day.is-featured .schedule-prize { background:#fff; color:#c2003f; } .schedule-featured .schedule-prize { font-size:.95rem; padding:5px 14px; background:#fff; color:#c2003f; }
+  .program-prizes { display:grid; grid-template-columns:1fr 1fr; gap:8px; } .program-prizes input { width:100%; } .schedule-day .schedule-logo img { object-fit:contain; background:#0d1020; padding:10%; }
   /* programme images open large in a popup */
   .image-zoom { display:block; width:100%; padding:0; border:0; background:none; cursor:zoom-in; border-radius:12px; } .image-zoom img { display:block; }
   .image-viewer { width:fit-content; min-width:120px; min-height:120px; max-width:min(94vw,900px); max-height:94vh; padding:0; border:0; border-radius:18px; background:transparent; overflow:visible; } .image-viewer::backdrop { background:rgba(10,10,20,.82); }

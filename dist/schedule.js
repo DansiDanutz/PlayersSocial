@@ -66,6 +66,21 @@
     return [...week.filter(({ when }) => when !== 'past'), ...week.filter(({ when }) => when === 'past')];
   }
 
+  // "Buy-in 10 lei" and "Garantat 500 lei", whichever the admin set.
+  function prizeChips(entry) {
+    const lei = (amount) => `${amount.toLocaleString('ro-RO')} lei`;
+    return [['buy_in', 'Buy-in'], ['guaranteed', 'Garantat']]
+      .filter(([key]) => Number.isInteger(entry[key]))
+      .map(([key, label]) => element('span', 'schedule-prize', `${label} ${lei(entry[key])}`));
+  }
+  function prizeRow(entry) {
+    const chips = prizeChips(entry);
+    if (!chips.length) return [];
+    const row = element('div', 'schedule-prizes');
+    row.append(...chips);
+    return [row];
+  }
+
   function element(tag, className, text) {
     const node = document.createElement(tag);
     if (className) node.className = className;
@@ -115,7 +130,7 @@
     }
     const link = element('a', 'schedule-link');
     link.href = cardLink(entry.linked_card);
-    link.append(element('strong', 'schedule-event', entry.linked_card));
+    link.append(element('strong', 'schedule-event', entry.linked_card), ...prizeRow(entry));
     if (isFeatured) link.append(element('span', 'schedule-star', '★ Evenimentul săptămânii'));
     tile.append(eventImage(entry), link);
     return tile;
@@ -124,7 +139,7 @@
   function featuredCard(date, entry) {
     const card = element('article', 'schedule-featured');
     const body = element('div', 'schedule-featured-body');
-    body.append(element('span', 'schedule-featured-badge', 'Evenimentul săptămânii'), element('span', 'schedule-featured-day', dayLabel(date)), element('h3', '', entry.linked_card));
+    body.append(element('span', 'schedule-featured-badge', 'Evenimentul săptămânii'), element('span', 'schedule-featured-day', dayLabel(date)), element('h3', '', entry.linked_card), ...prizeRow(entry));
     const description = cardFor(entry.linked_card)?.querySelector('.desc')?.textContent;
     if (description) body.append(element('p', '', description));
     const link = element('a', 'schedule-featured-link', 'Vezi evenimentul');

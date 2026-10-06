@@ -43,6 +43,8 @@ function programDayForm(date){
   form.className='admin-controls program-day'; form.dataset.day=iso; form.noValidate=true;
   form.innerHTML=`<h4>${escapeHtml(PlayersSchedule.dayLabel(date))}</h4>`
     +`<label for="program-event-${iso}">Eveniment</label><select id="program-event-${iso}" name="linked_card">${eventOptions(entry?.linked_card)}</select>`
+    +`<div class="program-prizes"><label for="program-buyin-${iso}">Buy-in (lei)<input id="program-buyin-${iso}" name="buy_in" type="number" min="0" step="1" inputmode="numeric" value="${entry?.buy_in??''}"></label>`
+    +`<label for="program-guaranteed-${iso}">Garantat (lei)<input id="program-guaranteed-${iso}" name="guaranteed" type="number" min="0" step="1" inputmode="numeric" value="${entry?.guaranteed??''}"></label></div>`
     +`<label for="program-image-${iso}">Imagine (opțional · JPG, PNG sau WEBP, max. 5 MB) · Recomandat: 1080 × 1440 px (portret 3:4)<input id="program-image-${iso}" name="image" type="file" accept="image/jpeg,image/png,image/webp" data-recommended="1080x1440" data-fit="cover"></label>`
     +`<img class="program-day-preview" alt="" hidden><p class="program-banner-note"></p>`
     +(entry?.image_url?`<button class="program-use-default" type="button">Folosește bannerul implicit</button>`:'')
@@ -68,7 +70,7 @@ function showDayBanner(form,entry){
 async function useDefaultBanner(form){
   const day=form.dataset.day, entry=programDays().get(day);
   try {
-    const replaced=await adminRpc('players_admin_set_schedule_day',{p_day:day,p_linked_card:entry.linked_card,p_image_url:null});
+    const replaced=await adminRpc('players_admin_set_schedule_day',{p_day:day,p_linked_card:entry.linked_card,p_image_url:null,p_buy_in:entry.buy_in??null,p_guaranteed:entry.guaranteed??null});
     await discardScheduleImage(replaced);
     await afterProgramChange({day,text:'Ziua folosește bannerul implicit.'});
   } catch(error){ setFormStatus(form,error.message,'error'); }
@@ -95,12 +97,21 @@ async function afterProgramChange(message){
   await Promise.all([renderProgramAdmin(message),window.PlayersSchedule.reload()]);
 }
 
+// Empty means "not set"; otherwise a whole number of lei, 0 or more. Returns undefined when invalid.
+function parseLei(value){
+  const text=String(value??'').trim();
+  if(!text) return null;
+  return /^\d+$/.test(text)?Number(text):undefined;
+}
+
 async function saveProgramDay(form){
   const data=new FormData(form), linkedCard=data.get('linked_card'), day=form.dataset.day, existing=programDays().get(day);
   if(!linkedCard){ setFormStatus(form,'Alege evenimentul zilei.','error'); return; }
+  const buyIn=parseLei(data.get('buy_in')), guaranteed=parseLei(data.get('guaranteed'));
+  if(buyIn===undefined||guaranteed===undefined){ setFormStatus(form,'Buy-in-ul și garantatul trebuie să fie sume întregi în lei (0 sau mai mult).','error'); return; }
   form.querySelector('button[type="submit"]').disabled=true;
   try {
-    await saveWithImage(data.get('image'),uploaded=>adminRpc('players_admin_set_schedule_day',{p_day:day,p_linked_card:linkedCard,p_image_url:uploaded||existing?.image_url||null}));
+    await saveWithImage(data.get('image'),uploaded=>adminRpc('players_admin_set_schedule_day',{p_day:day,p_linked_card:linkedCard,p_image_url:uploaded||existing?.image_url||null,p_buy_in:buyIn,p_guaranteed:guaranteed}));
     await afterProgramChange({day,text:'Ziua a fost salvată.'});
   } catch(error){ setFormStatus(form,error.message,'error'); form.querySelector('button[type="submit"]').disabled=false; }
 }
