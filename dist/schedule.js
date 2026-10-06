@@ -37,7 +37,12 @@
   function cardFor(name) { return [...document.querySelectorAll('#eventGrid .event')].find((card) => card.dataset.name === name) || null; }
   function cardLink(name) { const card = cardFor(name); return card?.id ? `#${card.id}` : '#events'; }
   // Banner shown for a day without its own image: the event's default programme banner, else the card poster.
-  const DEFAULT_DAY_IMAGES = { 'Seară de Șah': '/program/seara-de-sah.jpg' };
+  const DEFAULT_DAY_IMAGES = {
+    'Seară de Șah': '/program/seara-de-sah.jpg',
+    'Remi & Prieteni': '/program/remi.jpg',
+    'Seară de Table': '/program/table.jpg',
+    'Turneu de Ping-Pong': '/program/ping-pong.jpg',
+  };
   function defaultImage(name) { return DEFAULT_DAY_IMAGES[name] || cardPoster(name); }
   function cardPoster(name) {
     const banner = cardFor(name)?.querySelector('.event-banner');

@@ -78,6 +78,24 @@ test('a Seară de Șah day without its own image shows the default chess banner;
   expect((await page.request.get('/program/seara-de-sah.jpg')).ok()).toBe(true);
 });
 
+test('Remi, Table and Ping-Pong days without their own image show their default banners', async ({ page }) => {
+  await mockSupabase(page, {
+    scheduleDays: {
+      '2026-10-05': { linked_card: 'Remi & Prieteni', image_url: null },
+      '2026-10-09': { linked_card: 'Seară de Table', image_url: null },
+      '2026-10-10': { linked_card: 'Turneu de Ping-Pong', image_url: null },
+    },
+  });
+  await gotoLoaded(page, '/#program');
+
+  const days = page.locator('#program .schedule-day');
+  const expected = { 'Luni 5 oct.': '/program/remi.jpg', 'Vineri 9 oct.': '/program/table.jpg', 'Sâmbătă 10 oct.': '/program/ping-pong.jpg' };
+  for (const [day, src] of Object.entries(expected)) {
+    await expect(days.filter({ hasText: day }).locator('img')).toHaveAttribute('src', src);
+    expect((await page.request.get(src)).ok(), src).toBe(true);
+  }
+});
+
 test('clicking a programme image opens it large in a popup', async ({ page }) => {
   await mockSupabase(page, {
     scheduleDays: { '2026-10-08': { linked_card: 'Seară de Șah', image_url: `${SCHEDULE_BASE}special.jpg` } },
