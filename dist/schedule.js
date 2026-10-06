@@ -174,7 +174,8 @@
   }
 
   function render(start, data) {
-    const days = new Map(data.days.map((entry) => [entry.day, entry]));
+    // Days marked free (no linked event) show as empty, like days without anything planned.
+    const days = new Map(data.days.filter((entry) => entry.linked_card).map((entry) => [entry.day, entry]));
     if (!days.size) { section.hidden = true; return; }
     range.textContent = rangeLabel(start);
     const featured = data.featured_day && days.get(data.featured_day);
@@ -189,7 +190,7 @@
   // Every big event card shows the terms; a card in the programme also shows its next day (this week or next).
   function renderCardDays(days) {
     const today = isoDay(new Date()), tomorrow = isoDay(addDays(new Date(), 1));
-    const upcoming = days.filter((entry) => entry.day >= today).sort((a, b) => a.day.localeCompare(b.day));
+    const upcoming = days.filter((entry) => entry.linked_card && entry.day >= today).sort((a, b) => a.day.localeCompare(b.day));
     document.querySelectorAll('#eventGrid .event').forEach((card) => {
       card.querySelector('.card-terms')?.remove();
       const entry = upcoming.find((day) => day.linked_card === card.dataset.name);

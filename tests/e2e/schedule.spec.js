@@ -386,6 +386,37 @@ test('the default programme also sets buy-in, guaranteed prize and minimum playe
   await expect(panel.locator('.admin-form-status')).toHaveText('Vineri: buy-in-ul și garantatul trebuie să fie sume întregi în lei, iar minimul de jucători cel puțin 1.');
 });
 
+test('a day marked without an event stays free on the site even if the default programme has one', async ({ page }) => {
+  await mockSupabase(page, { scheduleTemplate: DEFAULT_WEEK, scheduleDays: { '2026-10-08': { linked_card: null, image_url: null } } });
+  await gotoLoaded(page, '/#program');
+
+  const thursday = page.locator('#program .schedule-day').filter({ hasText: 'Joi 8 oct.' });
+  await expect(thursday).toHaveClass(/is-empty/);
+  await expect(thursday).toContainText('Fără eveniment');
+  await expect(thursday.locator('.schedule-event')).toHaveCount(0);
+  // The chess card skips the free Thursday: Tuesday is past, so its next day is next Tuesday.
+  await expect(page.locator('#eventGrid .event[data-name="Seară de Șah"] .card-next-day')).toHaveText('Marți 13 oct.');
+});
+
+test('admin marks a default-programme day as free, and Clear brings the default back', async ({ page }) => {
+  const state = await mockSupabase(page, { admin: true, scheduleTemplate: DEFAULT_WEEK });
+  await openProgramAsAdmin(page);
+
+  const wednesday = () => page.locator('#dashboardProgram .program-day').nth(2);
+  await wednesday().getByLabel('Eveniment', { exact: true }).selectOption('');
+  await wednesday().getByRole('button', { name: 'Salvează ziua' }).click();
+
+  await expect(wednesday().locator('.admin-form-status')).toHaveText('Ziua a fost marcată fără eveniment.');
+  expect(state.calls.find(call => call.name === 'players_admin_close_schedule_day').body).toEqual({ p_day: '2026-10-07' });
+  await expect(wednesday().locator('.program-default-note')).toHaveText('Fără eveniment în această zi · „Golește” revine la programul implicit');
+  await expect(wednesday().getByLabel('Eveniment', { exact: true })).toHaveValue('');
+  await expect(page.locator('#program .schedule-day').filter({ hasText: 'Miercuri 7 oct.' })).toHaveClass(/is-empty/);
+
+  await wednesday().getByRole('button', { name: 'Golește' }).click();
+  await expect(wednesday().getByLabel('Eveniment', { exact: true })).toHaveValue('Seară de Table');
+  await expect(page.locator('#program .schedule-day').filter({ hasText: 'Miercuri 7 oct.' }).locator('.schedule-event')).toHaveText('Seară de Table');
+});
+
 test('the programme stays hidden when the week has nothing planned', async ({ page }) => {
   await mockSupabase(page);
   await gotoLoaded(page, '/#events');

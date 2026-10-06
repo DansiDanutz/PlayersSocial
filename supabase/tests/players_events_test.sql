@@ -170,6 +170,18 @@ begin
     assert public.players_public_schedule(week) ->> 'featured_day' is null, 'featured day kept after its day was cleared';
     assert (public.players_public_schedule(week) -> 'days' -> 2 ->> 'is_default')::boolean, 'cleared day does not fall back to the default programme';
 
+    -- A day can be marked free even when the default programme has an event; clearing it brings the default back.
+    perform public.players_admin_close_schedule_day(week + 1);
+    assert (public.players_public_schedule(week) -> 'days' -> 1 ->> 'is_closed')::boolean and public.players_public_schedule(week) -> 'days' -> 1 ->> 'linked_card' is null, 'closed day not public';
+    failed := false; begin perform public.players_admin_set_schedule_week(week, null, week + 1); exception when others then failed := true; end;
+    assert failed, 'a free day accepted as event of the week';
+    perform public.players_admin_clear_schedule_day(week + 1);
+    assert (public.players_public_schedule(week) -> 'days' -> 1 ->> 'is_default')::boolean, 'cleared free day does not fall back to the default programme';
+    perform set_config('request.jwt.claims', visitor_claims, true);
+    failed := false; begin perform public.players_admin_close_schedule_day(week + 1); exception when others then failed := true; end;
+    assert failed, 'non-admin marked a day free';
+    perform set_config('request.jwt.claims', admin_claims, true);
+
     -- Admins edit the default programme; visitors cannot.
     assert (select count(*) from public.players_admin_list_schedule_template()) between 0 and 7, 'admin cannot list the default programme';
     perform public.players_admin_set_schedule_template_day(1::smallint, 'Campionat de FIFA', '21:00', 20, 1000, 8);

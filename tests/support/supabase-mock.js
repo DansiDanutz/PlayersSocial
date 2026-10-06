@@ -52,7 +52,7 @@ function rpcHandlers(state) {
       const start = new Date(`${body.p_week_start}T00:00:00Z`), end = new Date(start.getTime() + 6 * 86400000);
       const inWeek = day => { const date = new Date(`${day}T00:00:00Z`); return date >= start && date <= end; };
       const week = state.scheduleWeeks[body.p_week_start] || {};
-      const own = Object.entries(state.scheduleDays).filter(([day]) => inWeek(day)).map(([day, row]) => ({ day, ...row }));
+      const own = Object.entries(state.scheduleDays).filter(([day]) => inWeek(day)).map(([day, row]) => ({ day, ...row, ...(row.linked_card ? {} : { is_closed: true }) }));
       const template = Array.from({ length: 7 }, (_, index) => new Date(start.getTime() + index * 86400000).toISOString().slice(0, 10))
         .filter(day => !state.scheduleDays[day] && state.scheduleTemplate[new Date(`${day}T00:00:00Z`).getUTCDay() || 7])
         .map(day => ({ day, image_url: null, buy_in: null, guaranteed: null, min_players: null, ...state.scheduleTemplate[new Date(`${day}T00:00:00Z`).getUTCDay() || 7], is_default: true }));
@@ -64,6 +64,12 @@ function rpcHandlers(state) {
       if (body.p_linked_card) state.scheduleTemplate[body.p_weekday] = { linked_card: body.p_linked_card, start_time: body.p_start_time ? `${body.p_start_time}:00`.slice(0, 8) : null, buy_in: body.p_buy_in ?? null, guaranteed: body.p_guaranteed ?? null, min_players: body.p_min_players ?? null };
       else delete state.scheduleTemplate[body.p_weekday];
       return null;
+    },
+    players_admin_close_schedule_day: (request, body) => {
+      const previous = state.scheduleDays[body.p_day]?.image_url || null;
+      state.scheduleDays[body.p_day] = { linked_card: null, image_url: null, start_time: null, buy_in: null, guaranteed: null, min_players: null };
+      Object.values(state.scheduleWeeks).forEach(week => { if (week.featured_day === body.p_day) week.featured_day = null; });
+      return previous;
     },
     players_admin_set_schedule_day: (request, body) => {
       const previous = state.scheduleDays[body.p_day]?.image_url || null;
