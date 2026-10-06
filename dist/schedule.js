@@ -200,7 +200,7 @@
       if (entry) {
         const when = entry.day === today ? 'Azi · ' : entry.day === tomorrow ? 'Mâine · ' : '';
         box.append(element('strong', 'card-next-day', `${when}${dayLabel(parseDay(entry.day))}`));
-      }
+      } else box.append(element('span', 'card-terms-note', 'Încă nu e în Program'));
       box.append(...prizeRow(entry || {}, card.dataset.name));
       card.querySelector('.details').before(box);
     });

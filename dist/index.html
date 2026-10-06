@@ -393,6 +393,10 @@
   .schedule-day.is-today.is-featured .schedule-when { background:#fff; color:#e0115f; box-shadow:0 0 10px rgba(255,255,255,.7); }
   .schedule-day.is-past { opacity:.55; }
   .card-terms { display:grid; gap:6px; margin:0 0 16px; padding:10px 12px; border:1px dashed rgba(25,20,17,.28); border-radius:14px; background:rgba(255,255,255,.55); } .card-next-label { font-size:.75rem; font-weight:900; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); } .card-next-day { font:800 1rem/1.2 "Fraunces",serif; } .event:has(.card-next) .coming-soon-banner, .event:has(.card-next) .event-date { display:none; }
+  /* big cards in a row line up: terms box, details and join button sit at the bottom with the same height;
+     the day line and two lines of terms are reserved even when a card shows fewer */
+  .event .card-terms { margin-top:auto; grid-template-rows:auto minmax(1.2rem,auto) minmax(calc(2.6rem + 4px),auto); align-content:start; } .event .card-terms + .details { margin-top:0; }
+  .card-terms .card-next-label { grid-row:1; } .card-terms .card-next-day, .card-terms .card-terms-note { grid-row:2; } .card-terms-note { color:var(--muted); font-size:.85rem; font-weight:700; } .card-terms .card-next-day, .card-terms .card-terms-note { line-height:1.2rem; } .card-terms .schedule-prizes { grid-row:3; align-content:flex-start; line-height:1.5; }
   .card-terms .schedule-prizes { display:flex; flex-wrap:wrap; gap:4px 14px; } .card-terms .schedule-prize { padding:0; border-radius:0; background:none; color:var(--ink); font-size:.85rem; font-weight:800; white-space:normal; }
   .image-viewer-info { width:0; min-width:100%; display:grid; gap:8px; padding:12px 16px 14px; border-radius:0 0 18px 18px; background:var(--ink); color:#fff; } .image-viewer-info[hidden] { display:none; }
   .image-viewer-title { font:800 1.05rem/1.2 "Fraunces",serif; } .image-viewer-info .schedule-prize { font-size:.85rem; padding:4px 12px; border:1px solid #d6a943; background:rgba(255,209,102,.12); color:#ffd166; }

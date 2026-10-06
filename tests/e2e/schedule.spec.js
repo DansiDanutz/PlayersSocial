@@ -248,6 +248,7 @@ test('every game card shows the club defaults — Free entry, Garantat 500 lei, 
   await expect(page.locator('#eventGrid .contact-event .card-terms')).toHaveCount(0);
   const table = page.locator('#eventGrid .event[data-name="Seară de Table"]');
   await expect(table.locator('.card-terms .schedule-prize')).toHaveText(['Free entry', 'Garantat 500 lei', 'Min. 10 jucători']);
+  await expect(table.locator('.card-terms-note')).toHaveText('Încă nu e în Program');
   await expect(table.locator('.card-next')).toHaveCount(0);
   await expect(table.locator('.event-date')).toBeVisible();
   const chess = page.locator('#eventGrid .event[data-name="Seară de Șah"]');
@@ -619,4 +620,30 @@ test('on phones every day fits on one line and the Azi chip stays readable on th
   }
   const chip = page.locator('#program .schedule-day.is-today .schedule-when');
   expect(await chip.evaluate(node => getComputedStyle(node).backgroundColor)).toBe('rgb(255, 255, 255)');
+});
+
+test('on desktop and tablet the big event cards line up their terms and join buttons in every row', async ({ page }) => {
+  test.skip(page.viewportSize().width < 700, 'grid layout');
+  for (const width of [1280, 820]) {
+    await page.setViewportSize({ width, height: 900 });
+    await mockSupabase(page, { scheduleTemplate: DEFAULT_WEEK });
+    await gotoLoaded(page, `/?width=${width}#events`);
+    await expect(page.locator('#eventGrid .card-terms').first()).toBeVisible();
+    const rows = await page.locator('#eventGrid .event:not([hidden])').evaluateAll(cards => {
+      const byRow = new Map();
+      for (const card of cards) {
+        if (getComputedStyle(card).display === 'none') continue;
+        const top = Math.round(card.getBoundingClientRect().top), terms = card.querySelector('.card-terms'), actions = card.querySelector('button.join');
+        byRow.set(top, [...(byRow.get(top) || []), { terms: terms ? Math.round(terms.getBoundingClientRect().top) : null, termsBottom: terms ? Math.round(terms.getBoundingClientRect().bottom) : null, actions: Math.round(actions.getBoundingClientRect().top) }]);
+      }
+      return [...byRow.values()].filter(row => row.length > 1);
+    });
+    expect(rows.length, `rows at ${width}px`).toBeGreaterThan(0);
+    for (const row of rows) {
+      expect(new Set(row.map(card => card.actions)).size, `join buttons aligned at ${width}px`).toBe(1);
+      const withTerms = row.filter(card => card.terms !== null);
+      expect(new Set(withTerms.map(card => card.terms)).size, `terms aligned at ${width}px`).toBeLessThanOrEqual(1);
+      expect(new Set(withTerms.map(card => card.termsBottom)).size, `terms same height at ${width}px`).toBeLessThanOrEqual(1);
+    }
+  }
 });
