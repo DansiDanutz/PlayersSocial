@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test');
-const { mockSupabase, gotoLoaded } = require('../support/supabase-mock');
+const { mockSupabase, gotoLoaded, featuredRow } = require('../support/supabase-mock');
 
 test.beforeEach(async ({ page }) => {
   await page.route('**/videos/*.mp4', route => route.fulfill({ status: 204, body: '' }));
@@ -260,4 +260,38 @@ test('on desktop the dashboard header names the current section and the sidebar 
   const fileButton = await page.locator('#videoFile').evaluate(node => { const style = getComputedStyle(node, '::file-selector-button'); return { radius: parseFloat(style.borderTopLeftRadius), weight: style.fontWeight }; });
   expect(fileButton.radius).toBeGreaterThanOrEqual(8);
   expect(Number(fileButton.weight)).toBeGreaterThanOrEqual(700);
+});
+
+test('on phones the admin forms never trigger zoom and every control and label is comfortable', async ({ page }) => {
+  test.skip(page.viewportSize().width > 600, 'phone layout');
+  await mockSupabase(page, { admin: true, events: [featuredRow({ event_name: 'Turneu de Remi', event_date: '2026-10-10', joined_count: 5 })], scheduleTemplate: { 2: { linked_card: 'Seară de Șah', start_time: '18:00:00' } } });
+  await gotoLoaded(page, '/');
+  await page.locator('#adminToggle').click();
+
+  const kpiLabel = await page.locator('.dashboard-kpi span').first().evaluate(node => parseFloat(getComputedStyle(node).fontSize));
+  expect(kpiLabel).toBeGreaterThanOrEqual(12);
+
+  const checks = [];
+  for (const [section, open] of [['dashboardFeatured', '.admin-create-toggle'], ['dashboardEvents', null], ['dashboardVideos', null], ['dashboardProgram', '.program-template summary'], ['dashboardAdmins', null]]) {
+    await page.locator(`.dashboard-nav button[data-section="${section}"]`).click();
+    if (open) await page.locator(open).click();
+    checks.push(...await page.locator(`#${section}`).evaluate(root => [...root.querySelectorAll('input:not([type=radio]):not([type=checkbox]):not([type=file]), select, textarea')]
+      .filter(node => node.getBoundingClientRect().width && parseFloat(getComputedStyle(node).fontSize) < 16)
+      .map(node => `${node.id || node.name} ${getComputedStyle(node).fontSize}`)));
+  }
+  expect(checks, 'form fields under 16px zoom the page on iPhone').toEqual([]);
+
+  await page.locator('.dashboard-nav button[data-section="dashboardProgram"]').click();
+  for (const label of ['.program-template-number', '.program-default-note']) {
+    const size = await page.locator(label).first().evaluate(node => parseFloat(getComputedStyle(node).fontSize));
+    expect(size, label).toBeGreaterThanOrEqual(12);
+  }
+  for (const arrow of ['.program-prev', '.program-next']) {
+    const box = await page.locator(arrow).boundingBox();
+    expect(Math.min(box.width, box.height), arrow).toBeGreaterThanOrEqual(44);
+  }
+  await page.locator('.dashboard-nav button[data-section="dashboardFeatured"]').click();
+  await page.locator('#featuredUpcoming summary, #featuredUpcoming button').first().click();
+  const hiddenToggle = await page.locator('#featuredUpcoming .admin-check').first().boundingBox();
+  expect(hiddenToggle.height).toBeGreaterThanOrEqual(44);
 });
