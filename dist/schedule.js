@@ -216,7 +216,7 @@
     } catch (error) { console.error('Weekly programme failed to load:', error); section.hidden = true; renderCardDays([]); }
   }
 
-  window.PlayersSchedule = { reload, fetchWeek, defaultImage, CLUB_TERMS, weekStart, addDays, isoDay, parseDay, dayLabel, rangeLabel };
+  window.PlayersSchedule = { reload, fetchWeek, defaultImage, CLUB_TERMS, prizeRow, weekStart, addDays, isoDay, parseDay, dayLabel, rangeLabel };
   reload().then(() => {
     if (location.hash === '#program' && !section.hidden) section.scrollIntoView({ block: 'start' });
   });

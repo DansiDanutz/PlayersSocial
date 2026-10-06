@@ -61,9 +61,9 @@ test('admin dashboard tabs show one section at a time', async ({ page }) => {
   expect(radio.width).toBeGreaterThanOrEqual(20);
   await openDashboardSection(page, 'dashboardEvents');
   await expect(page.locator('#dashboardEvents')).toBeVisible();
-  // On phones the header already names the section, so the section's own title is not repeated.
-  const sectionTitle = page.locator('.dashboard-section-title[data-panel="dashboardEvents"]');
-  if (page.viewportSize().width > 760) await expect(sectionTitle).toBeVisible(); else await expect(sectionTitle).toBeHidden();
+  // The header already names the section, so the section's own title is not repeated.
+  await expect(page.locator('.dashboard-current-title')).toHaveText('Carduri & notificări');
+  await expect(page.locator('.dashboard-section-title[data-panel="dashboardEvents"]')).toBeHidden();
   await expect(page.locator('#dashboardProgram')).toBeHidden();
   expect(await hasHorizontalOverflow(page)).toBe(false);
 });

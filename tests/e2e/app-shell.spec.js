@@ -217,3 +217,47 @@ test('when the app is already installed the button says so', async ({ page }) =>
   await expect(page.locator('#installHelp .install-installed')).toBeVisible();
   await expect(page.locator('#installHelp .install-installed')).toContainText('Aplicația este deja instalată');
 });
+
+test('the admin overview shows today\'s programme and quick actions to the main tools', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-10-06T12:00:00'));
+  await mockSupabase(page, { admin: true, scheduleTemplate: { 2: { linked_card: 'Seară de Șah', start_time: '18:00:00' } } });
+  await gotoLoaded(page, '/');
+  await page.locator('#adminToggle').click();
+
+  const today = page.locator('.dashboard-today');
+  await expect(today).toBeVisible();
+  await expect(today.locator('.dashboard-today-day')).toHaveText('Astăzi · Marți 6 oct.');
+  await expect(today.locator('.dashboard-today-event')).toHaveText('Seară de Șah');
+  await expect(today.locator('.schedule-prize')).toHaveText(['Ora 18:00', 'Free entry', 'Garantat 500 lei', 'Min. 10 jucători']);
+
+  await today.getByRole('button', { name: 'Programul implicit' }).click();
+  await expect(page.locator('#dashboardProgram')).toBeVisible();
+  await expect(page.locator('#dashboardProgram .program-template')).toHaveAttribute('open', '');
+  await expect(page.locator('.dashboard-today')).toBeHidden();
+
+  await page.locator('.dashboard-nav button[data-section="dashboardKpis"]').click();
+  await today.getByRole('button', { name: 'Încarcă un video' }).click();
+  await expect(page.locator('#dashboardVideos')).toBeVisible();
+  await page.locator('.dashboard-nav button[data-section="dashboardKpis"]').click();
+  await today.getByRole('button', { name: 'Creează eveniment' }).click();
+  await expect(page.locator('#dashboardFeatured')).toBeVisible();
+  await expect(page.locator('#createEventPanel')).toBeVisible();
+});
+
+test('on desktop the dashboard header names the current section and the sidebar has icons', async ({ page }) => {
+  test.skip(page.viewportSize().width < 760, 'desktop layout');
+  await mockSupabase(page, { admin: true });
+  await gotoLoaded(page, '/');
+  await page.locator('#adminToggle').click();
+
+  await page.locator('.dashboard-nav button[data-section="dashboardProgram"]').click();
+  await expect(page.locator('.dashboard-current-title')).toHaveText('Program');
+  await expect(page.locator('.dashboard-current-title')).toBeVisible();
+  await expect(page.getByText('Dashboard evenimente')).toBeHidden();
+  await expect(page.locator('#dashboardProgramTitle')).toBeHidden();
+  const icon = await page.locator('.dashboard-nav button[data-section="dashboardProgram"]').evaluate(node => getComputedStyle(node, '::before').content);
+  expect(icon).toBe('"📅"');
+  const fileButton = await page.locator('#videoFile').evaluate(node => { const style = getComputedStyle(node, '::file-selector-button'); return { radius: parseFloat(style.borderTopLeftRadius), weight: style.fontWeight }; });
+  expect(fileButton.radius).toBeGreaterThanOrEqual(8);
+  expect(Number(fileButton.weight)).toBeGreaterThanOrEqual(700);
+});

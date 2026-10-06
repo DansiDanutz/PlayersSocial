@@ -138,7 +138,26 @@ function renderProgramStatus(){
 }
 
 // Re-reads the shown week and redraws the tab; keeps a confirmation on the form that was just saved.
+// ---------- overview: today's programme and quick actions ----------
+async function renderDashboardToday(){
+  const card=document.querySelector('.dashboard-today-card'), today=new Date();
+  try {
+    const week=await PlayersSchedule.fetchWeek(PlayersSchedule.weekStart(today)), entry=week.days.find(day=>day.day===PlayersSchedule.isoDay(today));
+    const day=document.createElement('span'); day.className='dashboard-today-day'; day.textContent=`Astăzi · ${PlayersSchedule.dayLabel(today)}`;
+    if(!entry){ const free=document.createElement('p'); free.className='dashboard-today-free'; free.textContent='Nu e niciun eveniment în Program.'; card.replaceChildren(day,free); return; }
+    const name=document.createElement('strong'); name.className='dashboard-today-event'; name.textContent=entry.linked_card;
+    card.replaceChildren(day,name,...PlayersSchedule.prizeRow(entry));
+  } catch(error){ card.textContent='Programul de azi nu a putut fi încărcat.'; }
+}
+const QUICK_ACTIONS={
+  create:()=>{ showDashboardSection('dashboardFeatured'); toggleCreatePanel(true); },
+  video:()=>showDashboardSection('dashboardVideos'),
+  template:()=>{ showDashboardSection('dashboardProgram'); document.querySelector('.program-template').open=true; },
+};
+document.querySelectorAll('.dashboard-quick [data-quick]').forEach(button=>button.addEventListener('click',()=>QUICK_ACTIONS[button.dataset.quick]()));
+
 async function renderProgramAdmin(message){
+  renderDashboardToday();
   if(!programWeek){ programWeek=PlayersSchedule.weekStart(new Date()); renderProgramTemplate(); }
   document.querySelector('.program-week-label').textContent=PlayersSchedule.rangeLabel(programWeek);
   try { programData=await PlayersSchedule.fetchWeek(programWeek); }
