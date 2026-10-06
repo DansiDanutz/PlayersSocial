@@ -76,6 +76,19 @@ test('signing out clears the session', async ({ page }) => {
   expect(await page.evaluate(() => localStorage.getItem('players-admin-session'))).toBeNull();
 });
 
+test('a signed-in member becomes admin instantly when added, without signing in again', async ({ page }) => {
+  const state = await mockSupabase(page, { user: true });
+  await gotoLoaded(page, '/#events');
+  await expect(page.locator('#accountName')).toHaveText('Ana Maria Pop');
+  await expect(page.locator('#adminToggle')).toBeHidden();
+
+  state.admins.push('ana.pop@example.com');
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+
+  await expect(page.locator('#adminToggle')).toBeVisible();
+  await expect(page.locator('#accessToast')).toContainText('Ai primit acces de administrator');
+});
+
 test.describe('admin management', () => {
   async function openAdmins(page) {
     await page.locator('#adminToggle').click();
@@ -99,6 +112,18 @@ test.describe('admin management', () => {
     await expect(form.locator('.admin-form-status')).toHaveText('maria@example.com este acum administrator.');
     await expect(list).toHaveCount(3);
     expect(state.calls.find(call => call.name === 'players_admin_add_admin').body).toEqual({ p_email: 'maria@example.com' });
+  });
+
+  test('adding someone who is already admin just confirms it', async ({ page }) => {
+    await mockSupabase(page, { admin: true });
+    await gotoLoaded(page, '/#events');
+    await openAdmins(page);
+
+    const form = page.locator('.admin-add-form');
+    await form.getByLabel('Email nou administrator').fill('toma.alinflorin@yahoo.com');
+    await form.getByRole('button', { name: 'Adaugă administrator' }).click();
+    await expect(form.locator('.admin-form-status')).toHaveText('toma.alinflorin@yahoo.com este acum administrator.');
+    await expect(page.locator('#adminList .admin-member')).toHaveCount(2);
   });
 
   test('shows the server error for an invalid email', async ({ page }) => {
