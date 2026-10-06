@@ -43,7 +43,7 @@ function programDayForm(date){
   form.className='admin-controls program-day'; form.dataset.day=iso; form.noValidate=true;
   form.innerHTML=`<h4>${escapeHtml(PlayersSchedule.dayLabel(date))}</h4>`
     +`<label for="program-event-${iso}">Eveniment</label><select id="program-event-${iso}" name="linked_card">${eventOptions(entry?.linked_card)}</select>`
-    +`<label for="program-image-${iso}">Imagine (opțional · JPG, PNG sau WEBP, max. 5 MB)<input id="program-image-${iso}" name="image" type="file" accept="image/jpeg,image/png,image/webp"></label>`
+    +`<label for="program-image-${iso}">Imagine (opțional · JPG, PNG sau WEBP, max. 5 MB) · Recomandat: 1080 × 1440 px (portret 3:4)<input id="program-image-${iso}" name="image" type="file" accept="image/jpeg,image/png,image/webp" data-recommended="1080x1440" data-fit="cover"></label>`
     +(entry?.image_url?`<img class="program-day-preview" src="${escapeHtml(entry.image_url)}" alt="">`:'')
     +`<label class="admin-check" for="program-featured-${iso}"><input id="program-featured-${iso}" type="radio" name="featured" value="${iso}"${programData?.featured_day===iso?' checked':''}${entry?'':' disabled'}>Evenimentul săptămânii</label>`
     +`<p class="admin-form-status" aria-live="polite"></p><div class="admin-actions"><button class="primary" type="submit">Salvează ziua</button><button class="program-clear" type="button"${entry?'':' disabled'}>Golește</button></div>`;

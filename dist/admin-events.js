@@ -47,7 +47,7 @@ function baseEventFields(row,prefix,isCreate){
     field(`${prefix}-target`,'Locuri',`<input id="${prefix}-target" name="participant_target" type="number" required min="2" max="500" value="${escapeHtml(row.participant_target??16)}">`),
     field(`${prefix}-location`,'Locație',`<input id="${prefix}-location" name="location" required minlength="3" maxlength="120" value="${escapeHtml(row.location||DEFAULT_EVENT_LOCATION)}">`,true),
     field(`${prefix}-description`,'Descriere',`<textarea id="${prefix}-description" name="description" required minlength="10" maxlength="600">${escapeHtml(row.description||'')}</textarea>`,true),
-    field(`${prefix}-banner`,isCreate?'Banner (JPG, PNG sau WEBP, max. 5 MB)':'Înlocuiește bannerul (opțional)',`<span class="banner-field"><img class="banner-preview" alt="Previzualizare banner"${row.banner_url?` src="${escapeHtml(row.banner_url)}"`:''}><input id="${prefix}-banner" name="banner" type="file" accept="image/jpeg,image/png,image/webp"${isCreate?' required':''}></span>`,true),
+    field(`${prefix}-banner`,`${isCreate?'Banner (JPG, PNG sau WEBP, max. 5 MB)':'Înlocuiește bannerul (opțional)'} · Recomandat: 1080 × 1620 px (portret 2:3)`,`<span class="banner-field"><img class="banner-preview" alt="Previzualizare banner"${row.banner_url?` src="${escapeHtml(row.banner_url)}"`:''}><input id="${prefix}-banner" name="banner" type="file" accept="image/jpeg,image/png,image/webp" data-recommended="1080x1620" data-fit="cover"${isCreate?' required':''}></span>`,true),
   ].join('');
 }
 
