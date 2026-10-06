@@ -169,6 +169,23 @@ begin
     assert public.players_admin_clear_schedule_day(week + 2) = schedule_base || 'sah.jpg', 'clear did not return the image';
     assert public.players_public_schedule(week) ->> 'featured_day' is null, 'featured day kept after its day was cleared';
     assert (public.players_public_schedule(week) -> 'days' -> 2 ->> 'is_default')::boolean, 'cleared day does not fall back to the default programme';
+
+    -- Admins edit the default programme; visitors cannot.
+    assert (select count(*) from public.players_admin_list_schedule_template()) between 0 and 7, 'admin cannot list the default programme';
+    perform public.players_admin_set_schedule_template_day(1::smallint, 'Campionat de FIFA', '21:00');
+    assert public.players_public_schedule(week) -> 'days' -> 0 ->> 'linked_card' = 'Campionat de FIFA' and public.players_public_schedule(week) -> 'days' -> 0 ->> 'start_time' = '21:00:00', 'default programme change not applied';
+    perform public.players_admin_set_schedule_template_day(1::smallint, null, null);
+    assert not exists (select 1 from jsonb_array_elements(public.players_public_schedule(week) -> 'days') d where d ->> 'day' = week::text), 'cleared weekday still has a default event';
+    failed := false; begin perform public.players_admin_set_schedule_template_day(1::smallint, 'Turneu inventat', null); exception when others then failed := true; end;
+    assert failed, 'unknown default event accepted';
+    failed := false; begin perform public.players_admin_set_schedule_template_day(8::smallint, 'Seară de Șah', null); exception when others then failed := true; end;
+    assert failed, 'weekday 8 accepted';
+    perform set_config('request.jwt.claims', visitor_claims, true);
+    failed := false; begin perform public.players_admin_set_schedule_template_day(2::smallint, 'Seară de Table', null); exception when others then failed := true; end;
+    assert failed, 'non-admin changed the default programme';
+    failed := false; begin perform public.players_admin_list_schedule_template(); exception when others then failed := true; end;
+    assert failed, 'non-admin listed the default programme';
+    perform set_config('request.jwt.claims', admin_claims, true);
   end;
 
   -- Storage deletes need admins to see the object first: each admin bucket has an admin-only SELECT policy.

@@ -330,6 +330,35 @@ test('in admin a default day shows its event, says it comes from the default pro
   await expect(saved.getByRole('button', { name: 'Golește' })).toBeEnabled();
 });
 
+test('admin changes the weekly default programme for any weekday, and the site follows it', async ({ page }) => {
+  const state = await mockSupabase(page, { admin: true, scheduleTemplate: DEFAULT_WEEK });
+  await openProgramAsAdmin(page);
+
+  const panel = page.locator('#dashboardProgram .program-template');
+  await panel.locator('summary').click();
+  const rows = panel.locator('.program-template-day');
+  await expect(rows.locator('.program-template-name')).toHaveText(['Luni', 'Marți', 'Miercuri', 'Joi', 'Vineri', 'Sâmbătă', 'Duminică']);
+  await expect(rows.nth(1).getByLabel('Eveniment implicit Marți')).toHaveValue('Seară de Șah');
+  await expect(rows.nth(1).getByLabel('Ora implicită Marți')).toHaveValue('18:00');
+
+  await rows.nth(2).getByLabel('Eveniment implicit Miercuri').selectOption('Campionat de FIFA');
+  await rows.nth(2).getByLabel('Ora implicită Miercuri').fill('21:00');
+  await rows.nth(6).getByLabel('Eveniment implicit Duminică').selectOption('');
+  await panel.getByRole('button', { name: 'Salvează programul implicit' }).click();
+
+  await expect(panel.locator('.admin-form-status')).toHaveText('Programul implicit a fost salvat.');
+  const saves = state.calls.filter(call => call.name === 'players_admin_set_schedule_template_day').map(call => call.body);
+  expect(saves).toEqual([
+    { p_weekday: 3, p_linked_card: 'Campionat de FIFA', p_start_time: '21:00' },
+    { p_weekday: 7, p_linked_card: null, p_start_time: null },
+  ]);
+  const day = (label) => page.locator('#program .schedule-day').filter({ hasText: label });
+  await expect(day('Miercuri 7 oct.').locator('.schedule-event')).toHaveText('Campionat de FIFA');
+  await expect(day('Miercuri 7 oct.').locator('.schedule-prize').first()).toHaveText('Ora 21:00');
+  await expect(day('Duminică 11 oct.')).toHaveClass(/is-empty/);
+  await expect(page.locator('#dashboardProgram .program-day').nth(2).getByLabel('Eveniment', { exact: true })).toHaveValue('Campionat de FIFA');
+});
+
 test('the programme stays hidden when the week has nothing planned', async ({ page }) => {
   await mockSupabase(page);
   await gotoLoaded(page, '/#events');

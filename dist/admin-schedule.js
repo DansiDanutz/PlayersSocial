@@ -81,6 +81,43 @@ async function useDefaultBanner(form){
   } catch(error){ setFormStatus(form,error.message,'error'); }
 }
 
+// ---------- weekly default programme ----------
+const WEEKDAY_NAMES=['Luni','Marți','Miercuri','Joi','Vineri','Sâmbătă','Duminică'];
+let programTemplate=new Map();
+
+function programTemplateRow(weekday,name){
+  const row=programTemplate.get(weekday), item=document.createElement('div');
+  item.className='program-template-day'; item.dataset.weekday=String(weekday);
+  item.innerHTML=`<span class="program-template-name">${name}</span>`
+    +`<select name="card" aria-label="Eveniment implicit ${name}">${eventOptions(row?.linked_card)}</select>`
+    +`<input name="time" type="time" aria-label="Ora implicită ${name}" value="${row?.start_time?.slice(0,5)??''}">`;
+  return item;
+}
+
+async function renderProgramTemplate(){
+  const list=document.querySelector('.program-template-days');
+  try { programTemplate=new Map((await adminRpc('players_admin_list_schedule_template',{})).map(row=>[Number(row.weekday),row])); }
+  catch(error){ list.textContent='Programul implicit nu a putut fi încărcat. Încearcă din nou.'; return; }
+  list.replaceChildren(...WEEKDAY_NAMES.map((name,index)=>programTemplateRow(index+1,name)));
+}
+
+// Saves only the weekdays that changed, then redraws the tab and the public programme.
+async function saveProgramTemplate(form){
+  const changes=[...form.querySelectorAll('.program-template-day')].map(item=>{
+    const weekday=Number(item.dataset.weekday), card=item.querySelector('select').value||null, time=card?(item.querySelector('input').value||null):null, row=programTemplate.get(weekday);
+    return { weekday, card, time, changed:card!==(row?.linked_card??null)||time!==(row?.start_time?.slice(0,5)??null) };
+  }).filter(change=>change.changed);
+  if(!changes.length){ setFormStatus(form,'Nu ai schimbat nimic.','ok'); return; }
+  const button=form.querySelector('button[type="submit"]'); button.disabled=true;
+  try {
+    for(const change of changes) await adminRpc('players_admin_set_schedule_template_day',{p_weekday:change.weekday,p_linked_card:change.card,p_start_time:change.time});
+    await Promise.all([renderProgramTemplate(),afterProgramChange()]);
+    setFormStatus(form,'Programul implicit a fost salvat.','ok');
+  } catch(error){ setFormStatus(form,error.message,'error'); }
+  finally { button.disabled=false; }
+}
+document.querySelector('.program-template-form').addEventListener('submit',event=>{ event.preventDefault(); saveProgramTemplate(event.currentTarget); });
+
 function renderProgramStatus(){
   const status=document.querySelector('.program-week-status'), featured=programData?.featured_day&&programDays().get(programData.featured_day);
   status.textContent=featured?`Evenimentul săptămânii: ${featured.linked_card}, ${PlayersSchedule.dayLabel(PlayersSchedule.parseDay(featured.day))}`:'Nu ai ales evenimentul săptămânii.';
@@ -89,7 +126,7 @@ function renderProgramStatus(){
 
 // Re-reads the shown week and redraws the tab; keeps a confirmation on the form that was just saved.
 async function renderProgramAdmin(message){
-  if(!programWeek) programWeek=PlayersSchedule.weekStart(new Date());
+  if(!programWeek){ programWeek=PlayersSchedule.weekStart(new Date()); renderProgramTemplate(); }
   document.querySelector('.program-week-label').textContent=PlayersSchedule.rangeLabel(programWeek);
   try { programData=await PlayersSchedule.fetchWeek(programWeek); }
   catch(error){ document.querySelector('.program-days').textContent='Programul nu a putut fi încărcat. Încearcă din nou.'; return; }
