@@ -138,6 +138,19 @@
   window.addEventListener('players:account', (event) => { account = event.detail; refresh(); });
   refresh();
 
+  // ---------- floating WhatsApp button: out of the way while scrolling on phones ----------
+  const whatsappWidget = document.querySelector('.whatsapp-widget');
+  const whatsappToggle = document.getElementById('whatsappToggle');
+  const isPhone = window.matchMedia('(max-width: 600px)');
+  const SCROLL_IDLE_MS = 600;
+  let scrollIdle = 0;
+  window.addEventListener('scroll', () => {
+    if (!whatsappWidget || !isPhone.matches || whatsappToggle?.getAttribute('aria-expanded') === 'true') return;
+    whatsappWidget.classList.add('is-scrolling');
+    clearTimeout(scrollIdle);
+    scrollIdle = setTimeout(() => whatsappWidget.classList.remove('is-scrolling'), SCROLL_IDLE_MS);
+  }, { passive: true });
+
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch((error) => console.error('Service worker registration failed:', error));
   }

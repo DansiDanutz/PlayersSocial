@@ -295,3 +295,32 @@ test('on phones the admin forms never trigger zoom and every control and label i
   const hiddenToggle = await page.locator('#featuredUpcoming .admin-check').first().boundingBox();
   expect(hiddenToggle.height).toBeGreaterThanOrEqual(44);
 });
+
+test('on phones the floating WhatsApp button hides while scrolling and comes back when scrolling stops', async ({ page }) => {
+  test.skip(page.viewportSize().width > 600, 'phone layout');
+  await mockSupabase(page);
+  await gotoLoaded(page, '/');
+
+  const widget = page.locator('.whatsapp-widget');
+  const shown = () => widget.evaluate(node => getComputedStyle(node).opacity === '1' && getComputedStyle(node).pointerEvents !== 'none');
+  expect(await shown()).toBe(true);
+  await page.evaluate(() => window.scrollBy(0, 400));
+  await expect(widget).toHaveClass(/is-scrolling/);
+  await expect.poll(shown).toBe(false);
+  await expect(widget).not.toHaveClass(/is-scrolling/, { timeout: 3000 });
+  await expect.poll(shown).toBe(true);
+
+  // An open WhatsApp menu stays on screen while scrolling.
+  await page.locator('#whatsappToggle').click();
+  await page.evaluate(() => window.scrollBy(0, 200));
+  await expect(widget).not.toHaveClass(/is-scrolling/);
+});
+
+test('on desktop the floating WhatsApp button stays put while scrolling', async ({ page }) => {
+  test.skip(page.viewportSize().width <= 600, 'desktop layout');
+  await mockSupabase(page);
+  await gotoLoaded(page, '/');
+  await page.evaluate(() => window.scrollBy(0, 400));
+  await page.waitForTimeout(100);
+  await expect(page.locator('.whatsapp-widget')).not.toHaveClass(/is-scrolling/);
+});

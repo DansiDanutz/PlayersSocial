@@ -350,6 +350,8 @@
     .whatsapp-menu .menu-icon { width:24px; text-align:center; flex:none; font-size:1.2rem; }
     .whatsapp-fab { min-height:56px; display:flex; align-items:center; gap:10px; padding:0 20px 0 15px; border:2px solid var(--ink); border-radius:999px; background:#25d366; color:#102f1c; box-shadow:5px 5px 0 var(--ink); font:800 1rem "DM Sans",sans-serif; cursor:pointer; transition:transform .2s ease,box-shadow .2s ease; touch-action:manipulation; }
     .whatsapp-fab svg { width:28px; height:28px; flex:0 0 28px; fill:currentColor; }
+    .whatsapp-widget { transition:opacity .2s ease, transform .2s ease; } .whatsapp-widget.is-scrolling { opacity:0; transform:translateY(24px); pointer-events:none; }
+    @media (prefers-reduced-motion:reduce) { .whatsapp-widget { transition:opacity .2s ease; } .whatsapp-widget.is-scrolling { transform:none; } }
     .whatsapp-fab:hover { transform:translateY(-3px); box-shadow:7px 7px 0 var(--ink); }
     .whatsapp-fab:active { transform:scale(.97); box-shadow:3px 3px 0 var(--ink); }
     .whatsapp-fab:focus-visible { outline:4px solid var(--blue); outline-offset:4px; }
