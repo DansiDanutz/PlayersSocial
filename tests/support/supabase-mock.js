@@ -48,6 +48,29 @@ function rpcHandlers(state) {
       state.videos = state.videos.filter(video => video.id !== body.p_id);
       return [{ video_url: row.video_url, poster_url: row.poster_url }];
     },
+    players_public_schedule: (request, body) => {
+      const start = new Date(`${body.p_week_start}T00:00:00Z`), end = new Date(start.getTime() + 6 * 86400000);
+      const inWeek = day => { const date = new Date(`${day}T00:00:00Z`); return date >= start && date <= end; };
+      const week = state.scheduleWeeks[body.p_week_start] || {};
+      const days = Object.entries(state.scheduleDays).filter(([day]) => inWeek(day)).sort().map(([day, row]) => ({ day, ...row }));
+      return { week_start: body.p_week_start, image_url: week.image_url || null, featured_day: week.featured_day || null, days };
+    },
+    players_admin_set_schedule_day: (request, body) => {
+      const previous = state.scheduleDays[body.p_day]?.image_url || null;
+      state.scheduleDays[body.p_day] = { linked_card: body.p_linked_card, image_url: body.p_image_url || null };
+      return previous !== (body.p_image_url || null) ? previous : null;
+    },
+    players_admin_clear_schedule_day: (request, body) => {
+      const previous = state.scheduleDays[body.p_day]?.image_url || null;
+      delete state.scheduleDays[body.p_day];
+      Object.values(state.scheduleWeeks).forEach(week => { if (week.featured_day === body.p_day) week.featured_day = null; });
+      return previous;
+    },
+    players_admin_set_schedule_week: (request, body) => {
+      const previous = state.scheduleWeeks[body.p_week_start]?.image_url || null;
+      state.scheduleWeeks[body.p_week_start] = { image_url: body.p_image_url || null, featured_day: body.p_featured_day || null };
+      return previous !== (body.p_image_url || null) ? previous : null;
+    },
     players_admin_list_admins: () => state.admins.map(email => ({ email, added_at: '2026-09-19T10:00:00Z', added_by: null })),
     players_admin_add_admin: (request, body) => {
       const email = String(body.p_email || '').trim().toLowerCase();
@@ -89,15 +112,15 @@ async function handle(route, state) {
     state.calls.push({ name: 'verify', body });
     return body?.token_hash === 'valid-hash' ? json(route, { access_token: ADMIN_TOKEN, refresh_token: 'refresh' }) : json(route, { message: 'expired' }, 403);
   }
-  if (path.startsWith('/storage/v1/object/players-event-banners/') || path.startsWith('/storage/v1/object/players-videos/')) {
+  if (path.startsWith('/storage/v1/object/players-event-banners/') || path.startsWith('/storage/v1/object/players-videos/') || path.startsWith('/storage/v1/object/players-schedule/')) {
     state.calls.push({ name: `storage:${request.method()}`, path });
     return json(route, { Key: path });
   }
   return json(route, { message: `unmocked ${request.method()} ${path}` }, 404);
 }
 
-async function mockSupabase(page, { events = [], registrants = [], videos = [], videosFail = false, admin = false, user = false } = {}) {
-  const state = { events: [...CATEGORY_CARDS.map(categoryRow), ...events], registrants, videos: [...videos], videosFail, admins: [ADMIN_EMAIL, 'toma.alinflorin@yahoo.com'], calls: [] };
+async function mockSupabase(page, { events = [], registrants = [], videos = [], videosFail = false, scheduleDays = {}, scheduleWeeks = {}, admin = false, user = false } = {}) {
+  const state = { events: [...CATEGORY_CARDS.map(categoryRow), ...events], registrants, videos: [...videos], videosFail, scheduleDays: { ...scheduleDays }, scheduleWeeks: { ...scheduleWeeks }, admins: [ADMIN_EMAIL, 'toma.alinflorin@yahoo.com'], calls: [] };
   await page.route(`${SUPABASE_ORIGIN}/**`, route => handle(route, state));
   await page.route(/fonts\.(googleapis|gstatic)\.com|maps\.google/, route => route.abort());
   const sessionToken = admin ? ADMIN_TOKEN : user ? USER_TOKEN : null;
@@ -118,4 +141,6 @@ function videoRow(overrides) {
   return { id: 'video-db-1', category: 'remi', video_type: 'event', title: 'Seara de Remi · 10 octombrie', description: 'Momente de la turneu.', video_url: `${VIDEO_BASE}seara-remi.mp4`, poster_url: null, created_at: '2026-10-01T12:00:00Z', ...overrides };
 }
 
-module.exports = { mockSupabase, featuredRow, videoRow, gotoLoaded, ADMIN_TOKEN, ADMIN_EMAIL, USER_TOKEN, USER, VIDEO_BASE };
+const SCHEDULE_BASE = `${SUPABASE_ORIGIN}/storage/v1/object/public/players-schedule/`;
+
+module.exports = { mockSupabase, featuredRow, videoRow, gotoLoaded, ADMIN_TOKEN, ADMIN_EMAIL, USER_TOKEN, USER, VIDEO_BASE, SCHEDULE_BASE };
