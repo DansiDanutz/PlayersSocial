@@ -418,7 +418,7 @@
     .schedule-day { flex-direction:row; align-items:center; gap:12px; padding:8px 12px; min-height:64px; } .schedule-day.is-featured { transform:none; }
     .schedule-day { display:grid; grid-template-columns:112px 56px minmax(0,1fr); grid-template-areas:"when img link" "date img link"; column-gap:12px; row-gap:3px; }
     .schedule-when { grid-area:when; justify-self:start; } .schedule-date { grid-area:date; font-size:.8rem; white-space:nowrap; } .schedule-day:not(:has(.schedule-when)) .schedule-date { grid-row:1 / span 2; }
-    .schedule-free { margin:0; grid-column:2 / -1; grid-row:1 / span 2; }
+    .schedule-free { margin:0; grid-column:3; grid-row:1 / span 2; }
     .schedule-link { grid-area:link; display:grid; gap:2px; align-items:center; } .schedule-day .image-zoom { grid-area:img; width:56px; } .schedule-day .image-zoom img { width:56px; aspect-ratio:1; border-radius:10px; }
     .video-list { grid-template-columns:none; grid-auto-flow:column; grid-auto-columns:82%; overflow-x:auto; scroll-snap-type:x mandatory; overscroll-behavior-x:contain; padding:4px 10px 16px 2px; -webkit-overflow-scrolling:touch; } .library-video { scroll-snap-align:start; }
     .video-swipe-hint { display:block; margin:-14px 0 14px; color:var(--muted); font-size:.88rem; font-weight:700; }
