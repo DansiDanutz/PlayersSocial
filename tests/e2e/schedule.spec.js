@@ -266,6 +266,17 @@ test('Team Building and charity days in the programme show only their day and ti
   await expect(page.locator('#eventGrid .event[data-name="Evenimente Caritabile"] .card-terms')).toHaveCount(0);
 });
 
+test('a day note shows on the day card, the big event card and in the popup', async ({ page }) => {
+  await mockSupabase(page, { scheduleDays: { '2026-10-10': { linked_card: 'Seară de Șah', image_url: null, start_time: '14:00:00', buy_in: 60, guaranteed: 1000, note: 'Studenți: 130 lei pentru ambele turnee' } } });
+  await gotoLoaded(page, '/#program');
+
+  const saturday = page.locator('#program .schedule-day').filter({ hasText: 'Sâmbătă 10 oct.' });
+  await expect(saturday.locator('.schedule-note')).toHaveText('Studenți: 130 lei pentru ambele turnee');
+  await expect(page.locator('#eventGrid .event[data-name="Seară de Șah"] .card-terms .schedule-note')).toHaveText('Studenți: 130 lei pentru ambele turnee');
+  await saturday.getByRole('button', { name: 'Mărește imaginea' }).click();
+  await expect(page.locator('#imageViewer .schedule-note')).toHaveText('Studenți: 130 lei pentru ambele turnee');
+});
+
 test('clicking a programme image opens it large in a popup', async ({ page }) => {
   await mockSupabase(page, {
     scheduleDays: { '2026-10-08': { linked_card: 'Seară de Șah', image_url: `${SCHEDULE_BASE}special.jpg` } },
@@ -457,7 +468,7 @@ test.describe('admin Program tab', () => {
     await expect(thursday.locator('.admin-form-status')).toHaveText('Ziua a fost salvată.');
     const upload = state.calls.find(call => call.name === 'storage:POST');
     expect(upload.path).toMatch(/^\/storage\/v1\/object\/players-schedule\/[A-Za-z0-9._-]+\.jpg$/);
-    expect(state.calls.find(call => call.name === 'players_admin_set_schedule_day').body).toEqual({ p_day: '2026-10-08', p_linked_card: 'Remi & Prieteni', p_image_url: `${SCHEDULE_BASE}${upload.path.split('/').pop()}`, p_start_time: null, p_buy_in: 0, p_guaranteed: 500, p_min_players: 10 });
+    expect(state.calls.find(call => call.name === 'players_admin_set_schedule_day').body).toEqual({ p_day: '2026-10-08', p_linked_card: 'Remi & Prieteni', p_image_url: `${SCHEDULE_BASE}${upload.path.split('/').pop()}`, p_start_time: null, p_buy_in: 0, p_guaranteed: 500, p_min_players: 10, p_note: null });
     await expect(page.locator('#program .schedule-day').filter({ hasText: 'Joi 8 oct.' }).locator('.schedule-event')).toHaveText('Remi & Prieteni');
   });
 
@@ -488,7 +499,7 @@ test.describe('admin Program tab', () => {
     await tuesday.getByRole('button', { name: 'Salvează ziua' }).click();
 
     await expect(page.locator('#dashboardProgram .program-day').nth(1).locator('.admin-form-status')).toHaveText('Ziua a fost salvată.');
-    expect(state.calls.find(call => call.name === 'players_admin_set_schedule_day').body).toEqual({ p_day: '2026-10-06', p_linked_card: 'Seară de Șah', p_image_url: null, p_start_time: '18:00', p_buy_in: 10, p_guaranteed: 500, p_min_players: 10 });
+    expect(state.calls.find(call => call.name === 'players_admin_set_schedule_day').body).toEqual({ p_day: '2026-10-06', p_linked_card: 'Seară de Șah', p_image_url: null, p_start_time: '18:00', p_buy_in: 10, p_guaranteed: 500, p_min_players: 10, p_note: null });
     const saved = page.locator('#dashboardProgram .program-day').nth(1);
     await expect(saved.getByLabel('Ora de început')).toHaveValue('18:00');
     await expect(saved.getByLabel('Buy-in (lei)')).toHaveValue('10');
@@ -510,7 +521,7 @@ test.describe('admin Program tab', () => {
     await friday.getByRole('button', { name: 'Salvează ziua' }).click();
 
     await expect(page.locator('#dashboardProgram .program-day').nth(4).locator('.admin-form-status')).toHaveText('Ziua a fost salvată.');
-    expect(state.calls.find(call => call.name === 'players_admin_set_schedule_day').body).toEqual({ p_day: '2026-10-09', p_linked_card: 'Karaoke Club', p_image_url: null, p_start_time: null, p_buy_in: 0, p_guaranteed: 500, p_min_players: 16 });
+    expect(state.calls.find(call => call.name === 'players_admin_set_schedule_day').body).toEqual({ p_day: '2026-10-09', p_linked_card: 'Karaoke Club', p_image_url: null, p_start_time: null, p_buy_in: 0, p_guaranteed: 500, p_min_players: 16, p_note: null });
     await expect(page.locator('#program .schedule-day').filter({ hasText: 'Vineri 9 oct.' }).locator('.schedule-prize')).toHaveText(['Free entry', 'Garantat 500 lei', 'Min. 16 jucători']);
   });
 
@@ -525,6 +536,22 @@ test.describe('admin Program tab', () => {
       expect(labels[i].overflow, `label ${i} overflows`).toBe(false);
       for (let j = i + 1; j < labels.length; j += 1) expect(overlap(labels[i], labels[j]), `labels ${i} and ${j} overlap`).toBe(false);
     }
+  });
+
+  test('admin adds a note to a day, which is saved and shown on the site', async ({ page }) => {
+    const state = await mockSupabase(page, { admin: true });
+    await gotoLoaded(page, '/#events');
+    await openProgram(page);
+
+    const saturday = page.locator('#dashboardProgram .program-day').nth(5);
+    await saturday.getByLabel('Eveniment', { exact: true }).selectOption('Seară de Șah');
+    await saturday.getByLabel('Notă (opțional)').fill('  Studenți: 130 lei pentru ambele turnee  ');
+    await saturday.getByRole('button', { name: 'Salvează ziua' }).click();
+
+    await expect(page.locator('#dashboardProgram .program-day').nth(5).locator('.admin-form-status')).toHaveText('Ziua a fost salvată.');
+    expect(state.calls.find(call => call.name === 'players_admin_set_schedule_day').body.p_note).toBe('Studenți: 130 lei pentru ambele turnee');
+    await expect(page.locator('#dashboardProgram .program-day').nth(5).getByLabel('Notă (opțional)')).toHaveValue('Studenți: 130 lei pentru ambele turnee');
+    await expect(page.locator('#program .schedule-day').filter({ hasText: 'Sâmbătă 10 oct.' }).locator('.schedule-note')).toHaveText('Studenți: 130 lei pentru ambele turnee');
   });
 
   test('the buy-in and guaranteed prize must be whole amounts in lei', async ({ page }) => {
@@ -576,7 +603,7 @@ test.describe('admin Program tab', () => {
     await thursday.getByRole('button', { name: 'Folosește bannerul implicit' }).click();
 
     await expect(thursday.locator('.admin-form-status')).toHaveText('Ziua folosește bannerul implicit.');
-    expect(state.calls.find(call => call.name === 'players_admin_set_schedule_day').body).toEqual({ p_day: '2026-10-08', p_linked_card: 'Seară de Șah', p_image_url: null, p_start_time: '18:00', p_buy_in: 10, p_guaranteed: 500, p_min_players: null });
+    expect(state.calls.find(call => call.name === 'players_admin_set_schedule_day').body).toEqual({ p_day: '2026-10-08', p_linked_card: 'Seară de Șah', p_image_url: null, p_start_time: '18:00', p_buy_in: 10, p_guaranteed: 500, p_min_players: null, p_note: null });
     expect(state.calls.some(call => call.name === 'storage:DELETE' && call.path.endsWith('/special.jpg'))).toBe(true);
     await expect(page.locator('#dashboardProgram .program-day').nth(3).locator('.program-day-preview')).toHaveAttribute('src', '/program/seara-de-sah.jpg');
   });

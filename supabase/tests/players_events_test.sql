@@ -113,7 +113,7 @@ begin
   -- Weekly programme: public read, admin-only writes, events limited to category cards, featured day within the week.
   perform set_config('role', 'postgres', true);
   assert has_function_privilege('anon', 'public.players_public_schedule(date)', 'execute'), 'anon cannot read the schedule';
-  assert not has_function_privilege('anon', 'public.players_admin_set_schedule_day(date,text,text,time,integer,integer,integer)', 'execute'), 'anon can set schedule days';
+  assert not has_function_privilege('anon', 'public.players_admin_set_schedule_day(date,text,text,time,integer,integer,integer,text)', 'execute'), 'anon can set schedule days';
   assert not has_function_privilege('anon', 'public.players_admin_clear_schedule_day(date)', 'execute'), 'anon can clear schedule days';
   assert not has_function_privilege('anon', 'public.players_admin_set_schedule_week(date,text,date)', 'execute'), 'anon can set the schedule week';
   perform set_config('role', 'authenticated', true);
@@ -130,7 +130,9 @@ begin
     assert public.players_admin_set_schedule_day(week + 2, 'Remi & Prieteni', schedule_base || 'remi.jpg') is null, 'first save returned an old image';
     assert public.players_admin_set_schedule_day(week + 2, 'Seară de Șah', schedule_base || 'sah.jpg') = schedule_base || 'remi.jpg', 'replaced image not returned';
     perform public.players_admin_set_schedule_day(week + 4, 'Karaoke Club', null);
-    perform public.players_admin_set_schedule_day(week + 3, 'Seară de Table', null, '18:30', 10, 500, 12);
+    perform public.players_admin_set_schedule_day(week + 3, 'Seară de Table', null, '18:30', 10, 500, 12, '  Studenți: 130 lei  ');
+    failed := false; begin perform public.players_admin_set_schedule_day(week + 5, 'Remi & Prieteni', null, null, null, null, null, repeat('x', 201)); exception when others then failed := true; end;
+    assert failed, 'note over 200 characters accepted';
     failed := false; begin perform public.players_admin_set_schedule_day(week + 5, 'Remi & Prieteni', null, null, null, null, 0); exception when others then failed := true; end;
     assert failed, 'zero minimum players accepted';
     failed := false; begin perform public.players_admin_set_schedule_day(week + 5, 'Remi & Prieteni', null, null, -1, null); exception when others then failed := true; end;
@@ -157,6 +159,7 @@ begin
     assert (schedule -> 'days' -> 3 ->> 'buy_in')::int = 10 and (schedule -> 'days' -> 3 ->> 'guaranteed')::int = 500, 'buy-in and guaranteed not public';
     assert schedule -> 'days' -> 3 ->> 'start_time' = '18:30:00', 'start time not public';
     assert (schedule -> 'days' -> 3 ->> 'min_players')::int = 12, 'minimum players not public';
+    assert schedule -> 'days' -> 3 ->> 'note' = 'Studenți: 130 lei', 'note not public or not trimmed';
     assert (schedule -> 'days' -> 0 ->> 'is_default')::boolean and schedule -> 'days' -> 0 ->> 'linked_card' = monday_default, 'Monday does not follow the default programme';
     assert not has_table_privilege('anon', 'public.players_schedule_template', 'select'), 'anon can read the template directly';
 

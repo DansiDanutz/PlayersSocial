@@ -90,12 +90,16 @@
     }
     return items.map(([kind, label]) => element('span', `schedule-prize ${kind}`, label));
   }
+  // The terms as a row of chips, then the day's note (e.g. a student offer) when it has one.
   function prizeRow(entry, name) {
-    const chips = prizeChips(entry, name);
-    if (!chips.length) return [];
-    const row = element('div', 'schedule-prizes');
-    row.append(...chips);
-    return [row];
+    const chips = prizeChips(entry, name), parts = [];
+    if (chips.length) {
+      const row = element('div', 'schedule-prizes');
+      row.append(...chips);
+      parts.push(row);
+    }
+    if (entry.note) parts.push(element('p', 'schedule-note', entry.note));
+    return parts;
   }
 
   function element(tag, className, text) {
@@ -131,6 +135,9 @@
     info.hidden = !details;
     viewer.querySelector('.image-viewer-title').textContent = details?.title || '';
     viewer.querySelector('.image-viewer-info .schedule-prizes').replaceChildren(...(details ? prizeChips(details.entry) : []));
+    const note = viewer.querySelector('.image-viewer-info .schedule-note');
+    note.textContent = details?.entry.note || '';
+    note.hidden = !details?.entry.note;
     if (!viewer.open) viewer.showModal();
   }
   viewer.querySelector('.image-viewer-close').addEventListener('click', () => viewer.close());

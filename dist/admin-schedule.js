@@ -50,6 +50,7 @@ function programDayForm(date){
     +`<div class="program-prizes"><label for="program-buyin-${iso}">Buy-in (lei)<input id="program-buyin-${iso}" name="buy_in" type="number" min="0" step="1" inputmode="numeric" value="${entry?.buy_in??PlayersSchedule.CLUB_TERMS.buy_in}"></label>`
     +`<label for="program-guaranteed-${iso}">Garantat (lei)<input id="program-guaranteed-${iso}" name="guaranteed" type="number" min="0" step="1" inputmode="numeric" value="${entry?.guaranteed??PlayersSchedule.CLUB_TERMS.guaranteed}"></label>`
     +`<label for="program-players-${iso}">Minim jucători<input id="program-players-${iso}" name="min_players" type="number" min="1" step="1" inputmode="numeric" value="${entry?.min_players??PlayersSchedule.CLUB_TERMS.min_players}"></label></div>`
+    +`<label for="program-note-${iso}">Notă (opțional)<input id="program-note-${iso}" name="note" type="text" maxlength="200" placeholder="ex. Studenți: 130 lei pentru ambele turnee" value="${escapeHtml(entry?.note??'')}"></label>`
     +`<label for="program-image-${iso}">Imagine (opțional · JPG, PNG sau WEBP, max. 5 MB) · Recomandat: 1080 × 1440 px (portret 3:4)<input id="program-image-${iso}" name="image" type="file" accept="image/jpeg,image/png,image/webp" data-recommended="1080x1440" data-fit="cover"></label>`
     +`<img class="program-day-preview" alt="" hidden><p class="program-banner-note"></p>`
     +(entry?.image_url?`<button class="program-use-default" type="button">Folosește bannerul implicit</button>`:'')
@@ -75,7 +76,7 @@ function showDayBanner(form,entry){
 async function useDefaultBanner(form){
   const day=form.dataset.day, entry=programDays().get(day);
   try {
-    const replaced=await adminRpc('players_admin_set_schedule_day',{p_day:day,p_linked_card:entry.linked_card,p_image_url:null,p_start_time:entry.start_time?.slice(0,5)??null,p_buy_in:entry.buy_in??null,p_guaranteed:entry.guaranteed??null,p_min_players:entry.min_players??null});
+    const replaced=await adminRpc('players_admin_set_schedule_day',{p_day:day,p_linked_card:entry.linked_card,p_image_url:null,p_start_time:entry.start_time?.slice(0,5)??null,p_buy_in:entry.buy_in??null,p_guaranteed:entry.guaranteed??null,p_min_players:entry.min_players??null,p_note:entry.note??null});
     await discardScheduleImage(replaced);
     await afterProgramChange({day,text:'Ziua folosește bannerul implicit.'});
   } catch(error){ setFormStatus(form,error.message,'error'); }
@@ -195,7 +196,7 @@ async function saveProgramDay(form){
   if(minPlayers===undefined||minPlayers===0){ setFormStatus(form,'Minimul de jucători trebuie să fie un număr întreg, cel puțin 1.','error'); return; }
   form.querySelector('button[type="submit"]').disabled=true;
   try {
-    await saveWithImage(data.get('image'),uploaded=>adminRpc('players_admin_set_schedule_day',{p_day:day,p_linked_card:linkedCard,p_image_url:uploaded||existing?.image_url||null,p_start_time:data.get('start_time')||null,p_buy_in:buyIn,p_guaranteed:guaranteed,p_min_players:minPlayers}));
+    await saveWithImage(data.get('image'),uploaded=>adminRpc('players_admin_set_schedule_day',{p_day:day,p_linked_card:linkedCard,p_image_url:uploaded||existing?.image_url||null,p_start_time:data.get('start_time')||null,p_buy_in:buyIn,p_guaranteed:guaranteed,p_min_players:minPlayers,p_note:String(data.get('note')??'').trim()||null}));
     await afterProgramChange({day,text:'Ziua a fost salvată.'});
   } catch(error){ setFormStatus(form,error.message,'error'); form.querySelector('button[type="submit"]').disabled=false; }
 }

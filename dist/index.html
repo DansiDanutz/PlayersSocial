@@ -394,6 +394,8 @@
   .schedule-day.is-today .schedule-when { background:#ff3d8b; box-shadow:0 0 10px rgba(255,61,139,.8); }
   .schedule-day.is-today.is-featured .schedule-when { background:#fff; color:#e0115f; box-shadow:0 0 10px rgba(255,255,255,.7); }
   .schedule-day.is-past { opacity:.55; }
+  .schedule-note { margin:2px 0 0; color:#b4005a; font-size:.8rem; font-weight:800; line-height:1.35; } .schedule-note::before { content:"✦ "; }
+  .schedule-day.is-featured .schedule-note, .schedule-featured .schedule-note { color:#fff; } .image-viewer-info .schedule-note { color:#ffd166; } .card-terms .schedule-note { grid-row:4; }
   .card-terms { display:grid; gap:6px; margin:0 0 16px; padding:10px 12px; border:1px dashed rgba(25,20,17,.28); border-radius:14px; background:rgba(255,255,255,.55); } .card-next-label { font-size:.75rem; font-weight:900; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); } .card-next-day { font:800 1rem/1.2 "Fraunces",serif; } .event:has(.card-next) .coming-soon-banner, .event:has(.card-next) .event-date { display:none; }
   /* big cards in a row line up: terms box, details and join button sit at the bottom with the same height;
      the day line and two lines of terms are reserved even when a card shows fewer */
@@ -529,7 +531,7 @@
   <div class="ticker" aria-hidden="true"><span>ȘAH <b>✦</b> TABLE <b>✦</b> PING-PONG <b>✦</b> KARAOKE <b>✦</b> STAND-UP <b>✦</b> REMI <b>✦</b> FIFA <b>✦</b> CHAMPIONS LEAGUE <b>✦</b> TEAM BUILDING <b>✦</b> EVENIMENTE CARITABILE <b>✦</b> ȘAH <b>✦</b> TABLE <b>✦</b> PING-PONG <b>✦</b> KARAOKE <b>✦</b> STAND-UP <b>✦</b> REMI <b>✦</b> FIFA <b>✦</b> CHAMPIONS LEAGUE <b>✦</b> TEAM BUILDING <b>✦</b> EVENIMENTE CARITABILE <b>✦</b> </span></div>
   <main id="events"><div class="shell"><div class="section-head"><div><h2>La ce ai chef?</h2><p>Alege ceva distractiv. Noi îți păstrăm un loc.</p></div><div class="filters" role="group" aria-label="Filtrează evenimentele"><button class="filter active" data-filter="all">Toate</button><button class="filter" data-filter="table">Jocuri de masă</button><button class="filter" data-filter="active">Mișcare</button><button class="filter" data-filter="stage">Pe scenă</button><button class="filter" data-filter="football">Fotbal</button><button class="filter" data-filter="community">Grupuri &amp; cauze</button></div></div>
     <section class="weekly-schedule" id="program" aria-labelledby="programTitle" hidden><div class="section-head"><div><h2 id="programTitle">Programul săptămânii</h2><p class="schedule-range"></p></div></div><div class="schedule-featured-slot"></div><div class="schedule-layout"><div class="schedule-days"></div></div></section>
-    <dialog class="image-viewer" id="imageViewer" aria-label="Imagine mărită"><button type="button" class="image-viewer-close" aria-label="Închide">×</button><img alt=""><div class="image-viewer-info" hidden><strong class="image-viewer-title"></strong><div class="schedule-prizes"></div></div></dialog>
+    <dialog class="image-viewer" id="imageViewer" aria-label="Imagine mărită"><button type="button" class="image-viewer-close" aria-label="Închide">×</button><img alt=""><div class="image-viewer-info" hidden><strong class="image-viewer-title"></strong><div class="schedule-prizes"></div><p class="schedule-note" hidden></p></div></dialog>
     <div id="featuredEvents"></div>
     <p class="events-swipe-hint" aria-hidden="true">Glisează lateral pentru toate evenimentele →</p>
     <div class="events" id="eventGrid">
