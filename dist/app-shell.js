@@ -8,7 +8,8 @@
   const installButton = document.getElementById('installApp');
   const menuInstall = document.getElementById('menuInstall');
   const installHelp = document.getElementById('installHelp');
-  let account = { signedIn: false, isAdmin: false, name: '' };
+  // The sign-in may finish before this script loads: start from the last announced state.
+  let account = window.playersAccount || { signedIn: false, isAdmin: false, name: '' };
   let installPrompt = null;
 
   // ---------- menu ----------
