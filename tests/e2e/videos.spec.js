@@ -13,7 +13,7 @@ test('lists every video from the library, grouped under category tabs', async ({
   const tabs = page.locator('#videoTabs [role="tab"]');
   await expect(tabs).toHaveText(["Toate", "Player's Poker Club", 'Șah', 'Remi', 'Table', 'Ping-Pong']);
   await expect(page.locator('#videoTabs [aria-selected="true"]')).toHaveText('Toate');
-  await expect(page.locator('#videoList .library-video')).toHaveCount(9);
+  await expect(page.locator('#videoList .library-video')).toHaveCount(10);
   await expect(page.locator('#video-players-ping-pong-premium video')).toHaveAttribute('src', '/videos/players-ping-pong-premium.mp4');
 });
 
@@ -95,4 +95,19 @@ test('the Seara de Șah recap of 6 October is the newest event video in the Șah
   await expect(recap.locator('.video-card-link')).toHaveAttribute('href', '#players-sah');
   expect((await page.request.get('/videos/players-sah-seara-0610-poster.jpg')).ok()).toBe(true);
   expect((await page.request.head('/videos/players-sah-seara-0610.mp4')).ok()).toBe(true);
+});
+
+test('the wordless Dot avatar promo sits in the club category after the club promo', async ({ page }) => {
+  await gotoLoaded(page, '/#videos');
+
+  await page.locator('#videoTabs [role="tab"]', { hasText: "Player's Poker Club" }).click();
+  const club = page.locator('#videoList .library-video:visible');
+  await expect(club).toHaveCount(2);
+  const dot = club.nth(1);
+  await expect(dot.locator('h3')).toHaveText("Player's Poker Club · Dot joacă tot");
+  await expect(dot.locator('.video-type')).toHaveText('Promo');
+  await expect(dot.locator('video')).toHaveAttribute('src', '/videos/players-dot-promo.mp4');
+  await expect(dot.locator('video')).toHaveAttribute('poster', '/videos/players-dot-promo-poster.jpg');
+  expect((await page.request.get('/videos/players-dot-promo-poster.jpg')).ok()).toBe(true);
+  expect((await page.request.head('/videos/players-dot-promo.mp4')).ok()).toBe(true);
 });

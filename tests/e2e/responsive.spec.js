@@ -36,7 +36,7 @@ test('phone programme is a compact list and videos swipe sideways', async ({ pag
   await expect(page.locator('#program .schedule-day')).toHaveCount(7);
 
   expect((await page.locator('#program .schedule-days').boundingBox()).height).toBeLessThan(820);
-  await expect(page.locator('#videoList .library-video')).toHaveCount(9);
+  await expect(page.locator('#videoList .library-video')).toHaveCount(10);
   const list = page.locator('#videoList');
   expect(await list.evaluate(element => element.scrollWidth > element.clientWidth + 100)).toBe(true);
   expect((await page.locator('#videos').boundingBox()).height).toBeLessThan(1300);

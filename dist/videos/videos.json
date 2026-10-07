@@ -17,6 +17,15 @@
       "poster": "/videos/players-club-promo-poster.jpg"
     },
     {
+      "id": "players-dot-promo",
+      "category": "club",
+      "type": "promo",
+      "title": "Player's Poker Club · Dot joacă tot",
+      "description": "Poker, zaruri, table, remi, ping-pong, karaoke și stand-up: o zi la club, fără niciun cuvânt, doar cu sunete.",
+      "src": "/videos/players-dot-promo.mp4",
+      "poster": "/videos/players-dot-promo-poster.jpg"
+    },
+    {
       "id": "players-sah-seara-0610",
       "category": "sah",
       "type": "event",
