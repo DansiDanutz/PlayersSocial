@@ -19,7 +19,7 @@ test('uploaded event videos appear first in their category in the Video tab', as
   await mockSupabase(page, { videos: [videoRow()] });
   await gotoLoaded(page, '/#videos');
 
-  await expect(page.locator('#videoList .library-video')).toHaveCount(9);
+  await expect(page.locator('#videoList .library-video')).toHaveCount(10);
   await page.locator('#videoTabs [role="tab"]', { hasText: 'Remi' }).click();
   const remi = page.locator('#videoList .library-video:visible');
   await expect(remi).toHaveCount(3);
@@ -32,7 +32,7 @@ test('the Video tab still shows the site videos when uploaded videos cannot load
   await mockSupabase(page, { videosFail: true });
   await gotoLoaded(page, '/#videos');
 
-  await expect(page.locator('#videoList .library-video')).toHaveCount(8);
+  await expect(page.locator('#videoList .library-video')).toHaveCount(9);
   await expect(page.locator('#videoStatus')).toBeHidden();
 });
 

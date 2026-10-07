@@ -17,6 +17,15 @@
       "poster": "/videos/players-club-promo-poster.jpg"
     },
     {
+      "id": "players-sah-seara-0610",
+      "category": "sah",
+      "type": "event",
+      "title": "Seara de Șah · marți 6 octombrie",
+      "description": "Free entry și 500 lei garantat: mese pline, partide rapide cu ceasul pe masă și premiații serii la Player’s Poker Club.",
+      "src": "/videos/players-sah-seara-0610.mp4",
+      "poster": "/videos/players-sah-seara-0610-poster.jpg"
+    },
+    {
       "id": "players-sah-promo",
       "category": "sah",
       "type": "event",

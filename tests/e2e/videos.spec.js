@@ -13,7 +13,7 @@ test('lists every video from the library, grouped under category tabs', async ({
   const tabs = page.locator('#videoTabs [role="tab"]');
   await expect(tabs).toHaveText(["Toate", "Player's Poker Club", 'Șah', 'Remi', 'Table', 'Ping-Pong']);
   await expect(page.locator('#videoTabs [aria-selected="true"]')).toHaveText('Toate');
-  await expect(page.locator('#videoList .library-video')).toHaveCount(8);
+  await expect(page.locator('#videoList .library-video')).toHaveCount(9);
   await expect(page.locator('#video-players-ping-pong-premium video')).toHaveAttribute('src', '/videos/players-ping-pong-premium.mp4');
 });
 
@@ -79,4 +79,20 @@ test('on desktop and tablet the video cards line up their share buttons and card
       expect(new Set(row.map(card => card.link)).size, `card links aligned at ${width}px`).toBe(1);
     }
   }
+});
+
+test('the Seara de Șah recap of 6 October is the newest event video in the Șah category', async ({ page }) => {
+  await gotoLoaded(page, '/#videos');
+
+  await page.locator('#videoTabs [role="tab"]', { hasText: 'Șah' }).click();
+  const chess = page.locator('#videoList .library-video:visible');
+  await expect(chess).toHaveCount(2);
+  const recap = chess.first();
+  await expect(recap.locator('h3')).toHaveText('Seara de Șah · marți 6 octombrie');
+  await expect(recap.locator('.video-type')).toHaveText('Eveniment');
+  await expect(recap.locator('video')).toHaveAttribute('src', '/videos/players-sah-seara-0610.mp4');
+  await expect(recap.locator('video')).toHaveAttribute('poster', '/videos/players-sah-seara-0610-poster.jpg');
+  await expect(recap.locator('.video-card-link')).toHaveAttribute('href', '#players-sah');
+  expect((await page.request.get('/videos/players-sah-seara-0610-poster.jpg')).ok()).toBe(true);
+  expect((await page.request.head('/videos/players-sah-seara-0610.mp4')).ok()).toBe(true);
 });

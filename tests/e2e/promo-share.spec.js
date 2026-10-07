@@ -92,8 +92,8 @@ test('every video in the Video tab can be sent on WhatsApp', async ({ page }) =>
   await mockSupabase(page);
   await gotoLoaded(page, '/#videos');
 
-  await expect(page.locator('#videoList .library-video')).toHaveCount(8);
-  await expect(page.locator('#videoList .library-video .share-whatsapp')).toHaveCount(8);
+  await expect(page.locator('#videoList .library-video')).toHaveCount(9);
+  await expect(page.locator('#videoList .library-video .share-whatsapp')).toHaveCount(9);
   const href = await page.locator('#video-players-club-promo .share-whatsapp').getAttribute('href');
   expect(decodeURIComponent(href)).toContain('?video=players-club-promo');
 });
