@@ -1,3 +1,7 @@
+// Async-button labels (interior.js): each button reserves room for all of them from the start.
+Interior.register('#installApp',{pending:'Se pregătește…'});
+Interior.register('.install-copy-link',{success:'Link copiat ✓',error:'Copiază manual'});
+
 // App shell: the single "Meniu" button with submenus, the "Install App" button and the service worker.
 // Install: where the browser supports it (Chrome/Edge on Android, Windows, macOS) the button opens the native
 // install prompt. Chrome only allows it after some use of the site, so an early tap waits a few seconds for it.
@@ -115,10 +119,9 @@
     if (await isAlreadyInstalled()) { showInstallHelp('installed'); return; }
     const current = platform();
     if (current === 'android' || current === 'other') {
-      const label = installButton.textContent;
-      installButton.textContent = 'Se pregătește…';
-      const prompt = await waitForPrompt(PROMPT_WAIT_MS);
-      installButton.textContent = label;
+      // The button reserves room for "Se pregătește…" so it never resizes while Chrome warms up (interior.js).
+      let prompt = null;
+      await Interior.actionButton(installButton)(async () => { prompt = await waitForPrompt(PROMPT_WAIT_MS); return null; });
       if (prompt) { await runPrompt(prompt); return; }
     }
     showInstallHelp(current);
@@ -128,11 +131,12 @@
   installButton.addEventListener('click', install);
   menuInstall.addEventListener('click', install);
   installHelp.querySelector('.install-help-close').addEventListener('click', () => installHelp.close());
-  installHelp.querySelector('.install-copy-link').addEventListener('click', async () => {
+  const copyLink = installHelp.querySelector('.install-copy-link');
+  copyLink.addEventListener('click', () => Interior.actionButton(copyLink)(async () => {
     const status = installHelp.querySelector('.install-copy-status'), url = `${location.origin}/`;
-    try { await navigator.clipboard.writeText(url); status.textContent = 'Link copiat. Deschide Chrome, lipește-l în bara de adrese și apasă Install App.'; }
-    catch { status.textContent = `Copiază manual: ${url}`; }
-  });
+    try { await navigator.clipboard.writeText(url); status.textContent = 'Link copiat. Deschide Chrome, lipește-l în bara de adrese și apasă Install App.'; return true; }
+    catch { status.textContent = `Copiază manual: ${url}`; return false; }
+  }));
   installHelp.addEventListener('click', (event) => { if (event.target === installHelp) installHelp.close(); });
 
   window.addEventListener('players:account', (event) => { account = event.detail; refresh(); });

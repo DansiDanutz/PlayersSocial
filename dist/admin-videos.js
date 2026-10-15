@@ -1,3 +1,7 @@
+// Async-button labels (interior.js): each button reserves room for all of them from the start.
+Interior.register('.video-upload-form button[type="submit"]',{pending:'Se publică…',success:'Publicat ✓',error:'Încearcă din nou'});
+Interior.register('.video-admin-delete',{pending:'Se șterge…',error:'Eroare'});
+
 // Admin dashboard: upload event videos (MP4 + optional poster) to the "players-videos" bucket and publish them
 // in the site's Video tab, or delete them again. Videos that are not MP4 or are over 50 MB are first compressed
 // in the browser by video-compress.js. Authorization is enforced by the Supabase RPCs and storage policies;
@@ -65,7 +69,8 @@ async function submitVideoForm(form){
   const poster=data.get('poster');
   let video=data.get('video');
   const uploaded=[];
-  button.disabled=true; progress.hidden=false; progress.value=0;
+  await Interior.actionButton(button)(async()=>{
+  progress.hidden=false; progress.value=0;
   try {
     video=await compressIfNeeded(form,video,progress);
     setFormStatus(form,'Se încarcă videoclipul…','');
@@ -81,22 +86,25 @@ async function submitVideoForm(form){
   } catch(error){
     await Promise.all(uploaded.map(discardVideoFile));
     setFormStatus(form,error.message,'error');
+    return false;
   } finally {
-    button.disabled=false; progress.hidden=true;
+    progress.hidden=true;
   }
+  });
 }
 
 async function deleteUploadedVideo(row,button){
   if(!confirm(`Ștergi „${row.title}” din tab-ul Video? Fișierul va fi șters definitiv.`)) return;
-  button.disabled=true;
-  try {
-    const files=await adminRpc('players_admin_delete_video',{p_id:row.id});
-    await Promise.all(files.flatMap(file=>[file.video_url,file.poster_url]).filter(Boolean).map(discardVideoFile));
-    await Promise.all([renderVideoAdmin(),window.PlayersVideos?.reload()]);
-  } catch(error){
-    button.disabled=false;
-    alert(error.message);
-  }
+  await Interior.actionButton(button)(async()=>{
+    try {
+      const files=await adminRpc('players_admin_delete_video',{p_id:row.id});
+      await Promise.all(files.flatMap(file=>[file.video_url,file.poster_url]).filter(Boolean).map(discardVideoFile));
+      await Promise.all([renderVideoAdmin(),window.PlayersVideos?.reload()]);
+    } catch(error){
+      alert(error.message);
+      return false;
+    }
+  });
 }
 
 function videoAdminItem(row){

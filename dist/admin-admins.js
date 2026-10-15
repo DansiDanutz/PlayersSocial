@@ -1,3 +1,7 @@
+// Async-button labels (interior.js): each button reserves room for all of them from the start.
+Interior.register('.admin-member-remove',{pending:'Se elimină…',error:'Eroare'});
+Interior.register('.admin-add-form button[type="submit"]',{pending:'Se adaugă…',success:'Adăugat ✓',error:'Încearcă din nou'});
+
 // Admin dashboard: list, add and remove administrators. Every admin capability on the site checks
 // public.is_players_admin() in the database, so this list is the single source of truth. The RPCs refuse
 // non-admins, self-removal and removing the last admin; this file only drives the UI.
@@ -26,9 +30,10 @@ async function renderAdminList(){
 
 async function removeAdmin(email,button){
   if(!confirm(`Elimini accesul de administrator pentru ${email}?`)) return;
-  button.disabled=true;
-  try { await adminRpc('players_admin_remove_admin',{p_email:email}); await renderAdminList(); }
-  catch(error){ button.disabled=false; alert(error.message); }
+  await Interior.actionButton(button)(async()=>{
+    try { await adminRpc('players_admin_remove_admin',{p_email:email}); await renderAdminList(); }
+    catch(error){ alert(error.message); return false; }
+  });
 }
 
 document.querySelector('.admin-add-form').addEventListener('submit',async event=>{
@@ -36,15 +41,15 @@ document.querySelector('.admin-add-form').addEventListener('submit',async event=
   const form=event.currentTarget, input=form.querySelector('input[name="email"]'), button=form.querySelector('button[type="submit"]');
   const email=input.value.trim().toLowerCase();
   if(!email){ setFormStatus(form,'Scrie adresa de email.','error'); return; }
-  button.disabled=true;
-  try {
-    await adminRpc('players_admin_add_admin',{p_email:email});
-    input.value='';
-    setFormStatus(form,`${email} este acum administrator.`,'ok');
-    await renderAdminList();
-  } catch(error){
-    setFormStatus(form,error.message,'error');
-  } finally {
-    button.disabled=false;
-  }
+  await Interior.actionButton(button)(async()=>{
+    try {
+      await adminRpc('players_admin_add_admin',{p_email:email});
+      input.value='';
+      setFormStatus(form,`${email} este acum administrator.`,'ok');
+      await renderAdminList();
+    } catch(error){
+      setFormStatus(form,error.message,'error');
+      return false;
+    }
+  });
 });
