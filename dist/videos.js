@@ -19,18 +19,18 @@
   async function shareVideo(video, status) {
     const url = shareUrl(video);
     if (navigator.share) {
-      try { await navigator.share({ title: video.title, text: `Uită-te la ${video.title} — Players Club`, url }); }
-      catch (error) { if (error.name !== 'AbortError') status.textContent = `Copiază linkul: ${url}`; }
-      return;
+      try { await navigator.share({ title: video.title, text: `Uită-te la ${video.title} — Players Club`, url }); return true; }
+      catch (error) { if (error.name === 'AbortError') return null; status.textContent = `Copiază linkul: ${url}`; return false; }
     }
-    try { await navigator.clipboard.writeText(url); status.textContent = 'Link copiat. Îl poți lipi oriunde.'; }
-    catch { status.textContent = `Copiază linkul: ${url}`; }
+    try { await navigator.clipboard.writeText(url); status.textContent = 'Link copiat. Îl poți lipi oriunde.'; return true; }
+    catch { status.textContent = `Copiază linkul: ${url}`; return false; }
   }
+  // The share button's labels are registered in featured-events.js (interior.js).
   function shareRow(video) {
     const row = element('div', 'share-row'), native = element('button', 'share-native', 'Distribuie'), whatsapp = element('a', 'share-whatsapp', 'WhatsApp'), status = element('p', 'share-status');
     native.type = 'button';
     status.setAttribute('role', 'status');
-    native.addEventListener('click', () => shareVideo(video, status));
+    native.addEventListener('click', () => Interior.actionButton(native)(() => shareVideo(video, status)));
     whatsapp.href = whatsappHref(video);
     whatsapp.target = '_blank';
     whatsapp.rel = 'noopener noreferrer';
@@ -97,6 +97,7 @@
 
   function selectTab(id) {
     tabs.querySelectorAll('[role="tab"]').forEach((tab) => tab.setAttribute('aria-selected', String(tab.dataset.category === id)));
+    Interior.syncTabs(tabs);
     list.querySelectorAll('.library-video').forEach((card) => { card.hidden = id !== ALL && card.dataset.category !== id; });
   }
 
@@ -115,6 +116,7 @@
     tabs.replaceChildren(tabButton(ALL, 'Toate'), ...used.map((category) => tabButton(category.id, category.label)));
     list.replaceChildren(...videos.map((video) => videoCard(video, byId.get(video.category))));
     selectTab(ALL);
+    Interior.tabKeys(tabs);
     status.hidden = true;
     const linked = location.hash.startsWith('#video-') && document.getElementById(location.hash.slice(1));
     if (linked) linked.scrollIntoView({ block: 'start' });
@@ -159,17 +161,30 @@
     return { categories, videos };
   }
 
+  // Placeholder cards appear only if loading is slow, and then stay long enough not to blink (interior.js).
+  function skeletonCard() {
+    const card = element('article', 'library-video interior-skeleton');
+    card.setAttribute('aria-hidden', 'true');
+    for (const kind of ['media', 'tag', 'title', 'line', 'line']) card.append(element('span', `interior-bar interior-bar-${kind}`));
+    return card;
+  }
+  const skeleton = Interior.skeletonSwap(list, { makeCard: skeletonCard, cards: 3 });
+
   async function reload() {
+    skeleton.start();
     const [site, uploaded] = await Promise.allSettled([loadSiteVideos(), loadUploadedVideos()]);
     if (site.status === 'rejected') console.error('Site videos failed to load:', site.reason);
     if (uploaded.status === 'rejected') console.error('Uploaded videos failed to load:', uploaded.reason);
     if (site.status === 'rejected' && uploaded.status === 'rejected') {
-      openSharedVideo([]);
-      status.textContent = 'Videoclipurile nu au putut fi încărcate. Reîncarcă pagina.';
-      status.hidden = false;
+      skeleton.settle(() => {
+        list.replaceChildren();
+        openSharedVideo([]);
+        status.textContent = 'Videoclipurile nu au putut fi încărcate. Reîncarcă pagina.';
+        status.hidden = false;
+      });
       return;
     }
-    render(merge(site.value, uploaded.value || []));
+    skeleton.settle(() => render(merge(site.value, uploaded.value || [])));
   }
 
   window.PlayersVideos = { reload };

@@ -1,3 +1,6 @@
+// Async-button labels (interior.js): each button reserves room for all of them from the start.
+Interior.register('.create-event-form button[type="submit"], .featured-admin-body button[type="submit"]',{pending:'Se salvează…',success:'Salvat ✓',error:'Încearcă din nou'});
+
 // Admin dashboard tools for featured events: create with a banner upload, edit (including the post-event
 // recap and private notes), and view or export registrants. Authorization is enforced by the Supabase RPCs
 // and storage policies; this file only drives the UI. Loaded before the main inline script.
@@ -74,18 +77,21 @@ function eventPayload(data,bannerUrl){
 // Uploads a new banner when one was chosen, runs the save, and cleans the upload up if the save fails.
 async function submitEventForm(form,save,successMessage){
   const submit=form.querySelector('button[type="submit"]'), data=new FormData(form), file=form.querySelector('input[name="banner"]').files[0];
-  submit.disabled=true; setFormStatus(form,file?'Se încarcă bannerul…':'Se salvează…');
-  let uploadedUrl=null;
-  try {
-    if(file) uploadedUrl=await uploadBanner(file);
-    await save(data,uploadedUrl);
-    setFormStatus(form,successMessage,'ok');
-    return true;
-  } catch(error){
-    if(uploadedUrl) await discardBanner(uploadedUrl);
-    setFormStatus(form,error.message,'error');
-    return false;
-  } finally { submit.disabled=false; }
+  const outcome=await Interior.actionButton(submit)(async()=>{
+    setFormStatus(form,file?'Se încarcă bannerul…':'Se salvează…');
+    let uploadedUrl=null;
+    try {
+      if(file) uploadedUrl=await uploadBanner(file);
+      await save(data,uploadedUrl);
+      setFormStatus(form,successMessage,'ok');
+      return true;
+    } catch(error){
+      if(uploadedUrl) await discardBanner(uploadedUrl);
+      setFormStatus(form,error.message,'error');
+      return false;
+    }
+  });
+  return outcome==='success';
 }
 
 function renderCreateForm(){

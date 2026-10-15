@@ -26,10 +26,12 @@ const eventShareUrl=row=>`${location.origin}/e/${eventSlug(row.event_name)}`;
 const eventShareText=row=>`${row.event_name} · ${eventWhen(row)} — Players Club`;
 async function shareEvent(row,status){
   const url=eventShareUrl(row);
-  if(navigator.share){ try { await navigator.share({title:row.event_name,text:eventShareText(row),url}); } catch(error){ if(error.name!=='AbortError') status.textContent='Nu am putut deschide distribuirea.'; } return; }
-  try { await navigator.clipboard.writeText(url); status.textContent='Link copiat. Îl poți lipi oriunde.'; }
-  catch { status.textContent=url; }
+  if(navigator.share){ try { await navigator.share({title:row.event_name,text:eventShareText(row),url}); return true; } catch(error){ if(error.name==='AbortError') return null; status.textContent='Nu am putut deschide distribuirea.'; return false; } }
+  try { await navigator.clipboard.writeText(url); status.textContent='Link copiat. Îl poți lipi oriunde.'; return true; }
+  catch { status.textContent=url; return false; }
 }
+// Labels the share button can show; it confirms on itself, and never changes size (interior.js).
+Interior.register('.share-native',()=>navigator.share?{idle:'Distribuie',success:'Trimis ✓',error:'Încearcă din nou'}:{idle:'Distribuie',success:'Link copiat ✓',error:'Copiază manual'});
 function eventShareRow(row){
   const wrapper=document.createElement('div'), buttons=document.createElement('div'), native=document.createElement('button'), whatsapp=document.createElement('a'), status=document.createElement('p');
   wrapper.className='event-share'; buttons.className='share-row';
@@ -37,7 +39,7 @@ function eventShareRow(row){
   whatsapp.className='share-whatsapp'; whatsapp.textContent='Trimite pe WhatsApp'; whatsapp.target='_blank'; whatsapp.rel='noopener noreferrer';
   whatsapp.href=`https://wa.me/?text=${encodeURIComponent(`${eventShareText(row)} ${eventShareUrl(row)}`)}`;
   status.className='share-status'; status.setAttribute('aria-live','polite');
-  native.addEventListener('click',()=>shareEvent(row,status));
+  native.addEventListener('click',()=>Interior.actionButton(native)(()=>shareEvent(row,status)));
   buttons.append(native,whatsapp); wrapper.append(buttons,status);
   return wrapper;
 }

@@ -1,3 +1,6 @@
+// Async-button labels (interior.js): each button reserves room for all of them from the start.
+Interior.register('#dashboardProgram .program-day button[type="submit"], .program-template-form button[type="submit"]',{pending:'Se salvează…',success:'Salvat ✓',error:'Încearcă din nou'});
+
 // Admin dashboard "Program": plan each day of a week (one of the site's category cards + an optional
 // banner that replaces the event's default one) and pick the event of the week among the planned days.
 // Authorization is enforced by the Supabase RPCs and storage policies; this file only drives the UI.
@@ -122,13 +125,14 @@ async function saveProgramTemplate(form){
   if(invalid){ setFormStatus(form,`${invalid.name}: buy-in-ul și garantatul trebuie să fie sume întregi în lei, iar minimul de jucători cel puțin 1.`,'error'); return; }
   const changes=rows.filter(row=>row.changed);
   if(!changes.length){ setFormStatus(form,'Nu ai schimbat nimic.','ok'); return; }
-  const button=form.querySelector('button[type="submit"]'); button.disabled=true;
+  const button=form.querySelector('button[type="submit"]');
+  await Interior.actionButton(button)(async()=>{
   try {
     for(const { weekday, values } of changes) await adminRpc('players_admin_set_schedule_template_day',{p_weekday:weekday,p_linked_card:values.card,p_start_time:values.time,p_buy_in:values.buy_in,p_guaranteed:values.guaranteed,p_min_players:values.min_players});
     await Promise.all([renderProgramTemplate(),afterProgramChange()]);
     setFormStatus(form,'Programul implicit a fost salvat.','ok');
-  } catch(error){ setFormStatus(form,error.message,'error'); }
-  finally { button.disabled=false; }
+  } catch(error){ setFormStatus(form,error.message,'error'); return false; }
+  });
 }
 document.querySelector('.program-template-form').addEventListener('submit',event=>{ event.preventDefault(); saveProgramTemplate(event.currentTarget); });
 
@@ -184,21 +188,24 @@ async function saveProgramDay(form){
   // "Fără eveniment" on a day that has one (its own or from the default programme) keeps that date free.
   if(!linkedCard){
     if(!existing?.linked_card){ setFormStatus(form,'Alege evenimentul zilei.','error'); return; }
-    try {
-      await discardScheduleImage(await adminRpc('players_admin_close_schedule_day',{p_day:day}));
-      await afterProgramChange({day,text:'Ziua a fost marcată fără eveniment.'});
-    } catch(error){ setFormStatus(form,error.message,'error'); }
+    await Interior.actionButton(form.querySelector('button[type="submit"]'))(async()=>{
+      try {
+        await discardScheduleImage(await adminRpc('players_admin_close_schedule_day',{p_day:day}));
+        await afterProgramChange({day,text:'Ziua a fost marcată fără eveniment.'});
+      } catch(error){ setFormStatus(form,error.message,'error'); return false; }
+    });
     return;
   }
   const buyIn=parseLei(data.get('buy_in')), guaranteed=parseLei(data.get('guaranteed'));
   if(buyIn===undefined||guaranteed===undefined){ setFormStatus(form,'Buy-in-ul și garantatul trebuie să fie sume întregi în lei (0 sau mai mult).','error'); return; }
   const minPlayers=parseLei(data.get('min_players'));
   if(minPlayers===undefined||minPlayers===0){ setFormStatus(form,'Minimul de jucători trebuie să fie un număr întreg, cel puțin 1.','error'); return; }
-  form.querySelector('button[type="submit"]').disabled=true;
+  await Interior.actionButton(form.querySelector('button[type="submit"]'))(async()=>{
   try {
     await saveWithImage(data.get('image'),uploaded=>adminRpc('players_admin_set_schedule_day',{p_day:day,p_linked_card:linkedCard,p_image_url:uploaded||existing?.image_url||null,p_start_time:data.get('start_time')||null,p_buy_in:buyIn,p_guaranteed:guaranteed,p_min_players:minPlayers,p_note:String(data.get('note')??'').trim()||null}));
     await afterProgramChange({day,text:'Ziua a fost salvată.'});
-  } catch(error){ setFormStatus(form,error.message,'error'); form.querySelector('button[type="submit"]').disabled=false; }
+  } catch(error){ setFormStatus(form,error.message,'error'); return false; }
+  });
 }
 
 async function clearProgramDay(form){
