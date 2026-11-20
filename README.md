@@ -29,6 +29,14 @@ Open <http://localhost:8000>. The browser needs network access for Google Fonts,
 - Videos that are not MP4 (e.g. iPhone MOV) or are over 50 MB are compressed in the browser before upload (`dist/video-compress.js`, WebCodecs via Mediabunny 1.61.3, MPL-2.0, vendored unmodified in `dist/vendor/`). Bitrate is sized from the duration to land around 45 MB; resolution drops to 720p/480p for longer videos; videos longer than ~10 minutes are refused. Needs a WebCodecs browser (Chrome, Edge, recent Safari).
 - To ship a video with the site instead: add the MP4 (vertical, ideally under 15 MB) and a 540×960 poster JPG to `dist/videos/`, then append an entry to `videos` with `category` (an existing category id), `type` (`promo`, `premium` or `event`), `title`, `description`, `src` and `poster`. To add a new category, append it to `categories` (with `card` set to the game card anchor, or `""`).
 
+## Dealers and floor managers
+
+- `/dealers-payout/` is the printable dealer rules page (PDF next to it). Its last section is a signing form: the dealer types their name, draws a signature and signs from their own account; that creates their dealer card (`players_dealer_sign`).
+- `/dealer/` is the dealer card: check-in / check-out (time editable), forgotten shifts, and every amount from the rules (monthly share, 3-month guarantee, deposit, next bonus, penalties).
+- `/sef-de-sala/` is the floor manager panel: approve or correct shifts (flagged once the day after has passed), enter each dealer's daily tips and penalties, open any dealer card. Admins also add floor managers there; admins are floor managers automatically.
+- Signing in always happens on the home page (`/?login=1`); `app-shell.js` sends the visitor back to the staff page they came from.
+- The database stores only raw facts (migration `20261121120000_players_dealers.sql`, all access through security definer functions). Every amount is computed in `dist/staff/dealer-math.js`, unit-tested in `tests/unit/dealer-math.test.js`. `supabase/tests/players_dealers_test.sql` checks the permissions and rolls back.
+
 ## Deployment
 
 The existing Vercel project is `playerssocial` in the `irises-projects-ce549f63` team. `vercel.json` serves the `dist` directory. The Vercel project is connected to this GitHub repository, so pushes to `main` deploy the site automatically.
