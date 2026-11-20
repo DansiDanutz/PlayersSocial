@@ -45,4 +45,5 @@ test('explains the guaranteed minimum and loyalty bonuses', async ({ page }) => 
   await expect(page.getByText(/perioada nouă începe de la zero/)).toBeVisible();
   await expect(page.getByText('Bonus 4.000 RON')).toBeVisible();
   await expect(page.getByText('Bonus 8.000 RON')).toBeVisible();
+  await expect(page.getByText(/Bonusurile se repetă/)).toBeVisible();
 });
