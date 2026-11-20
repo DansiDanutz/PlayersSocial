@@ -23,19 +23,20 @@
   }
 
   function monthsTable(card) {
+    const td = (label, value) => el('td', { class: 'num', 'data-label': label }, value);
     const rows = [...card.months].reverse().map(month => el('tr', {},
-      el('td', {}, monthLabel(month.key), month.closed ? null : el('div', { class: 'muted' }, 'în curs (estimat)')),
-      el('td', { class: 'num' }, hours(month.hours)),
-      el('td', { class: 'num' }, money(month.tips)),
-      el('td', { class: 'num' }, money(month.dealerShare)),
-      el('td', { class: 'num' }, month.adjustment ? signedMoney(month.adjustment) : '—'),
-      el('td', { class: 'num' }, month.dailyDeposit ? money(month.dailyDeposit) : '—'),
-      el('td', { class: 'num' }, month.contribution ? `−${money(month.contribution)}` : '—'),
-      el('td', { class: 'num' }, el('b', {}, money(month.payout)))));
+      el('td', { class: 'lead', 'data-label': 'Luna' }, monthLabel(month.key), month.closed ? null : el('div', { class: 'muted' }, 'în curs (estimat)')),
+      td('Ore', hours(month.hours)),
+      td('Tips total', money(month.tips)),
+      td('Partea ta', money(month.dealerShare)),
+      td('Garanție', month.adjustment ? signedMoney(month.adjustment) : '—'),
+      td('Depozit zilnic', month.dailyDeposit ? money(month.dailyDeposit) : '—'),
+      td('Contribuție', month.contribution ? `−${money(month.contribution)}` : '—'),
+      td('De primit', el('b', {}, money(month.payout)))));
     return el('div', { class: 'panel' },
       el('h2', {}, 'Lună de lună'),
       el('p', { class: 'muted' }, 'Garanția: minim 5.000 RON pe lună, socotit pe perioade de 3 luni. „De primit” = partea ta ± garanția − contribuția lunară la depozit.'),
-      el('div', { class: 'table-wrap' }, el('table', {},
+      el('div', { class: 'table-wrap' }, el('table', { class: 'stack' },
         el('thead', {}, el('tr', {}, ...['Luna', 'Ore', 'Tips total', 'Partea ta', 'Garanție', 'Depozit zilnic', 'Contribuție', 'De primit'].map((name, index) => el('th', { class: index ? 'num' : '' }, name)))),
         el('tbody', {}, rows))));
   }
@@ -45,14 +46,14 @@
     const changed = shift => shift.dealer_check_in && (shift.dealer_check_in !== shift.check_in || shift.dealer_check_out !== shift.check_out) && shift.status === 'approved';
     return el('div', { class: 'panel' },
       el('h2', {}, 'Pontaj'),
-      recent.length ? el('div', { class: 'table-wrap' }, el('table', {},
+      recent.length ? el('div', { class: 'table-wrap' }, el('table', { class: 'stack' },
         el('thead', {}, el('tr', {}, el('th', {}, 'Ziua'), el('th', {}, 'Venit'), el('th', {}, 'Plecat'), el('th', { class: 'num' }, 'Ore'), el('th', {}, 'Stare'))),
         el('tbody', {}, recent.map(shift => el('tr', {},
-          el('td', {}, dateLabel(shift.check_in)),
-          el('td', {}, time(shift.check_in)),
-          el('td', {}, time(shift.check_out)),
-          el('td', { class: 'num' }, shift.check_out ? hours(window.DealerMath.shiftHours(shift)) : '—'),
-          el('td', {}, el('span', { class: `chip ${shift.status}` }, STATUS_LABELS[shift.status]),
+          el('td', { class: 'lead', 'data-label': 'Ziua' }, dateLabel(shift.check_in)),
+          el('td', { 'data-label': 'Venit' }, time(shift.check_in)),
+          el('td', { 'data-label': 'Plecat' }, time(shift.check_out)),
+          el('td', { class: 'num', 'data-label': 'Ore' }, shift.check_out ? hours(window.DealerMath.shiftHours(shift)) : '—'),
+          el('td', { 'data-label': 'Stare' }, el('span', { class: `chip ${shift.status}` }, STATUS_LABELS[shift.status]),
             changed(shift) ? el('div', { class: 'muted' }, `scris de tine: ${time(shift.dealer_check_in)}–${time(shift.dealer_check_out)}`) : null))))))
         : el('p', { class: 'empty' }, 'Nicio tură încă.'));
   }

@@ -56,7 +56,7 @@
     view.replaceChildren(el('section', { class: 'panel' },
       el('h2', {}, 'Pontaje de aprobat'),
       el('p', { class: 'muted' }, 'Verifică ora de venire și de plecare a fiecărui dealer. Corectează dacă e nevoie, apoi aprobă. Termen: cel târziu a doua zi.'),
-      overdue ? el('p', { class: 'status error' }, `${overdue} pontaje au trecut de termen.`) : null,
+      overdue ? el('p', { class: 'status error' }, overdue === 1 ? '1 pontaj a trecut de termen.' : `${overdue} pontaje au trecut de termen.`) : null,
       shifts.length ? el('div', { class: 'card-list' }, shifts.map(shift => shiftReview(shift, renderPending))) : el('p', { class: 'empty' }, 'Nimic de aprobat. Totul este la zi.')));
   }
 
