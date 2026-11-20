@@ -223,7 +223,7 @@
   .bal.zero { background: var(--green-soft); color: var(--dealer); }
   .up { color: var(--dealer); font-weight: 700; }
   .down { color: var(--amber); font-weight: 700; }
-  .total { margin-top: 2.4mm; display: flex; justify-content: space-between; align-items: center; gap: 4mm; background: #f5f7f5; border-radius: 2.5mm; padding: 2.6mm 4mm; font-size: 9.2pt; }
+  .total { margin-top: 2.4mm; display: flex; justify-content: space-between; align-items: center; gap: 4mm; background: #f5f7f5; border-radius: 2.5mm; padding: 2.2mm 4mm; font-size: 9pt; line-height: 1.4; }
   .total b { color: var(--felt); }
   .total.two { margin-top: 1.6mm; background: var(--green-soft); }
   .howto { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; margin-bottom: 2.6mm; }
@@ -237,7 +237,7 @@
   .tier .top .big { font-family: "Playfair Display", serif; font-size: 20pt; font-weight: 800; line-height: 1.15; }
   .tier .top .big span { color: var(--gold); }
   .tier.gold .top .big span { color: #f3d98f; }
-  .tier .body { padding: 3mm 4.5mm; font-size: 9pt; display: flex; flex-direction: column; gap: 1.8mm; }
+  .tier .body { padding: 2.4mm 4.5mm; font-size: 9pt; display: flex; flex-direction: column; gap: 1.8mm; }
   .tier .body ul { padding-left: 4mm; }
   .tier .ex { background: var(--gold-soft); border-radius: 2mm; padding: 2.2mm 3mm; font-size: 8.7pt; color: var(--ink); }
   .cond { margin-top: 3mm; }
@@ -435,7 +435,7 @@
       <div class="howto">
         <div><b>Sub 5.000 RON?</b>Clubul îți completează până la 5.000 RON.</div>
         <div><b>Peste 5.000 RON?</b>Din ce trece de 5.000 se reține întâi ce ți-a completat clubul înainte.</div>
-        <div><b>La fiecare 3 luni</b>Calculul se face pe perioade de 3 luni: 15.000 RON garantat.</div>
+        <div><b>La fiecare 3 luni, de la zero</b>Ce nu s-a recuperat în cele 3 luni rămâne pierderea clubului. Tu nu mai datorezi nimic.</div>
       </div>
       <div class="months">
         <div class="month"><div class="mh">Luna 1 <span>ai făcut 4.000</span></div><div class="mb">
@@ -451,13 +451,14 @@
           <div class="why">Ai făcut 6.000 RON. Se rețin ultimii <span class="down">−500 RON</span> din completare.</div>
           <div class="bal zero">De recuperat: 0 RON ✓</div></div></div>
       </div>
-      <div class="total"><span>Exemplul 1: în 3 luni ai făcut <b>15.500 RON</b> și ai primit <b>15.500 RON</b>.</span><span>Completarea se recuperează doar din ce faci peste 5.000 RON.</span></div>
-      <div class="total two"><span><b>Exemplul 2 — 3 luni slabe la rând:</b> faci câte 4.000 RON în fiecare lună → primești <b>5.000 RON în fiecare lună</b> (clubul îți completează 3 × 1.000 = 3.000 RON).</span></div>
+      <div class="total"><span>Exemplul 1: în 3 luni ai făcut <b>15.500 RON</b> și ai primit <b>15.500 RON</b>.</span></div>
+      <div class="total two"><span><b>Exemplul 2 — 3 luni slabe, apoi 3 luni bune:</b><br>
+        Lunile 1–3: faci 4.000 · 4.000 · 4.000 → primești <b>5.000 · 5.000 · 5.000</b>. Clubul pierde 3 × 1.000 = 3.000 RON.<br>
+        Lunile 4–6: faci 5.000 · 5.000 · 6.000 → primești <b>5.000 · 5.000 · 6.000</b>. Nu ți se reține nimic: perioada nouă începe de la zero.</span></div>
     </div>
 
     <div>
       <h2><span class="num">9</span>Bonus de fidelitate</h2>
-      <p class="lead">Dacă nu ai nicio penalizare în firmă, primești înapoi ce ai strâns în depozit peste prag, plus un bonus.</p>
       <div class="tiers">
         <div class="tier"><div class="top"><small>După 6 luni</small><div class="big">Bonus <span>4.000 RON</span></div></div>
           <div class="body"><ul><li>primești <b>tot ce ai în depozit peste 5.000 RON</b>;</li><li>plus un <b>bonus de 4.000 RON</b>.</li></ul>
