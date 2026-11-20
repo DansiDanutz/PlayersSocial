@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Regulament intern pentru dealeri: împărțirea tipsului și depozitul de garanție.">
+<title>Regulament Dealeri</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --felt: #0d3b2a;
+    --felt-2: #145238;
+    --gold: #c9a24a;
+    --gold-soft: #f6eed8;
+    --ink: #1b1f1d;
+    --muted: #5d6762;
+    --line: #dfe3df;
+    --paper: #ffffff;
+    --bg: #ecefec;
+    --dealer: #1f7a52;
+    --deposit: #c9a24a;
+    --club: #9aa39e;
+    --red: #b3261e;
+    --red-soft: #fbeceb;
+    --amber: #a86a00;
+    --amber-soft: #fdf3e0;
+    --green-soft: #e8f3ed;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.45;
+  }
+  .page {
+    width: 210mm;
+    height: 297mm;
+    margin: 10mm auto;
+    background: var(--paper);
+    box-shadow: 0 4px 24px rgba(0,0,0,.12);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .content { padding: 6mm 14mm 0; flex: 1; display: flex; flex-direction: column; gap: 4.6mm; }
+
+  /* Header */
+  .hero {
+    background: radial-gradient(120% 140% at 85% 0%, var(--felt-2) 0%, var(--felt) 60%);
+    color: #fff;
+    padding: 7mm 14mm 7mm;
+    position: relative;
+  }
+  .hero::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2.2mm;
+    background: linear-gradient(90deg, var(--gold), #e7cd86, var(--gold));
+  }
+  .brand { display: flex; align-items: center; justify-content: space-between; font-size: 8.5pt; letter-spacing: .18em; text-transform: uppercase; color: #cfe2d8; }
+  .suits { letter-spacing: .35em; font-size: 11pt; }
+  .suits .r { color: #f08a80; }
+  .hero h1 { font-family: "Playfair Display", Georgia, serif; font-size: 26pt; line-height: 1.05; margin-top: 3.5mm; font-weight: 800; }
+  .hero h1 span { color: var(--gold); }
+  .hero p { margin-top: 2mm; font-size: 10.5pt; color: #dbe9e1; max-width: 150mm; }
+  .page-tag { position: absolute; right: 14mm; bottom: 7mm; font-size: 8pt; color: #a9c6b7; letter-spacing: .1em; text-transform: uppercase; }
+
+  .hero.slim { padding: 6mm 14mm 6mm; }
+  .hero.slim h1 { font-size: 24pt; margin-top: 2.5mm; }
+
+  /* Section titles */
+  h2 {
+    font-family: "Playfair Display", Georgia, serif;
+    font-size: 15pt; color: var(--felt); font-weight: 700;
+    display: flex; align-items: center; gap: 3mm; margin-bottom: 2.4mm;
+  }
+  h2 .num {
+    font-family: "Inter", sans-serif; font-size: 9pt; font-weight: 800;
+    background: var(--gold); color: var(--felt);
+    width: 6.5mm; height: 6.5mm; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .lead { color: var(--muted); font-size: 9.2pt; margin: -1.4mm 0 2.2mm; }
+
+  /* Key points */
+  .keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; }
+  .key {
+    border: 1px solid var(--line); border-radius: 3mm; padding: 2.6mm 3.2mm;
+    background: #fafbfa; border-top: 1.2mm solid var(--felt-2);
+  }
+  .key .ico { font-size: 11pt; line-height: 1; margin-right: 1.2mm; }
+  .key b { display: flex; align-items: center; font-size: 10pt; margin: 0 0 1mm; color: var(--felt); }
+  .key p { font-size: 8.6pt; color: var(--muted); line-height: 1.38; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 9.8pt; }
+  th {
+    background: var(--felt); color: #fff; text-align: left; font-weight: 600;
+    padding: 2mm 3mm; font-size: 8.4pt; letter-spacing: .04em; text-transform: uppercase;
+  }
+  th:first-child { border-top-left-radius: 2.5mm; }
+  th:last-child { border-top-right-radius: 2.5mm; }
+  td { padding: 1.75mm 3mm; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tr:nth-child(even) td { background: #f7f9f7; }
+  td.range { font-weight: 700; white-space: nowrap; }
+  .pill {
+    display: inline-block; padding: .6mm 2.4mm; border-radius: 10mm; font-weight: 700; font-size: 9pt;
+    background: var(--green-soft); color: var(--dealer);
+  }
+  .pill.club { background: #eef0ef; color: #4b524e; }
+  .pill.fix { background: var(--gold-soft); color: #7a5a12; }
+  .ex { color: var(--muted); font-size: 9pt; }
+  .ex b { color: var(--ink); }
+
+  .callout {
+    margin-top: 2.4mm; display: flex; gap: 3mm; align-items: flex-start;
+    background: var(--gold-soft); border-left: 1.5mm solid var(--gold);
+    padding: 2.4mm 4mm; border-radius: 0 2.5mm 2.5mm 0; font-size: 9.1pt; line-height: 1.4;
+  }
+  .callout .ico { font-size: 13pt; line-height: 1.1; }
+
+  /* Bars */
+  .legend { display: flex; gap: 5mm; font-size: 8.6pt; color: var(--muted); margin-bottom: 2mm; }
+  .legend i { display: inline-block; width: 3mm; height: 3mm; border-radius: .8mm; margin-right: 1.4mm; vertical-align: -.3mm; }
+  .bars { display: flex; flex-direction: column; gap: 1.5mm; }
+  .bar-row { display: grid; grid-template-columns: 19mm 1fr 52mm; align-items: center; gap: 3mm; font-size: 9.2pt; }
+  .bar-row .tip { font-weight: 800; text-align: right; }
+  .bar { display: flex; height: 5.2mm; border-radius: 1.5mm; overflow: hidden; background: #eee; }
+  .bar span { display: flex; align-items: center; justify-content: center; color: #fff; font-size: 7.8pt; font-weight: 700; white-space: nowrap; }
+  .s-d { background: var(--dealer); }
+  .s-p { background: var(--deposit); color: #3d2e08 !important; }
+  .s-c { background: var(--club); }
+  .bar-row .split { font-size: 8.6pt; color: var(--muted); }
+  .bar-row .split b { color: var(--dealer); }
+  .bar-row .split em { font-style: normal; color: #8a6a1c; font-weight: 700; }
+
+  /* Steps */
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; }
+  .step { position: relative; padding: 2.4mm 3mm; border-radius: 2.5mm; background: #f5f7f5; font-size: 8.8pt; }
+  .step .n { font-family: "Playfair Display", serif; font-weight: 800; font-size: 13pt; color: var(--gold); line-height: 1; }
+  .step b { display: block; color: var(--felt); margin: 1mm 0 .6mm; font-size: 9.4pt; }
+  .step p { color: var(--muted); line-height: 1.35; }
+
+  /* Page 2: stages */
+  .stages { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+  .stage {
+    border-radius: 3mm; padding: 3.2mm 5mm; color: #fff; position: relative; overflow: hidden;
+    background: linear-gradient(135deg, var(--felt-2), var(--felt));
+  }
+  .stage.two { background: linear-gradient(135deg, #3a2d0c, #6b5216); }
+  .stage small { text-transform: uppercase; letter-spacing: .14em; font-size: 8pt; color: #cfe2d8; }
+  .stage.two small { color: #f0dfae; }
+  .stage .amt { font-family: "Playfair Display", serif; font-size: 22pt; font-weight: 800; line-height: 1.1; margin: 1mm 0; }
+  .stage .amt span { font-size: 12pt; font-family: "Inter", sans-serif; font-weight: 600; opacity: .85; }
+  .stage p { font-size: 9pt; color: #e3eee8; }
+  .stage .chip {
+    position: absolute; right: -6mm; top: -6mm; width: 26mm; height: 26mm; border-radius: 50%;
+    border: 3.5mm dashed rgba(255,255,255,.18);
+  }
+  .progress { margin-top: 2.2mm; display: flex; align-items: center; gap: 2mm; font-size: 8.4pt; color: var(--muted); }
+  .progress .track { flex: 1; height: 3mm; border-radius: 2mm; background: linear-gradient(90deg, var(--felt-2) 0 50%, var(--gold) 50% 100%); position: relative; }
+  .progress .track i { position: absolute; top: -1.2mm; width: 1mm; height: 5.4mm; background: var(--ink); border-radius: .5mm; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
+  .card { border: 1px solid var(--line); border-radius: 3mm; padding: 3.2mm 4mm; }
+  .card h3 { font-size: 10.5pt; color: var(--felt); margin-bottom: 1mm; display: flex; gap: 2mm; align-items: center; }
+  .card h3 .tag { font-size: 7.6pt; background: var(--felt); color: #fff; border-radius: 1.2mm; padding: .4mm 1.8mm; letter-spacing: .06em; }
+  .card .sub { font-size: 8.6pt; color: var(--muted); margin-bottom: 2mm; }
+  .card table { font-size: 9.4pt; }
+  .card th { padding: 1.5mm 2.5mm; font-size: 8pt; }
+  .card td { padding: 1.4mm 2.5mm; }
+  .card td.r { text-align: right; font-weight: 800; color: #7a5a12; }
+  .mini-calc { margin-top: 2mm; font-size: 8.8pt; background: #f5f7f5; border-radius: 2mm; padding: 2.5mm 3mm; }
+  .mini-calc b { color: var(--felt); }
+  .flow { display: flex; flex-direction: column; gap: 1.6mm; font-size: 9pt; }
+  .flow .ln { display: flex; justify-content: space-between; padding: 1.3mm 2.5mm; border-radius: 1.6mm; background: #f5f7f5; }
+  .flow .ln.d { background: var(--green-soft); color: var(--dealer); font-weight: 700; }
+  .flow .ln.c { background: #eef0ef; }
+  .flow .ln.p { background: var(--gold-soft); color: #7a5a12; font-weight: 800; }
+  .flow .sub-ln { padding-left: 6mm; }
+
+  .rules { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3.5mm; }
+  .rule { border-radius: 3mm; padding: 3.2mm 3.6mm; border: 1px solid; }
+  .rule .badge { display: inline-flex; width: 6.5mm; height: 6.5mm; border-radius: 50%; align-items: center; justify-content: center; font-weight: 800; font-size: 12pt; color: #fff; }
+  .rule b { display: block; margin: 1.5mm 0 1mm; font-size: 10.5pt; }
+  .rule p, .rule li { font-size: 8.9pt; line-height: 1.4; }
+  .rule ul { padding-left: 4mm; margin-top: 1mm; }
+  .rule.ok { background: var(--green-soft); border-color: #bfdccc; }
+  .rule.ok .badge { background: var(--dealer); }
+  .rule.ok b { color: var(--dealer); }
+  .rule.warn { background: var(--amber-soft); border-color: #f0d7a6; }
+  .rule.warn .badge { background: var(--amber); }
+  .rule.warn b { color: var(--amber); }
+  .rule.bad { background: var(--red-soft); border-color: #efc4c1; }
+  .rule.bad .badge { background: var(--red); }
+  .rule.bad b { color: var(--red); }
+
+  .sign {
+    margin-top: auto; border: 1.5px dashed #b9c2bd; border-radius: 3mm; padding: 3mm 5mm 3.5mm;
+  }
+  .sign h4 { font-size: 10pt; color: var(--felt); margin-bottom: 1mm; }
+  .sign p { font-size: 8.6pt; color: var(--muted); margin-bottom: 7mm; }
+  .sign .fields { display: grid; grid-template-columns: 1.6fr 1fr 1.2fr; gap: 8mm; }
+  .sign .f { border-top: 1px solid var(--ink); padding-top: 1.2mm; font-size: 8pt; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+
+  .foot {
+    padding: 3mm 14mm 5mm; display: flex; justify-content: space-between; font-size: 7.8pt; color: #8b948f;
+    letter-spacing: .06em;
+  }
+
+  .toolbar {
+    position: sticky; top: 0; z-index: 10; display: flex; gap: 10px; justify-content: center; align-items: center;
+    padding: 10px 16px; background: var(--felt); border-bottom: 3px solid var(--gold);
+  }
+  .toolbar span { color: #cfe2d8; font-size: 13px; margin-right: auto; letter-spacing: .04em; }
+  .btn {
+    font: 600 14px/1 "Inter", system-ui, sans-serif; padding: 10px 16px; border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--gold); background: var(--gold); color: var(--felt); text-decoration: none;
+    transition: transform .15s ease, background-color .15s ease;
+  }
+  .btn.ghost { background: transparent; color: #fff; }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+  @page { size: A4; margin: 0; }
+  @media print {
+    body { background: #fff; }
+    .toolbar { display: none; }
+    .page { margin: 0; box-shadow: none; page-break-after: always; break-after: page; }
+    .page:last-child { page-break-after: auto; break-after: auto; }
+  }
+  @media screen and (max-width: 820px) {
+    .page { width: 100%; height: auto; margin: 0 0 12px; }
+    .content { padding: 16px; }
+    .keys, .steps, .rules { grid-template-columns: 1fr 1fr; }
+    .two-col, .stages { grid-template-columns: 1fr; }
+    .bar-row { grid-template-columns: 56px 1fr; }
+    .bar-row .split { grid-column: 2; }
+    table { font-size: 9pt; }
+    th, td { padding: 8px 6px; }
+    td.range { white-space: normal; }
+    .toolbar span { display: none; }
+    .hero h1 { font-size: 26px; }
+    .sign .fields { grid-template-columns: 1fr; gap: 28px; }
+  }
+</style>
+</head>
+<body>
+<nav class="toolbar" aria-label="Acțiuni document">
+  <span>Players Club · Dealeri</span>
+  <a class="btn" href="regulament-dealeri.pdf" download>Descarcă PDF</a>
+  <button class="btn ghost" type="button" onclick="window.print()">Printează</button>
+</nav>
+
+<!-- ============ PAGINA 1 — TIPS ============ -->
+<section class="page">
+  <header class="hero">
+    <div class="brand"><span>Regulament intern · Dealeri</span><span class="suits">♠<span class="r">♥</span>♣<span class="r">♦</span></span></div>
+    <h1>Cum se împarte <span>tipsul</span></h1>
+    <p>Grila de procente, exemple concrete și cum se formează depozitul tău.</p>
+    <div class="page-tag">Pagina 1 / 2</div>
+  </header>
+
+  <div class="content">
+    <div>
+      <h2><span class="num">1</span>Pe scurt</h2>
+      <div class="keys">
+        <div class="key"><b><span class="ico">💰</span>Doar tips</b><p>Dealerii nu mai au salariu. Câștigul tău vine 100% din tips.</p></div>
+        <div class="key"><b><span class="ico">📊</span>Grilă clară</b><p>Cât păstrează clubul depinde de cât tips faci în ziua respectivă.</p></div>
+        <div class="key"><b><span class="ico">🏦</span>Depozit</b><p>O parte din bani se strânge într-un depozit care este al tău.</p></div>
+        <div class="key"><b><span class="ico">🤝</span>Îl primești înapoi</b><p>La plecare primești depozitul, dacă anunți cu 30 de zile înainte.</p></div>
+      </div>
+    </div>
+
+    <div>
+      <h2><span class="num">2</span>Grila de împărțire a tipsului</h2>
+      <p class="lead">Se aplică la totalul de tips făcut de tine într-o zi.</p>
+      <table>
+        <thead><tr><th>Tips pe zi</th><th>Clubul ia</th><th>Tu primești</th><th>Exemplu</th></tr></thead>
+        <tbody>
+          <tr><td class="range">0 – 500 RON</td><td><span class="pill club">20%</span></td><td><span class="pill">80%</span></td><td class="ex">La 500 RON → <b>tu 400</b> · club 100</td></tr>
+          <tr><td class="range">501 – 600 RON</td><td><span class="pill fix">150 RON fix</span></td><td><span class="pill">restul</span></td><td class="ex">La 600 RON → <b>tu 450</b> · club 150</td></tr>
+          <tr><td class="range">601 – 1.000 RON</td><td><span class="pill club">30%</span></td><td><span class="pill">70%</span></td><td class="ex">La 1.000 RON → <b>tu 700</b> · club 300</td></tr>
+          <tr><td class="range">1.001 – 1.200 RON</td><td><span class="pill fix">350 RON fix</span></td><td><span class="pill">restul</span></td><td class="ex">La 1.200 RON → <b>tu 850</b> · club 350</td></tr>
+          <tr><td class="range">Peste 1.200 RON</td><td><span class="pill club">40%</span></td><td><span class="pill">60%</span></td><td class="ex">La 2.000 RON → <b>tu 1.200</b> · club 800*</td></tr>
+        </tbody>
+      </table>
+      <div class="callout"><span class="ico">⭐</span><div><b>Regula de 500 RON:</b> clubul păstrează <b>maximum 500 RON pe zi</b> din tipsul tău. Tot ce depășește 500 RON din partea clubului <b>intră în depozitul tău</b>.<br>*La 2.000 RON: clubul are 800 → <b>500 rămân la club</b>, <b>300 merg în depozitul tău</b>.</div></div>
+    </div>
+
+    <div>
+      <h2><span class="num">3</span>Exemple pe înțelesul tuturor</h2>
+      <div class="legend"><span><i class="s-d"></i>Tu (bani în mână)</span><span><i class="s-p"></i>Depozitul tău</span><span><i class="s-c"></i>Clubul</span></div>
+      <div class="bars">
+        <div class="bar-row"><div class="tip">300</div><div class="bar"><span class="s-d" style="width:80%">240</span><span class="s-c" style="width:20%">60</span></div><div class="split"><b>Tu 240</b> · club 60</div></div>
+        <div class="bar-row"><div class="tip">550</div><div class="bar"><span class="s-d" style="width:72.7%">400</span><span class="s-c" style="width:27.3%">150</span></div><div class="split"><b>Tu 400</b> · club 150 (fix)</div></div>
+        <div class="bar-row"><div class="tip">1.100</div><div class="bar"><span class="s-d" style="width:68.2%">750</span><span class="s-c" style="width:31.8%">350</span></div><div class="split"><b>Tu 750</b> · club 350 (fix)</div></div>
+        <div class="bar-row"><div class="tip">1.500</div><div class="bar"><span class="s-d" style="width:60%">900</span><span class="s-p" style="width:6.7%">100</span><span class="s-c" style="width:33.3%">500</span></div><div class="split"><b>Tu 900</b> · <em>depozit 100</em> · club 500</div></div>
+        <div class="bar-row"><div class="tip">2.000</div><div class="bar"><span class="s-d" style="width:60%">1.200</span><span class="s-p" style="width:15%">300</span><span class="s-c" style="width:25%">500</span></div><div class="split"><b>Tu 1.200</b> · <em>depozit 300</em> · club 500</div></div>
+        <div class="bar-row"><div class="tip">3.000</div><div class="bar"><span class="s-d" style="width:60%">1.800</span><span class="s-p" style="width:23.3%">700</span><span class="s-c" style="width:16.7%">500</span></div><div class="split"><b>Tu 1.800</b> · <em>depozit 700</em> · club 500</div></div>
+      </div>
+    </div>
+
+    <div>
+      <h2><span class="num">4</span>Calculul în 4 pași</h2>
+      <div class="steps">
+        <div class="step"><div class="n">1</div><b>Totalul zilei</b><p>Se numără tot tipsul tău din ziua respectivă.</p></div>
+        <div class="step"><div class="n">2</div><b>Găsește rândul</b><p>Vezi în grilă în ce interval se încadrează suma.</p></div>
+        <div class="step"><div class="n">3</div><b>Partea clubului</b><p>Se scade procentul sau suma fixă a clubului. Restul e al tău.</p></div>
+        <div class="step"><div class="n">4</div><b>Peste 500?</b><p>Dacă partea clubului trece de 500 RON, diferența intră în depozitul tău.</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Toate sumele sunt în RON</span><span>Continuare: Depozitul de garanție →</span></div>
+</section>
+
+<!-- ============ PAGINA 2 — DEPOZIT ============ -->
+<section class="page">
+  <header class="hero slim">
+    <div class="brand"><span>Regulament intern · Dealeri</span><span class="suits">♠<span class="r">♥</span>♣<span class="r">♦</span></span></div>
+    <h1>Depozitul de <span>garanție</span></h1>
+    <p>Banii din depozit sunt ai tăi. Clubul îi păstrează ca garanție și ți-i dă înapoi când pleci, dacă respecți regulile.</p>
+    <div class="page-tag">Pagina 2 / 2</div>
+  </header>
+
+  <div class="content">
+    <div>
+      <h2><span class="num">5</span>Cât trebuie să strângi</h2>
+      <div class="stages">
+        <div class="stage"><div class="chip"></div><small>Etapa 1</small><div class="amt">5.000 <span>RON</span></div><p>Primul prag al depozitului.</p></div>
+        <div class="stage two"><div class="chip"></div><small>Etapa 2</small><div class="amt">10.000 <span>RON</span></div><p>Depozitul complet, după Etapa 1.</p></div>
+      </div>
+      <div class="progress"><span>0</span><div class="track"><i style="left:calc(50% - .5mm)"></i></div><span>10.000 RON</span></div>
+    </div>
+
+    <div>
+      <h2><span class="num">6</span>Cum se formează depozitul</h2>
+      <p class="lead">Depozitul crește în două feluri, automat:</p>
+      <div class="two-col">
+        <div class="card">
+          <h3><span class="tag">A</span>Lunar, din câștigul tău</h3>
+          <p class="sub">La final de lună, în funcție de cât ai câștigat:</p>
+          <table>
+            <thead><tr><th>Câștig în lună</th><th style="text-align:right">Lași în depozit</th></tr></thead>
+            <tbody>
+              <tr><td>Sub 6.000 RON</td><td class="r" style="color:var(--muted)">0 RON</td></tr>
+              <tr><td>6.000 – 6.999 RON</td><td class="r">500 RON</td></tr>
+              <tr><td>7.000 – 7.999 RON</td><td class="r">750 RON</td></tr>
+              <tr><td>8.000 – 9.999 RON</td><td class="r">1.000 RON</td></tr>
+              <tr><td>10.000 RON și peste</td><td class="r">1.500 RON</td></tr>
+            </tbody>
+          </table>
+          <div class="mini-calc">Exemplu: ai câștigat <b>7.200 RON</b> într-o lună → <b>750 RON</b> merg în depozit, <b>6.450 RON</b> sunt ai tăi.</div>
+        </div>
+        <div class="card">
+          <h3><span class="tag">B</span>Zilnic, din partea clubului</h3>
+          <p class="sub">Când faci peste 1.200 RON tips, clubul păstrează maxim 500 RON. Restul vine la tine, în depozit.</p>
+          <div class="flow">
+            <div class="ln"><span>Tips făcut azi</span><b>2.000 RON</b></div>
+            <div class="ln d"><span>Partea ta (60%) — bani în mână</span><span>1.200 RON</span></div>
+            <div class="ln c"><span>Partea clubului (40%)</span><span>800 RON</span></div>
+            <div class="ln c sub-ln"><span>↳ rămâne la club</span><span>500 RON</span></div>
+            <div class="ln p sub-ln"><span>↳ intră în depozitul tău</span><span>300 RON</span></div>
+          </div>
+          <div class="mini-calc">Pe scurt: <b>din partea clubului, tot ce trece de 500 RON e al tău</b> și se adaugă la depozit.</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h2><span class="num">7</span>Ce se întâmplă cu depozitul</h2>
+      <div class="rules">
+        <div class="rule ok"><span class="badge">✓</span><b>Îl primești înapoi</b><p>Primești depozitul în momentul în care pleci din firmă, cu condiția să <strong>anunți plecarea cu 30 de zile înainte</strong> și să respecți regulile.</p></div>
+        <div class="rule warn"><span class="badge">!</span><b>Penalizări din depozit</b><p>Greșelile se penalizează din depozit, de exemplu:</p><ul><li>întârzieri la program;</li><li>vorbit urât cu clienții;</li><li>vorbit urât cu colegii.</li></ul></div>
+        <div class="rule bad"><span class="badge">✕</span><b>Pierzi tot depozitul</b><p>Dacă un dealer este <strong>prins că fură</strong>, i se reține <strong>întregul depozit</strong>, fără excepție.</p></div>
+      </div>
+    </div>
+
+    <div class="sign">
+      <h4>Confirmare dealer</h4>
+      <p>Am citit, am înțeles și sunt de acord cu regulile privind împărțirea tipsului și depozitul de garanție.</p>
+      <div class="fields"><div class="f">Nume și prenume</div><div class="f">Data</div><div class="f">Semnătura</div></div>
+    </div>
+  </div>
+  <div class="foot"><span>Toate sumele sunt în RON</span><span>Pentru întrebări, adresează-te managerului de sală</span></div>
+</section>
+
+</body>
+</html>
