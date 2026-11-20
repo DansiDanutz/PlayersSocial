@@ -155,3 +155,24 @@
     navigator.serviceWorker.register('/sw.js').catch((error) => console.error('Service worker registration failed:', error));
   }
 })();
+
+// Staff pages (/dealer/, /sef-de-sala/, the signing form) send visitors here with ?login=1 to sign in, and are
+// sent back once the account is ready. The login dialog only opens when no session is stored, so the button
+// (which signs out when a session exists) is never pressed for someone already signed in.
+(() => {
+  const RETURN_KEY = 'players-return-to', MAX_AGE_MS = 30 * 60 * 1000, STAFF_PATH = /^\/[a-z0-9-]+\/$/;
+  let target = null;
+  try {
+    const saved = JSON.parse(localStorage.getItem(RETURN_KEY) || 'null');
+    if (saved && Date.now() - saved.at < MAX_AGE_MS && STAFF_PATH.test(saved.path)) target = saved.path;
+  } catch { target = null; }
+  window.addEventListener('players:account', (event) => {
+    if (!event.detail.signedIn || !target) return;
+    localStorage.removeItem(RETURN_KEY);
+    location.replace(target);
+  });
+  const wantsLogin = new URLSearchParams(location.search).get('login') === '1';
+  if (wantsLogin && !localStorage.getItem('players-admin-session')) {
+    window.addEventListener('load', () => document.getElementById('adminLogin').click());
+  }
+})();

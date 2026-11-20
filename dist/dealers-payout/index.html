@@ -204,9 +204,21 @@
     margin-top: auto; border: 1.5px dashed #b9c2bd; border-radius: 3mm; padding: 3mm 5mm 3.5mm;
   }
   .sign h4 { font-size: 10pt; color: var(--felt); margin-bottom: 1mm; }
-  .sign p { font-size: 8.6pt; color: var(--muted); margin-bottom: 7mm; }
-  .sign .fields { display: grid; grid-template-columns: 1.6fr 1fr 1.2fr; gap: 8mm; }
-  .sign .f { border-top: 1px solid var(--ink); padding-top: 1.2mm; font-size: 8pt; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+  .sign p { font-size: 8.6pt; color: var(--muted); margin-bottom: 2mm; }
+  .sign .fields { display: grid; grid-template-columns: 1.6fr 1fr 1.2fr; gap: 8mm; align-items: end; }
+  .sign .f { display: flex; flex-direction: column; font-size: 8pt; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 400; }
+  .sign .f input { font: 600 11pt "Inter", sans-serif; color: var(--ink); border: 0; border-bottom: 1px solid var(--ink); background: transparent; padding: 1mm 0; height: 9mm; width: 100%; text-transform: none; letter-spacing: 0; border-radius: 0; }
+  .sign .f input:focus { outline: none; border-bottom: 2px solid var(--gold); }
+  .sign .f > span { padding-top: 1.2mm; display: flex; justify-content: space-between; align-items: center; }
+  .sign .sig canvas { width: 100%; height: 12mm; border-bottom: 1px solid var(--ink); touch-action: none; cursor: crosshair; background: transparent; }
+  .clear-sig { font: 600 7.5pt "Inter", sans-serif; border: 0; background: none; color: var(--felt-2); cursor: pointer; text-decoration: underline; padding: 0; }
+  .sign-actions { display: flex; align-items: center; gap: 4mm; margin-top: 4mm; flex-wrap: wrap; }
+  .btn-sign { font: 700 10.5pt "Inter", sans-serif; padding: 3mm 6mm; border-radius: 2mm; border: 0; background: var(--felt); color: #fff; cursor: pointer; }
+  .btn-sign:hover { background: var(--felt-2); }
+  .btn-sign:disabled { opacity: .6; cursor: wait; }
+  .sign-status { font-size: 9pt; margin: 0 !important; color: var(--muted); }
+  .sign-status.error { color: var(--red); }
+  .sign-status.ok { color: var(--dealer); font-weight: 700; }
 
 
   /* Page 3: guarantee + bonuses */
@@ -264,7 +276,8 @@
   @page { size: A4; margin: 0; }
   @media print {
     body { background: #fff; }
-    .toolbar { display: none; }
+    .toolbar, .sign-actions, .clear-sig { display: none !important; }
+    .sign .f input { font-size: 10pt; }
     .page { margin: 0; box-shadow: none; page-break-after: always; break-after: page; }
     .page:last-child { page-break-after: auto; break-after: auto; }
   }
@@ -287,6 +300,7 @@
 <body>
 <nav class="toolbar" aria-label="Acțiuni document">
   <span>Players Club · Dealeri</span>
+  <a class="btn ghost" href="/dealer/">Cardul meu</a>
   <a class="btn" href="regulament-dealeri.pdf" download>Descarcă PDF</a>
   <button class="btn ghost" type="button" onclick="window.print()">Printează</button>
 </nav>
@@ -470,14 +484,21 @@
       <div class="callout cond"><span class="ico">⚠️</span><div><b>Bonusurile se repetă</b> la fiecare 6 luni și la fiecare an, <b>cât timp nu ai nicio penalizare</b> în perioada respectivă.</div></div>
     </div>
 
-    <div class="sign">
+    <form class="sign" id="semnare" novalidate>
       <h4>Confirmare dealer</h4>
       <p>Am citit, am înțeles și sunt de acord cu regulile privind împărțirea tipsului și depozitul de garanție.</p>
-      <div class="fields"><div class="f">Nume și prenume</div><div class="f">Data</div><div class="f">Semnătura</div></div>
-    </div>
+      <div class="fields">
+        <label class="f"><input name="fullName" type="text" autocomplete="name" maxlength="120" spellcheck="false"><span>Nume și prenume</span></label>
+        <label class="f"><input name="date" type="text" readonly tabindex="-1"><span>Data</span></label>
+        <div class="f sig"><canvas aria-label="Semnătura: desenează cu degetul sau cu mouse-ul"></canvas><span>Semnătura <button type="button" class="clear-sig">Șterge</button></span></div>
+      </div>
+      <div class="sign-actions"><button type="submit" class="btn-sign">Semnez și îmi creez cardul</button><p class="sign-status" role="status" aria-live="polite"></p></div>
+    </form>
   </div>
   <div class="foot"><span>Toate sumele sunt în RON</span><span>Pentru întrebări, adresează-te managerului de sală</span></div>
 </section>
 
+<script src="/staff/staff-core.js"></script>
+<script src="/staff/sign.js"></script>
 </body>
 </html>
