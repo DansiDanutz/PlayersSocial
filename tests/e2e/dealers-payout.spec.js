@@ -36,3 +36,12 @@ test('has no horizontal scroll', async ({ page }) => {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(1);
 });
+
+test('explains the guaranteed minimum and loyalty bonuses', async ({ page }) => {
+  await page.goto(PAGE_URL);
+
+  await expect(page.getByRole('heading', { name: /Venit minim garantat: 5.000 RON/ })).toBeVisible();
+  await expect(page.getByText(/3 luni slabe la rând/)).toBeVisible();
+  await expect(page.getByText('Bonus 4.000 RON')).toBeVisible();
+  await expect(page.getByText('Bonus 8.000 RON')).toBeVisible();
+});
