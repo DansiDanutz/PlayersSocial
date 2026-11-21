@@ -23,6 +23,7 @@ const PAGES = [
   { name: 'dealer list', path: '/sef-de-sala/', tab: 'Dealeri' },
   { name: 'rules and signing', path: '/dealers-payout/' },
   { name: 'request approval', path: '/aprobare/#t=t1' },
+  { name: 'staff guide', path: '/cum-functioneaza/' },
   { name: 'access request', path: '/sef-de-sala/', data: { user: true } },
 ];
 
