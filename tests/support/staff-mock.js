@@ -81,6 +81,17 @@ function handlers(staff) {
       if (body.p_approve) staff.managers.push(pending.email);
       return pending.status;
     },
+    players_admin_list_floor_requests: request => {
+      if (bearer(request) !== ADMIN_TOKEN) throw new Error('Acces interzis');
+      return staff.adminRequests.filter(row => row.status === 'pending');
+    },
+    players_admin_decide_floor_request: (request, body) => {
+      if (bearer(request) !== ADMIN_TOKEN) throw new Error('Acces interzis');
+      const row = staff.adminRequests.find(entry => entry.id === body.p_id);
+      row.status = body.p_approve ? 'approved' : 'rejected';
+      if (body.p_approve) staff.managers.push(row.email);
+      return row.status;
+    },
     players_admin_list_floor_managers: request => {
       if (bearer(request) !== ADMIN_TOKEN) throw new Error('Acces interzis');
       return staff.managers.map(email => ({ email, added_at: '2026-11-01T00:00:00Z', added_by: ADMIN_EMAIL }));
@@ -93,9 +104,9 @@ function handlers(staff) {
   };
 }
 
-async function mockStaff(page, { admin = false, user = false, dealer = null, managers = [], shifts = [], tips = [], penalties = [], request = null, approvals = {}, floorRequestError = null, team = [] } = {}) {
+async function mockStaff(page, { admin = false, user = false, dealer = null, managers = [], shifts = [], tips = [], penalties = [], request = null, approvals = {}, floorRequestError = null, team = [], adminRequests = [] } = {}) {
   const state = await mockSupabase(page, { admin, user });
-  const staff = { dealer, managers: [...managers], shifts: [...shifts], tips: [...tips], penalties: [...penalties], request, approvals: structuredClone(approvals), floorRequests: [], team: structuredClone(team), calls: [] };
+  const staff = { dealer, managers: [...managers], shifts: [...shifts], tips: [...tips], penalties: [...penalties], request, approvals: structuredClone(approvals), floorRequests: [], team: structuredClone(team), adminRequests: structuredClone(adminRequests), calls: [] };
   const table = handlers(staff);
   await page.route(`${SUPABASE_ORIGIN}/rest/v1/rpc/**`, async route => {
     const request = route.request();

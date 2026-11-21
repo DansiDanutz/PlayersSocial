@@ -126,3 +126,16 @@ test('one account can be floor manager and dealer: a manager still signs and get
   expect(staff.calls.some(call => call.name === 'players_dealer_sign')).toBe(true);
   expect(staff.floorRequests).toHaveLength(0);
 });
+
+test('the admin sees pending requests in the panel and approves one there', async ({ page }) => {
+  const { staff } = await mockStaff(page, { admin: true, adminRequests: [{ id: 'r1', full_name: 'Maria Ionescu', email: 'maria@example.com', created_at: '2026-11-21T10:00:00Z', expires_at: '2026-11-28T10:00:00Z', status: 'pending' }] });
+  await page.goto('/sef-de-sala/');
+
+  await expect(page.getByRole('tab', { name: /Șefi de sală/ }).locator('.count')).toHaveText('1');
+  await page.getByRole('tab', { name: /Șefi de sală/ }).click();
+  await page.getByRole('button', { name: 'Aprobă Maria Ionescu' }).click();
+
+  await expect(page.getByText('Nicio cerere în așteptare.')).toBeVisible();
+  await expect(page.locator('.item').filter({ hasText: 'maria@example.com' })).toBeVisible();
+  expect(staff.calls.find(call => call.name === 'players_admin_decide_floor_request').body).toEqual({ p_id: 'r1', p_approve: true });
+});

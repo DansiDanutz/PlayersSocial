@@ -13,17 +13,16 @@
 <link rel="stylesheet" href="/staff/board.css">
 </head>
 <body class="board-page">
-<header class="b-header">
-  <div class="b-header-inner">
-    <a class="b-brand" href="/"><span class="b-logo">P</span><span>Players · Echipa</span></a>
-    <nav class="b-nav">
-      <a href="/dealer/">Cardul meu</a>
-      <a href="/sef-de-sala/">Șef de sală</a>
-      <a href="/cum-functioneaza/">Ghid</a>
-    </nav>
-  </div>
+<header class="topbar">
+  <strong>Players · Echipa</strong>
+  <span class="who" id="who"></span>
+  <a href="/dealer/">Cardul meu</a>
+  <a href="/echipa/">Echipa</a>
+  <a href="/sef-de-sala/">Șef de sală</a>
+  <a href="/dealers-payout/">Regulament</a>
+  <a href="/cum-functioneaza/">Ghid</a>
 </header>
-<main class="b-main" id="app"><p class="b-muted">Se încarcă…</p></main>
+<main class="b-main" id="app" aria-busy="true"><span class="skeleton" style="height:34px;width:260px"></span><div class="b-stats"><span class="skeleton" style="height:96px"></span><span class="skeleton" style="height:96px"></span><span class="skeleton" style="height:96px"></span><span class="skeleton" style="height:96px"></span></div><div class="b-grid"><span class="skeleton" style="height:250px"></span><span class="skeleton" style="height:250px"></span><span class="skeleton" style="height:250px"></span></div></main>
 <dialog class="b-sheet" id="sheet" aria-labelledby="sheetTitle">
   <div class="b-sheet-head">
     <div><h2 id="sheetTitle"></h2><p class="b-muted" id="sheetSub"></p></div>

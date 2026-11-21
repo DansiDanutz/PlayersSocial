@@ -103,5 +103,10 @@
       el('button', { class: 'btn', type: 'button', onclick: goToLogin }, 'Intră în cont')));
   }
 
+  // Highlights the header link of the page being viewed.
+  document.querySelectorAll('.topbar a[href]').forEach(link => {
+    if (new URL(link.href, location.href).pathname === location.pathname) link.setAttribute('aria-current', 'page');
+  });
+
   window.Staff = { currentUser, rpc, requestFloorAccess, cleanName, isFullName, goToLogin, signOutTo, loginPrompt, el, money, signedMoney, hours, time, dateLabel, monthLabel, toInput, fromInput, today, STATUS_LABELS };
 })();

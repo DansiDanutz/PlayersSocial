@@ -1,6 +1,7 @@
 // /cum-functioneaza/: the staff guide explains the three roles and is linked from every staff page.
 const { test, expect } = require('@playwright/test');
 const { mockStaff } = require('../support/staff-mock');
+const { gotoLoaded } = require('../support/supabase-mock');
 
 test('the guide explains dealer, floor manager and administrator steps', async ({ page }) => {
   await page.goto('/cum-functioneaza/');
@@ -17,13 +18,14 @@ for (const path of ['/dealers-payout/', '/dealer/', '/sef-de-sala/', '/aprobare/
   test(`${path} links to the guide`, async ({ page }) => {
     await mockStaff(page, { user: true });
     await page.goto(path);
-    await expect(page.getByRole('link', { name: 'Cum funcționează' })).toHaveAttribute('href', '/cum-functioneaza/');
+    await expect(page.locator('.topbar, .toolbar').locator('a[href="/cum-functioneaza/"]')).toBeVisible();
   });
 }
 
 test('signed-in people find the staff pages in the home menu, visitors do not', async ({ page }) => {
   await mockStaff(page, { user: true });
-  await page.goto('/');
+  await gotoLoaded(page, '/');
+  await expect(page.locator('#menuStaff')).not.toHaveAttribute('hidden', '');
   await page.locator('#menuToggle').click();
   const menu = page.locator('#siteMenu');
   await menu.getByText('Personal', { exact: true }).click();
@@ -34,7 +36,7 @@ test('signed-in people find the staff pages in the home menu, visitors do not', 
 
 test('visitors who are not signed in do not see the staff menu', async ({ page }) => {
   await mockStaff(page);
-  await page.goto('/');
+  await gotoLoaded(page, '/');
   await page.locator('#menuToggle').click();
   await expect(page.locator('#siteMenu')).toBeVisible();
   await expect(page.locator('#menuStaff')).toBeHidden();

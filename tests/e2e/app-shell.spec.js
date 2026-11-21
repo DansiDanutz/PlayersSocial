@@ -153,6 +153,8 @@ test('on phones the admin dashboard is an app: compact header, 2×2 KPIs and a b
 
 const SAMSUNG = 'Mozilla/5.0 (Linux; Android 15; SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/28.0 Chrome/130.0.0.0 Mobile Safari/537.36';
 const ANDROID_CHROME = 'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36';
+// A date that is always ahead, so 'upcoming' fixtures never age out.
+const daysAhead = days => new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
 const useAgent = (page, agent) => page.addInitScript(value => Object.defineProperty(navigator, 'userAgent', { get: () => value }), agent);
 
 test('Samsung Internet gets steps for its own menu and can copy the link for Chrome', async ({ page }) => {
@@ -264,7 +266,7 @@ test('on desktop the dashboard header names the current section and the sidebar 
 
 test('on phones the admin forms never trigger zoom and every control and label is comfortable', async ({ page }) => {
   test.skip(page.viewportSize().width > 600, 'phone layout');
-  await mockSupabase(page, { admin: true, events: [featuredRow({ event_name: 'Turneu de Remi', event_date: '2026-10-10', joined_count: 5 })], scheduleTemplate: { 2: { linked_card: 'Seară de Șah', start_time: '18:00:00' } } });
+  await mockSupabase(page, { admin: true, events: [featuredRow({ event_name: 'Turneu de Remi', event_date: daysAhead(30), joined_count: 5 })], scheduleTemplate: { 2: { linked_card: 'Seară de Șah', start_time: '18:00:00' } } });
   await gotoLoaded(page, '/');
   await page.locator('#adminToggle').click();
 
