@@ -21,9 +21,26 @@ for (const path of ['/dealers-payout/', '/dealer/', '/sef-de-sala/', '/aprobare/
   test(`${path} links to the guide`, async ({ page }) => {
     await mockStaff(page, { user: true });
     await page.goto(path);
-    await expect(page.locator('.topbar, .toolbar').locator('a[href="/cum-functioneaza/"]')).toBeVisible();
+    // Desktop: header link; phones: the bottom tab bar (pages with a single link keep it in the header).
+    await expect(page.locator('.topbar, .toolbar, .tabbar').locator('a[href="/cum-functioneaza/"]:visible')).toHaveCount(1);
   });
 }
+
+test('staff pages show one set of navigation links: header on desktop, tab bar on phones', async ({ page, isMobile }) => {
+  await mockStaff(page, { user: true });
+  await page.goto('/dealer/');
+
+  const tabbar = page.getByRole('navigation', { name: 'Navigare personal' });
+  if (isMobile) {
+    await expect(tabbar).toBeVisible();
+    await expect(tabbar.getByRole('link', { name: 'Cardul meu' })).toHaveAttribute('aria-current', 'page');
+    await expect(page.locator('.topbar a[href="/echipa/"]')).toBeHidden();
+  } else {
+    await expect(tabbar).toBeHidden();
+    await expect(page.locator('.topbar a[href="/echipa/"]')).toBeVisible();
+  }
+  await expect(page.getByRole('link', { name: 'Echipa' })).toHaveCount(1);
+});
 
 test('signed-in people find the staff pages in the home menu, visitors do not', async ({ page }) => {
   await mockStaff(page, { user: true });
