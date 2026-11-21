@@ -4,12 +4,15 @@
 (function () {
   const { currentUser, rpc, requestFloorAccess, cleanName, isFullName, loginPrompt, signOutTo, el, money, hours, time, dateLabel, monthLabel, toInput, fromInput, today, timeField, STATUS_LABELS } = window.Staff;
   const app = document.getElementById('app');
-  const view = el('div', { style: 'display:contents' });
+  const view = el('div', { class: 'view' });
   const tabs = el('div', { class: 'tabs', role: 'tablist' });
   let isAdmin = false;
   let active = 'pending';
 
   function statusLine() { return el('p', { class: 'status', role: 'status' }); }
+
+  // The "Istoric" column; reloaded after every saved change so the new entry appears at the top.
+  let history = { reload: () => {} };
 
   async function run(button, status, action, doneMessage, after) {
     button.disabled = true;
@@ -19,6 +22,7 @@
       await action();
       status.className = 'status ok';
       status.textContent = doneMessage;
+      history.reload();
       if (after) await after();
     } catch (error) {
       status.className = 'status error';
@@ -136,7 +140,7 @@
       after: penaltyForm(dealerId, refresh),
       onDeletePenalty: async penalty => {
         if (!confirm(`Ștergi penalizarea de ${money(penalty.amount)} (${penalty.reason})?`)) return;
-        try { await rpc('players_floor_delete_penalty', { p_penalty: penalty.id }); await refresh(); } catch (error) { alert(error.message); }
+        try { await rpc('players_floor_delete_penalty', { p_penalty: penalty.id }); history.reload(); await refresh(); } catch (error) { alert(error.message); }
       },
       onDeletePayout: payout => deletePayout(payout, refresh),
     });
@@ -159,7 +163,7 @@
   // The floor manager writes what was actually paid; a wrong entry is deleted and written again.
   async function deletePayout(payout, refresh) {
     if (!confirm(`Ștergi plata „${window.DealerCard.payoutLabel(payout)}” de ${money(payout.amount)}?`)) return;
-    try { await rpc('players_floor_delete_payout', { p_payout: payout.id }); await refresh(); } catch (error) { alert(error.message); }
+    try { await rpc('players_floor_delete_payout', { p_payout: payout.id }); history.reload(); await refresh(); } catch (error) { alert(error.message); }
   }
 
   function payForm(row, due, refresh) {
@@ -359,7 +363,8 @@
     Object.entries(SECTIONS).filter(([key]) => key !== 'managers' || isAdmin).forEach(([key, [label]]) => {
       tabs.append(el('button', { type: 'button', role: 'tab', 'data-tab': key, onclick: () => show(key) }, label, ['pending', 'pay', 'managers'].includes(key) ? el('span', { class: 'count', hidden: true }) : null));
     });
-    app.replaceChildren(el('h1', {}, 'Panoul șefului de sală'), tabs, view);
+    history = window.StaffActivity.create();
+    app.replaceChildren(el('h1', {}, 'Panoul șefului de sală'), tabs, el('div', { class: 'with-history' }, view, history.node));
     await show(active);
     loadPayRows().then(rows => setCount('pay', rows.flatMap(dueItems).length)).catch(() => {});
     if (isAdmin && active !== 'managers') rpc('players_admin_list_floor_requests').then(rows => setCount('managers', rows.length)).catch(() => {});
