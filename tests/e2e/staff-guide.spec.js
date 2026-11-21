@@ -20,3 +20,22 @@ for (const path of ['/dealers-payout/', '/dealer/', '/sef-de-sala/', '/aprobare/
     await expect(page.getByRole('link', { name: 'Cum funcționează' })).toHaveAttribute('href', '/cum-functioneaza/');
   });
 }
+
+test('signed-in people find the staff pages in the home menu, visitors do not', async ({ page }) => {
+  await mockStaff(page, { user: true });
+  await page.goto('/');
+  await page.locator('#menuToggle').click();
+  const menu = page.locator('#siteMenu');
+  await menu.getByText('Personal', { exact: true }).click();
+  await expect(menu.getByRole('link', { name: 'Cardul meu de dealer' })).toHaveAttribute('href', '/dealer/');
+  await expect(menu.getByRole('link', { name: 'Șef de sală' })).toHaveAttribute('href', '/sef-de-sala/');
+  await expect(menu.getByRole('link', { name: 'Ghid personal' })).toHaveAttribute('href', '/cum-functioneaza/');
+});
+
+test('visitors who are not signed in do not see the staff menu', async ({ page }) => {
+  await mockStaff(page);
+  await page.goto('/');
+  await page.locator('#menuToggle').click();
+  await expect(page.locator('#siteMenu')).toBeVisible();
+  await expect(page.locator('#menuStaff')).toBeHidden();
+});
