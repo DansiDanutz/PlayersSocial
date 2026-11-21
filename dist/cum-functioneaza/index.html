@@ -9,20 +9,21 @@
 <meta name="description" content="Ghidul personalului Players Club: contul de dealer, pontajul, aprobarea șefilor de sală.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/staff/staff.css">
 <style>
   .lead { font-size: 16px; color: var(--muted); margin: 0; max-width: 62ch; }
   .roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 12px; }
-  .role { background: var(--paper); border: 1px solid var(--line); border-top: 4px solid var(--felt); border-radius: 14px; padding: 14px 16px; text-decoration: none; color: inherit; }
-  .role.floor { border-top-color: var(--gold); }
-  .role.admin { border-top-color: var(--felt-2); }
-  .role b { display: block; font-family: "Playfair Display", Georgia, serif; font-size: 18px; color: var(--felt); }
+  .role { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-decoration: none; color: inherit; box-shadow: var(--shadow-sm); transition: box-shadow .15s ease, border-color .15s ease; }
+  .role:hover { border-color: #d4d4d8; box-shadow: var(--shadow-md); }
+  .role::before { content: ""; display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--primary); margin-bottom: 10px; }
+  .role.floor::before { background: var(--accent); }
+  .role.admin::before { background: var(--info); }
+  .role b { display: block; font-size: 16px; font-weight: 600; color: var(--foreground); margin-bottom: 2px; }
   .role span { font-size: 14px; color: var(--muted); }
   .steps { list-style: none; counter-reset: step; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
   .steps li { counter-increment: step; display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: start; }
-  .steps li::before { content: counter(step); display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--felt); color: #fff; font-weight: 700; }
-  .panel.floor .steps li::before { background: var(--gold); color: var(--felt); }
+  .steps li::before { content: counter(step); display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--surface-muted); border: 1px solid var(--border); color: var(--foreground); font-weight: 600; font-size: 13px; }
   .steps strong { display: block; }
   .steps p { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
   .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 0 0 14px; font-size: 13px; font-weight: 600; }
@@ -38,11 +39,12 @@
 </head>
 <body>
 <header class="topbar">
-  <strong>Players · Cum funcționează</strong>
-  <a href="/dealers-payout/">Regulament</a>
+  <strong>Players · Ghid</strong>
   <a href="/dealer/">Cardul meu</a>
-  <a href="/sef-de-sala/">Șef de sală</a>
   <a href="/echipa/">Echipa</a>
+  <a href="/sef-de-sala/">Șef de sală</a>
+  <a href="/dealers-payout/">Regulament</a>
+  <a href="/cum-functioneaza/" aria-current="page">Ghid</a>
 </header>
 <main>
   <h1>Cum funcționează</h1>

@@ -132,6 +132,7 @@
       el('p', { class: 'muted' }, `${bundle.dealer.email} · a semnat pe ${dateLabel(bundle.dealer.signed_at)}`),
       body);
     window.DealerCard.renderCard(body, bundle, {
+      viewer: 'other',
       after: penaltyForm(dealerId, refresh),
       onDeletePenalty: async penalty => {
         if (!confirm(`Ștergi penalizarea de ${money(penalty.amount)} (${penalty.reason})?`)) return;
@@ -153,6 +154,31 @@
   }
 
   // ---------- Șefi de sală (doar admin) ----------
+  // Requests sent from "Cere acces de șef de sală"; the same decision as the emailed approval link.
+  function requestsPanel(requests) {
+    const status = statusLine();
+    const decide = (row, approve) => async event => {
+      const buttons = event.currentTarget.parentElement.querySelectorAll('button');
+      buttons.forEach(button => { button.disabled = true; });
+      try {
+        await rpc('players_admin_decide_floor_request', { p_id: row.id, p_approve: approve });
+        await renderManagers();
+      } catch (error) {
+        status.textContent = error.message; status.className = 'status error';
+        buttons.forEach(button => { button.disabled = false; });
+      }
+    };
+    return el('section', { class: 'panel' },
+      el('h2', {}, 'Cereri de acces'),
+      el('p', { class: 'muted' }, 'Cererile vin și pe email. Le poți aproba de aici sau din email: contează prima decizie.'),
+      requests.length ? el('div', { class: 'card-list' }, requests.map(row => el('div', { class: 'item' },
+        el('div', { class: 'who' }, el('span', {}, `${row.full_name} · ${row.email}`), el('span', { class: 'muted' }, `trimisă ${dateLabel(row.created_at)}, ${time(row.created_at)}`)),
+        el('button', { class: 'btn small', type: 'button', 'aria-label': `Aprobă ${row.full_name}`, onclick: decide(row, true) }, 'Aprobă'),
+        el('button', { class: 'btn danger small', type: 'button', 'aria-label': `Respinge ${row.full_name}`, onclick: decide(row, false) }, 'Respinge'))))
+        : el('p', { class: 'empty' }, 'Nicio cerere în așteptare.'),
+      status);
+  }
+
   async function renderManagers() {
     const status = statusLine();
     const email = el('input', { type: 'email', required: true, placeholder: 'email@exemplu.ro', 'aria-label': 'Emailul șefului de sală' });
@@ -162,8 +188,9 @@
       event.preventDefault();
       run(button, status, () => rpc('players_admin_add_floor_manager', { p_email: email.value }), `${email.value.trim().toLowerCase()} este acum șef de sală.`, renderManagers);
     });
-    const managers = await rpc('players_admin_list_floor_managers');
-    view.replaceChildren(el('section', { class: 'panel' },
+    const [managers, requests] = await Promise.all([rpc('players_admin_list_floor_managers'), rpc('players_admin_list_floor_requests').catch(() => [])]);
+    setCount('managers', requests.length);
+    view.replaceChildren(requestsPanel(requests), el('section', { class: 'panel' },
       el('h2', {}, 'Șefi de sală'),
       el('p', { class: 'muted' }, 'Pot aproba pontajul, trece tipsul și penalizările. Nu au acces la evenimente, video sau administratori.'),
       form, status,
@@ -237,10 +264,11 @@
     }
     isAdmin = admin === true;
     Object.entries(SECTIONS).filter(([key]) => key !== 'managers' || isAdmin).forEach(([key, [label]]) => {
-      tabs.append(el('button', { type: 'button', role: 'tab', 'data-tab': key, onclick: () => show(key) }, label, key === 'pending' ? el('span', { class: 'count', hidden: true }) : null));
+      tabs.append(el('button', { type: 'button', role: 'tab', 'data-tab': key, onclick: () => show(key) }, label, ['pending', 'managers'].includes(key) ? el('span', { class: 'count', hidden: true }) : null));
     });
     app.replaceChildren(el('h1', {}, 'Panoul șefului de sală'), tabs, view);
     await show(active);
+    if (isAdmin && active !== 'managers') rpc('players_admin_list_floor_requests').then(rows => setCount('managers', rows.length)).catch(() => {});
   }
 
   start();

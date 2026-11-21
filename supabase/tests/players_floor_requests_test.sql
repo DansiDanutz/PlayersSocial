@@ -87,5 +87,25 @@ select pg_temp.as_user('00000000-0000-4000-8000-0000000fe002', 'altul@example.in
 select pg_temp.expect_error($$select public.players_floor_request_create('test-server-key', 'Ion Vasile', repeat('e', 64))$$, 'prea multe cereri');
 reset role;
 
+-- Admins see pending requests in the panel and decide them there; others cannot.
+select pg_temp.as_user('00000000-0000-4000-8000-0000000fe003', 'panel.cerere@example.invalid');
+insert into test_ids select public.players_floor_request_create('test-server-key', 'Ana Panel', pg_temp.h('token-6'));
+select pg_temp.expect_error($$select * from public.players_admin_list_floor_requests()$$, 'Acces interzis');
+select pg_temp.expect_error($$select public.players_admin_decide_floor_request((select id from test_ids order by id limit 1), true)$$, 'Acces interzis');
+reset role;
+select pg_temp.as_user('00000000-0000-4000-8000-0000000fe004', (select email from public.players_admins limit 1));
+do $$
+declare
+  pending_id uuid := (select id from public.players_admin_list_floor_requests() where full_name = 'Ana Panel');
+begin
+  if pending_id is null then raise exception 'admin does not see the pending request'; end if;
+  if public.players_admin_decide_floor_request(pending_id, true) <> 'approved' then raise exception 'panel approval failed'; end if;
+  if exists (select 1 from public.players_admin_list_floor_requests() where id = pending_id) then raise exception 'decided request still listed'; end if;
+end $$;
+reset role;
+do $$ begin
+  if not exists (select 1 from public.players_floor_managers where email = 'panel.cerere@example.invalid') then raise exception 'panel approval did not grant access'; end if;
+end $$;
+
 select 'ALL PASSED' as result;
 rollback;
