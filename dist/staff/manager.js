@@ -50,7 +50,7 @@
     return el('div', { class: `item ${shift.overdue ? 'late' : ''}` },
       el('div', { class: 'who' }, el('span', {}, `${shift.full_name} · ${dateLabel(shift.check_in)}`),
         el('span', {}, shift.overdue ? el('span', { class: 'chip late' }, 'Întârziat') : null, ' ', el('span', { class: `chip ${shift.status}` }, STATUS_LABELS[shift.status]))),
-      el('label', {}, 'Venit', checkIn), timeField('Plecat', checkOut), approve, reject, status);
+      el('label', {}, 'Venit', checkIn), timeField('Plecat', checkOut), el('div', { class: 'actions' }, approve, reject), status);
   }
 
   async function renderPending() {

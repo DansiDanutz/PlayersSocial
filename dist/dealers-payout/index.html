@@ -303,6 +303,7 @@
     td.range { white-space: normal; }
     .toolbar span { display: none; }
     .hero h1 { font-size: 26px; }
+    .page-tag { position: static !important; display: inline-block; margin-top: 10px; }
     .sign .fields { grid-template-columns: 1fr; gap: 22px; }
     .role-pick legend { float: none; width: 100%; margin-bottom: 6px; }
     .role-pick label { flex: 1 1 0; justify-content: center; min-height: 44px; }
@@ -312,18 +313,22 @@
     .sign-actions { flex-direction: column; align-items: stretch; }
     .btn-sign { font-size: 16px; padding: 14px 18px; min-height: 48px; }
     .toolbar { gap: 8px; padding: 8px 12px; flex-wrap: wrap; }
-    .toolbar .btn { flex: 1 1 40%; padding: 10px 8px; font-size: 13px; text-align: center; }
+    .toolbar .btn { flex: 1 1 40%; padding: 10px 8px; font-size: 13px; text-align: center; min-height: 44px; }
   }
 </style>
+<link rel="stylesheet" href="/staff/nav.css">
 </head>
 <body>
-<nav class="toolbar" aria-label="Acțiuni document">
+<header class="toolbar">
   <span>Players Club · Dealeri</span>
-  <a class="btn ghost" href="/cum-functioneaza/">Cum funcționează</a>
-  <a class="btn ghost" href="/dealer/">Cardul meu</a>
+  <a href="/dealer/">Cardul meu</a>
+  <a href="/sef-de-sala/">Șef de sală</a>
+  <a href="/echipa/">Echipa</a>
+  <a href="/dealers-payout/">Regulament</a>
+  <a href="/cum-functioneaza/">Ghid</a>
   <a class="btn" href="regulament-dealeri.pdf" download>Descarcă PDF</a>
   <button class="btn ghost" type="button" onclick="window.print()">Printează</button>
-</nav>
+</header>
 
 <!-- ============ PAGINA 1 — TIPS ============ -->
 <section class="page">
@@ -527,5 +532,6 @@
 <script src="/staff/roles.js"></script>
 <script src="/staff/staff-core.js"></script>
 <script src="/staff/sign.js"></script>
+<script src="/staff/nav.js"></script>
 </body>
 </html>

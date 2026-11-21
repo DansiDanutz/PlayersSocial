@@ -333,26 +333,51 @@ main:has(.with-history) { max-width: 1340px; }
   .activity { position: static; max-height: 460px; }
 }
 
-/* Phone tab bar (built by nav.js). */
-.tabbar { display: none; }
+/* Phones: felt band sizes and compact tiles (the tab bar itself lives in nav.css). */
 @media (max-width: 640px) {
   :root { --band: 132px; }
   main:has(> .tabs) { --band: 150px; }
   main:has(> h1 + .lead) { --band: 268px; }
   main:has(> .b-title) { --band: 230px; }
   main:has(> .page-head) { --band: 150px; }
-  main { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
   .topbar strong { font-size: 14px; gap: 8px; }
-  .topbar:has(~ .tabbar) a { display: none; }
-  .topbar:has(~ .tabbar) .role-icons { margin-left: auto; }
-  .tabbar { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
-    padding: 6px max(6px, env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-right));
-    background: rgba(8, 37, 25, .94); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-top: 1px solid rgba(212, 175, 90, .28); }
-  .tabbar a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 50px; padding: 4px 2px; border-radius: 12px;
-    color: rgba(251, 247, 236, .62); text-decoration: none; font: 600 10.5px/1.1 "Inter", system-ui, sans-serif; text-align: center; }
-  .tabbar svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-  .tabbar a[aria-current="page"] { color: var(--brass-light); background: rgba(212, 175, 90, .14); }
-  .tabbar a:focus-visible { outline: 2px solid var(--brass); outline-offset: -2px; }
   .tile b { font-size: 23px; }
   .tile { padding: 14px 12px 12px; }
+}
+
+/* ===================== Responsive fixes: phones and tablets ===================== */
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+@media (pointer: coarse) { details > summary { min-height: 44px; display: flex; align-items: center; } }
+@media (max-width: 900px) {
+  .topbar { flex-wrap: nowrap; overflow: visible; }
+  .topbar strong { flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; margin-right: 6px;
+    -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); }
+  .topbar .role-icons, .topbar .account { flex: 0 0 auto; }
+  /* Tables become cards (two per row on tablets). */
+  .table-wrap:has(table.stack) { border: 0; border-radius: 0; overflow: visible; }
+  table.stack thead { display: none; }
+  table.stack, table.stack tbody, table.stack tr, table.stack td { display: block; width: 100%; }
+  table.stack tr { border: 1px solid var(--border); border-radius: 14px; padding: 8px 14px; margin-bottom: 10px; background: var(--card); }
+  table.stack td { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 6px 0; border: 0; text-align: right; }
+  table.stack td::before { content: attr(data-label); color: var(--muted-foreground); font-size: 12.5px; font-weight: 500; text-align: left; }
+  table.stack td.lead { display: block; font-weight: 650; text-align: left; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 4px; }
+  table.stack td.lead::before { display: none; }
+  tbody tr:hover td { background: transparent; }
+  main > .tabs { display: flex; flex-wrap: wrap; overflow: visible; align-self: stretch; }
+}
+@media (min-width: 641px) and (max-width: 900px) {
+  table.stack tbody { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  table.stack tr { margin: 0; }
+}
+@media (max-width: 640px) {
+  /* Floor manager tabs: every tab visible, two per row. */
+  main > .tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+  main > .tabs button { justify-content: center; display: inline-flex; align-items: center; min-height: 44px; padding: 8px 6px; }
+  main > .tabs button:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  /* "Ora curentă" goes under the date so the date is never cut. */
+  .with-now { flex-wrap: wrap; }
+  label .with-now input, .with-now .now-btn { flex: 1 1 100%; width: 100%; }
+  .with-now .now-btn { height: 44px; }
+  .actions { flex: 1 1 100%; }
+  .actions > .btn { flex: 1 1 0; }
 }
