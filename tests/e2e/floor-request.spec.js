@@ -106,3 +106,23 @@ test('an already decided or unknown link cannot be used again', async ({ page })
   await page.reload();
   await expect(page.getByText('Linkul nu este valid.')).toBeVisible();
 });
+
+test('one account can be floor manager and dealer: a manager still signs and gets a dealer card', async ({ page }) => {
+  const { staff } = await mockStaff(page, { user: true, managers: [USER.email] });
+  await page.goto('/dealers-payout/#semnare');
+
+  await expect(page.getByLabel('Șef de sală')).toBeChecked();
+  await expect(page.locator('.sign-status')).toHaveText('Ai deja acces de șef de sală.');
+  await page.getByLabel('Dealer', { exact: true }).check();
+  await page.locator('#semnare input[name="fullName"]').fill('Ion Popescu');
+  const box = await page.locator('#semnare canvas').boundingBox();
+  await page.mouse.move(box.x + 10, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2, box.y + 5, { steps: 5 });
+  await page.mouse.up();
+  await page.getByRole('button', { name: 'Semnez și îmi creez cardul' }).click();
+
+  await expect(page).toHaveURL(/\/dealer\/$/);
+  expect(staff.calls.some(call => call.name === 'players_dealer_sign')).toBe(true);
+  expect(staff.floorRequests).toHaveLength(0);
+});
