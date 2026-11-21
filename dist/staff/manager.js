@@ -2,7 +2,7 @@
 // at the latest), enters each dealer's daily tips and any penalties, and opens any dealer's card.
 // Admins also manage the list of floor managers here. Every permission is enforced by the database.
 (function () {
-  const { currentUser, rpc, loginPrompt, signOutTo, el, money, hours, time, dateLabel, toInput, fromInput, today, STATUS_LABELS } = window.Staff;
+  const { currentUser, rpc, requestFloorAccess, cleanName, isFullName, loginPrompt, signOutTo, el, money, hours, time, dateLabel, toInput, fromInput, today, STATUS_LABELS } = window.Staff;
   const app = document.getElementById('app');
   const view = el('div', { style: 'display:contents' });
   const tabs = el('div', { class: 'tabs', role: 'tablist' });
@@ -189,6 +189,40 @@
     try { await SECTIONS[key][1](); } catch (error) { view.replaceChildren(el('p', { class: 'status error' }, error.message)); }
   }
 
+  // Accounts without access can ask for it; the super admin approves the request from an email link.
+  async function refuse(user) {
+    const request = await rpc('players_floor_request_mine').catch(() => null);
+    const heading = el('h1', {}, 'Acces doar pentru șefii de sală');
+    if (request?.status === 'pending') {
+      app.replaceChildren(el('div', { class: 'notice' }, heading,
+        el('p', {}, `Cererea ta (${request.full_name}) a fost trimisă pe ${dateLabel(request.created_at)} și așteaptă aprobarea administratorului.`),
+        el('p', { class: 'muted' }, 'După aprobare, reîncarcă pagina.')));
+      return;
+    }
+    const metaName = String(user.user_metadata?.full_name || user.user_metadata?.name || '').trim();
+    const name = el('input', { type: 'text', autocomplete: 'name', maxlength: '120', value: metaName });
+    const status = statusLine();
+    if (request?.status === 'rejected') { status.textContent = 'Cererea ta anterioară a fost respinsă. Poți trimite una nouă.'; status.className = 'status error'; }
+    const send = el('button', { class: 'btn', type: 'submit' }, 'Cere acces de șef de sală');
+    const form = el('form', { class: 'row', onsubmit: async event => {
+      event.preventDefault();
+      const fullName = cleanName(name.value);
+      if (!isFullName(fullName)) { status.textContent = 'Scrie numele și prenumele.'; status.className = 'status error'; return; }
+      send.disabled = true;
+      status.textContent = 'Se trimite cererea…'; status.className = 'status';
+      try {
+        await requestFloorAccess(fullName);
+        await refuse(user);
+      } catch (error) {
+        status.textContent = error.message; status.className = 'status error';
+        send.disabled = false;
+      }
+    } }, el('label', {}, 'Nume și prenume', name), send);
+    app.replaceChildren(el('div', { class: 'notice' }, heading,
+      el('p', {}, `Contul ${user.email} nu are încă acces. Trimite o cerere: administratorul o primește pe email și o aprobă.`),
+      form, status));
+  }
+
   async function start() {
     const user = await currentUser();
     if (!user) { loginPrompt(app, 'Intră în cont cu adresa de email de șef de sală.'); return; }
@@ -198,7 +232,7 @@
     signOut.addEventListener('click', () => signOutTo('/'));
     const [allowed, admin] = await Promise.all([rpc('is_players_floor_manager').catch(() => false), rpc('is_players_admin').catch(() => false)]);
     if (allowed !== true) {
-      app.replaceChildren(el('div', { class: 'notice' }, el('h1', {}, 'Acces doar pentru șefii de sală'), el('p', {}, `Contul ${user.email} nu are acces. Cere administratorului să te adauge.`)));
+      await refuse(user);
       return;
     }
     isAdmin = admin === true;

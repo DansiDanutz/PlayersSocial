@@ -217,6 +217,14 @@
   .btn-sign:hover { background: var(--felt-2); }
   .btn-sign:disabled { opacity: .6; cursor: wait; }
   .sign-status { font-size: 9pt; margin: 0 !important; color: var(--muted); }
+  .role-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 2mm 3mm; border: 0; padding: 0; margin: 0 0 4mm; }
+  .role-pick legend { float: left; font-size: 8pt; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-right: 2mm; padding: 0; }
+  .role-pick label { display: inline-flex; align-items: center; gap: 2mm; font: 600 10pt "Inter", sans-serif; padding: 2mm 4mm; border: 1px solid #c9d2cd; border-radius: 99px; cursor: pointer; }
+  .role-pick label:has(input:checked) { border-color: var(--felt); background: #e9f2ed; color: var(--felt); }
+  .role-pick input { accent-color: var(--felt); margin: 0; }
+  .sign .role-note { color: var(--felt-2); }
+  .sign.floor .fields { grid-template-columns: 1fr; }
+  .sign.floor .sig, .sign.floor .f-date { display: none; }
   .sign-status.error { color: var(--red); }
   .sign-status.ok { color: var(--dealer); font-weight: 700; }
 
@@ -276,7 +284,9 @@
   @page { size: A4; margin: 0; }
   @media print {
     body { background: #fff; }
-    .toolbar, .sign-actions, .clear-sig { display: none !important; }
+    .toolbar, .sign-actions, .clear-sig, .role-pick, .role-note { display: none !important; }
+    .sign.floor .sig, .sign.floor .f-date { display: flex !important; }
+    .sign.floor .fields { grid-template-columns: 1.6fr 1fr 1.2fr; }
     .sign .f input { font-size: 10pt; }
     .page { margin: 0; box-shadow: none; page-break-after: always; break-after: page; }
     .page:last-child { page-break-after: auto; break-after: auto; }
@@ -294,6 +304,8 @@
     .toolbar span { display: none; }
     .hero h1 { font-size: 26px; }
     .sign .fields { grid-template-columns: 1fr; gap: 22px; }
+    .role-pick legend { float: none; width: 100%; margin-bottom: 6px; }
+    .role-pick label { flex: 1 1 0; justify-content: center; min-height: 44px; }
     .sign .sig canvas { height: 110px; border: 1px dashed #b9c2bd; border-bottom: 1px solid var(--ink); border-radius: 8px 8px 0 0; background: #fbfcfb; }
     .sign .f input { font-size: 16px; height: 44px; }
     .clear-sig { font-size: 13px; padding: 8px 0; }
@@ -494,9 +506,15 @@
     <form class="sign" id="semnare" novalidate>
       <h4>Confirmare dealer</h4>
       <p>Am citit, am înțeles și sunt de acord cu regulile privind împărțirea tipsului și depozitul de garanție.</p>
+      <fieldset class="role-pick">
+        <legend>Îmi fac contul ca</legend>
+        <label><input type="radio" name="role" value="dealer" checked> Dealer</label>
+        <label><input type="radio" name="role" value="floor"> Șef de sală</label>
+      </fieldset>
+      <p class="role-note" hidden>Dealerii primesc cardul imediat. Accesul de șef de sală pornește după ce administratorul aprobă cererea primită pe email.</p>
       <div class="fields">
         <label class="f"><input name="fullName" type="text" autocomplete="name" maxlength="120" spellcheck="false"><span>Nume și prenume</span></label>
-        <label class="f"><input name="date" type="text" readonly tabindex="-1"><span>Data</span></label>
+        <label class="f f-date"><input name="date" type="text" readonly tabindex="-1"><span>Data</span></label>
         <div class="f sig"><canvas aria-label="Semnătura: desenează cu degetul sau cu mouse-ul"></canvas><span>Semnătura <button type="button" class="clear-sig">Șterge</button></span></div>
       </div>
       <div class="sign-actions"><button type="submit" class="btn-sign">Semnez și îmi creez cardul</button><p class="sign-status" role="status" aria-live="polite"></p></div>
