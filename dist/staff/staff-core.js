@@ -46,15 +46,19 @@
   // The signed-in account's role icons in the page header, once per page.
   let rolesShown = false;
   async function showMyRoles() {
-    const topbar = document.querySelector('.topbar');
-    if (rolesShown || !topbar || !window.PlayersRoles) return;
+    if (rolesShown) return;
     rolesShown = true;
     const roles = await rpc('players_my_roles').catch(() => null);
     if (!roles) return;
+    // nav.js filters the menu with these.
+    window.staffRoles = roles;
+    document.dispatchEvent(new CustomEvent('staff:roles', { detail: roles }));
+    const topbar = document.querySelector('.topbar');
+    if (!topbar || !window.PlayersRoles) return;
     const icons = window.PlayersRoles.render(roles);
     icons.id = 'myRoles';
-    const who = topbar.querySelector('.who');
-    if (who) who.before(icons); else topbar.append(icons);
+    const anchor = topbar.querySelector('.account') || topbar.querySelector('.who');
+    if (anchor) anchor.before(icons); else topbar.append(icons);
   }
 
   async function rpc(name, body = {}) {

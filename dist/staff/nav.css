@@ -1,0 +1,55 @@
+/* Staff navigation (built by nav.js): header links, account menu and the phone/tablet tab bar.
+   Loaded by every staff page, including the rules page, which has its own stylesheet. */
+.site-links a[hidden], .tabbar a[hidden], .account[hidden] { display: none !important; }
+
+/* Header links */
+.site-links { display: flex; align-items: center; gap: 2px; margin-left: 8px; }
+.toolbar .site-links { margin: 0 auto 0 12px; }
+.site-links a { display: inline-flex; align-items: center; min-height: 36px; padding: 8px 11px; border-radius: 9px; color: rgba(251, 247, 236, .74);
+  font: 500 13.5px/1 "Inter", system-ui, sans-serif; text-decoration: none; white-space: nowrap; transition: background-color .15s ease, color .15s ease; }
+.site-links a:hover { background: rgba(255, 255, 255, .08); color: #fff; }
+.site-links a[aria-current="page"] { background: rgba(212, 175, 90, .16); color: #f3dfa6; box-shadow: inset 0 0 0 1px rgba(212, 175, 90, .3); }
+.site-links a:focus-visible, .account-btn:focus-visible, .account-menu a:focus-visible, .account-menu button:focus-visible { outline: 2px solid #d4af5a; outline-offset: 2px; }
+.topbar .site-links + .role-icons, .topbar .site-links ~ .role-icons { margin-left: auto; }
+.topbar:has(.site-links) > .who { display: none; }
+
+/* Account button and menu */
+.account { position: relative; margin-left: 8px; flex: 0 0 auto; }
+.topbar .site-links ~ .account:not(:has(~ *)) { margin-left: 8px; }
+.account-btn { display: inline-flex; align-items: center; gap: 4px; height: 40px; padding: 0 6px 0 4px; border: 1px solid rgba(212, 175, 90, .35); border-radius: 99px;
+  background: rgba(255, 255, 255, .06); color: #fbf7ec; cursor: pointer; }
+.account-btn:hover { background: rgba(255, 255, 255, .12); }
+.account-btn .avatar { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(140deg, #f3dfa6, #c9a24a); color: #082519; font: 700 14px/1 "Inter", sans-serif; }
+.account-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.account-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
+.account-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; min-width: 240px; max-width: calc(100vw - 24px); padding: 6px; border-radius: 14px;
+  background: #fff; color: #0a0a0b; border: 1px solid #e6e1d5; box-shadow: 0 18px 40px -12px rgba(8, 37, 25, .35); display: flex; flex-direction: column; }
+.account-menu[hidden] { display: none; }
+.account-menu .who { display: block !important; margin: 0 !important; padding: 10px 12px 8px; font-size: 13px; color: #52525b !important; border-bottom: 1px solid #eee9de; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: none; }
+.account-menu a, .account-menu button { display: flex !important; align-items: center; min-height: 44px; padding: 0 12px !important; border-radius: 9px; border: 0; background: none;
+  color: #0a0a0b !important; font: 500 14px/1 "Inter", system-ui, sans-serif !important; text-decoration: none; text-align: left; cursor: pointer; }
+.account-menu a:hover, .account-menu button:hover { background: #f4f2ec !important; }
+.account-menu button { color: #b91c1c !important; }
+.account-menu button[hidden] { display: none !important; }
+
+/* Tab bar: phones and tablets */
+.tabbar { display: none; }
+@media (max-width: 900px) {
+  .site-links { display: none; }
+  .topbar .role-icons { margin-left: auto; }
+  body:has(> .tabbar) { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  .tabbar { display: grid; grid-template-columns: repeat(var(--tabs, 5), minmax(0, 1fr)); gap: 2px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    padding: 6px max(6px, env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-right));
+    background: rgba(8, 37, 25, .96); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-top: 1px solid rgba(212, 175, 90, .28); }
+  .tabbar a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 52px; padding: 4px 2px; border-radius: 12px;
+    color: rgba(251, 247, 236, .66); text-decoration: none; font: 600 11px/1.15 "Inter", system-ui, sans-serif; text-align: center; -webkit-tap-highlight-color: transparent; }
+  .tabbar svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .tabbar a[aria-current="page"] { color: #f3dfa6; background: rgba(212, 175, 90, .15); }
+  .tabbar a:active { background: rgba(255, 255, 255, .08); }
+  .tabbar a:focus-visible { outline: 2px solid #d4af5a; outline-offset: -2px; }
+  @media (min-width: 641px) { .tabbar { left: 50%; right: auto; width: min(560px, calc(100% - 32px)); transform: translateX(-50%); bottom: 12px; border: 1px solid rgba(212, 175, 90, .3); border-radius: 18px; padding-bottom: 6px; box-shadow: 0 16px 40px -14px rgba(0, 0, 0, .5); } }
+}
+@media print { .tabbar, .site-links, .account { display: none !important; } }
+/* The rules page styles every toolbar span; link labels must not pick that up. */
+.site-links a span { color: inherit; margin: 0; font-size: inherit; letter-spacing: normal; display: inline !important; }
+@media (max-width: 900px) { .topbar:has(.account) { overflow: visible; } }
