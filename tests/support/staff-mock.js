@@ -1,4 +1,4 @@
-// In-memory stand-in for the dealer staff RPCs (migration 20261121120000_players_dealers.sql), layered on top of
+// In-memory stand-in for the dealer staff RPCs (migrations 20261121120000_players_dealers.sql and later), layered on top of
 // the main Supabase mock. Later page.route() handlers win, so only the staff RPCs are intercepted here.
 const { mockSupabase, ADMIN_TOKEN, USER_TOKEN, USER, ADMIN_EMAIL } = require('./supabase-mock');
 
@@ -14,7 +14,7 @@ const bearer = request => (request.headers().authorization || '').replace('Beare
 function handlers(staff) {
   const isManager = request => bearer(request) === ADMIN_TOKEN || (bearer(request) === USER_TOKEN && staff.managers.includes(USER.email));
   const requireManager = request => { if (!isManager(request)) throw new Error('Acces interzis'); };
-  const bundle = () => ({ dealer: staff.dealer, shifts: staff.shifts, tips: staff.tips, penalties: staff.penalties });
+  const bundle = () => ({ dealer: staff.dealer, shifts: staff.shifts, tips: staff.tips, penalties: staff.penalties, payouts: staff.payouts });
   return {
     is_players_floor_manager: request => isManager(request),
     players_dealer_sign: (request, body) => {
@@ -66,6 +66,18 @@ function handlers(staff) {
       staff.penalties.unshift({ id: `penalty-${staff.penalties.length + 1}`, day: body.p_day, amount: body.p_amount, reason: body.p_reason });
       return staff.penalties[0].id;
     },
+    players_floor_record_payout: (request, body) => {
+      requireManager(request);
+      if (staff.payouts.some(row => row.kind === body.p_kind && row.period === body.p_period)) throw new Error('Plata este deja trecută. Șterge-o întâi dacă vrei s-o corectezi.');
+      const note = String(body.p_note || '').trim() || null;
+      staff.payouts.unshift({ id: `payout-${staff.payouts.length + 1}`, kind: body.p_kind, period: body.p_period, amount: body.p_amount, from_deposit: body.p_from_deposit, paid_on: body.p_paid_on, note });
+      return staff.payouts[0].id;
+    },
+    players_floor_delete_payout: (request, body) => {
+      requireManager(request);
+      staff.payouts = staff.payouts.filter(row => row.id !== body.p_payout);
+      return true;
+    },
     players_staff_board: request => {
       const isDealer = bearer(request) === USER_TOKEN && staff.dealer;
       if (!isDealer && !isManager(request)) throw new Error('Acces doar pentru dealeri și șefi de sală');
@@ -104,9 +116,9 @@ function handlers(staff) {
   };
 }
 
-async function mockStaff(page, { admin = false, user = false, dealer = null, managers = [], shifts = [], tips = [], penalties = [], request = null, approvals = {}, floorRequestError = null, team = [], adminRequests = [] } = {}) {
+async function mockStaff(page, { admin = false, user = false, dealer = null, managers = [], shifts = [], tips = [], penalties = [], request = null, approvals = {}, floorRequestError = null, team = [], adminRequests = [], payouts = [] } = {}) {
   const state = await mockSupabase(page, { admin, user });
-  const staff = { dealer, managers: [...managers], shifts: [...shifts], tips: [...tips], penalties: [...penalties], request, approvals: structuredClone(approvals), floorRequests: [], team: structuredClone(team), adminRequests: structuredClone(adminRequests), calls: [] };
+  const staff = { dealer, managers: [...managers], shifts: [...shifts], tips: [...tips], penalties: [...penalties], request, approvals: structuredClone(approvals), floorRequests: [], team: structuredClone(team), adminRequests: structuredClone(adminRequests), payouts: structuredClone(payouts), calls: [] };
   const table = handlers(staff);
   await page.route(`${SUPABASE_ORIGIN}/rest/v1/rpc/**`, async route => {
     const request = route.request();

@@ -13,7 +13,9 @@
     deposit: ['Cel mai mare depozit', (a, b) => b.card.deposit.balance - a.card.deposit.balance],
     name: ['Nume', (a, b) => a.name.localeCompare(b.name, 'ro')],
   };
-  const EMPTY_MONTH = { hours: 0, tips: 0, dealerShare: 0, adjustment: 0, payout: 0, days: 0, closed: true };
+  const EMPTY_MONTH = { hours: 0, tips: 0, dealerShare: 0, adjustment: 0, payout: 0, days: 0, closed: true, paid: 0, remaining: 0, payStatus: 'none' };
+  const PAY_BADGES = { paid: ['Plătit', 'good'], partial: ['Plătit parțial', 'warn'], due: ['De plătit', 'warn'] };
+  const payBadge = row => (PAY_BADGES[row.month.payStatus] ? badge(...PAY_BADGES[row.month.payStatus]) : null);
   let rows = [];
   let months = [];
   let month = null;
@@ -47,7 +49,7 @@
   }
 
   function badges(row) {
-    const list = [];
+    const list = [payBadge(row)].filter(Boolean);
     if (row.card.pendingShifts) list.push(badge(plural(row.card.pendingShifts, 'tură de aprobat', 'ture de aprobat'), 'warn'));
     list.push(row.monthPenalties.length ? badge(plural(row.monthPenalties.length, 'penalizare', 'penalizări'), 'bad') : badge('Fără penalizări', 'good'));
     list.push(badge(`Bonus ${shortDate(row.card.nextBonus.date)}`, row.card.nextBonus.eligible ? 'good' : ''));
@@ -80,8 +82,8 @@
   function dealerTable(list) {
     const td = (label, value, cls = 'num') => el('td', { class: cls, 'data-label': label }, value);
     return el('div', { class: 'table-wrap' }, el('table', { class: 'stack b-table' },
-      el('thead', {}, el('tr', {}, ...['Dealer', 'Ore', 'Tips la masă', 'Partea dealerului', 'Garanție', 'De primit', 'Depozit', 'Penalizări']
-        .map((name, index) => el('th', { class: index ? 'num' : '' }, name)))),
+      el('thead', {}, el('tr', {}, ...['Dealer', 'Ore', 'Tips la masă', 'Partea dealerului', 'Garanție', 'De primit', 'Plată', 'Depozit', 'Penalizări']
+        .map((name, index) => el('th', { class: index && index !== 6 ? 'num' : '' }, name)))),
       el('tbody', {}, list.map(row => el('tr', {},
         el('td', { class: 'lead', 'data-label': 'Dealer' },
           el('button', { class: 'b-link', type: 'button', onclick: () => openSheet(row) }, row.name),
@@ -91,6 +93,7 @@
         td('Partea dealerului', money(row.month.dealerShare)),
         td('Garanție', row.month.adjustment ? signedMoney(row.month.adjustment) : '—'),
         td('De primit', el('b', {}, money(row.month.payout))),
+        td('Plată', payBadge(row) || '—', ''),
         td('Depozit', money(row.card.deposit.balance)),
         td('Penalizări', row.monthPenalties.length ? `−${money(sumBy(row.monthPenalties, penalty => penalty.amount))}` : '—'))))));
   }
@@ -117,7 +120,8 @@
       statCard('Dealeri activi', String(rows.length), atWork ? `${atWork} la lucru acum` : 'nimeni la lucru acum'),
       statCard('Ore aprobate', hours(sumBy(list, row => row.month.hours)), monthLabel(month)),
       statCard('Tips la mese', money(sumBy(list, row => row.month.tips)), `partea dealerilor ${money(sumBy(list, row => row.month.dealerShare))}`),
-      statCard(current ? 'De plătit (estimat)' : 'De plătit', money(sumBy(list, row => row.month.payout)), 'cu garanția inclusă'),
+      statCard(current ? 'De plătit (estimat)' : 'De plătit', money(sumBy(list, row => row.month.payout)),
+        current ? 'cu garanția inclusă' : `plătit ${money(sumBy(list, row => row.month.paid))} · rămas ${money(sumBy(list, row => row.month.remaining))}`),
       statCard('Depozite', money(sumBy(rows, row => row.card.deposit.balance)), 'soldul de azi'));
   }
 

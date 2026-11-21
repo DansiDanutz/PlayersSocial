@@ -57,3 +57,55 @@ test('summarizes a dealer card', () => {
   assert.equal(card.nextBonus.date, '2027-03-01');
   assert.equal(card.nextBonus.eligible, false);
 });
+
+// Payouts recorded by the floor manager: closed months become paid / partly paid / due, and a paid bonus
+// takes its deposit part out of the deposit.
+function paidDealer(payouts) {
+  return {
+    dealer: { start_date: '2026-05-01' },
+    tips: [{ day: '2026-09-05', total: 2000 }, { day: '2026-10-05', total: 2000 }, { day: '2026-11-05', total: 3000 }],
+    shifts: [],
+    penalties: [],
+    payouts,
+  };
+}
+
+test('marks closed months as paid, partly paid or due and sums what is still owed', () => {
+  const card = summarize(paidDealer([
+    { kind: 'month', period: '2026-09', amount: 5000, from_deposit: 0, paid_on: '2026-10-02' },
+    { kind: 'month', period: '2026-10', amount: 3000, from_deposit: 0, paid_on: '2026-11-02' },
+  ]), '2026-11-21');
+  const byKey = Object.fromEntries(card.months.map(month => [month.key, month]));
+
+  assert.equal(byKey['2026-08'].payStatus, 'none');
+  assert.equal(byKey['2026-09'].payStatus, 'paid');
+  assert.equal(byKey['2026-09'].paidOn, '2026-10-02');
+  assert.equal(byKey['2026-10'].payStatus, 'partial');
+  assert.equal(byKey['2026-10'].remaining, 2000);
+  assert.equal(byKey['2026-11'].payStatus, 'open');
+  assert.equal(card.pay.paid, 8000);
+  assert.deepEqual(card.pay.dueMonths.map(month => month.key), ['2026-10']);
+});
+
+test('a bonus date that has passed is due until it is paid, and its deposit part leaves the deposit', () => {
+  const due = summarize(paidDealer([]), '2026-11-21');
+  assert.equal(due.deposit.balance, 300 + 300 + 700);
+  assert.equal(due.pay.dueBonuses.length, 1);
+  assert.equal(due.pay.dueBonuses[0].date, '2026-11-01');
+  assert.equal(due.pay.dueBonuses[0].amount, 4000);
+  assert.equal(due.pay.dueBonuses[0].fromDeposit, 0);
+  assert.equal(due.pay.owed, 5000 + 5000 + 4000);
+
+  const paid = summarize(paidDealer([{ kind: 'bonus', period: '2026-11-01', amount: 4300, from_deposit: 300, paid_on: '2026-11-03' }]), '2026-11-21');
+  assert.equal(paid.deposit.withdrawn, 300);
+  assert.equal(paid.deposit.balance, 1000);
+  assert.equal(paid.pay.dueBonuses.length, 0);
+  assert.equal(paid.bonuses[0].paid.amount, 4300);
+});
+
+test('a bonus lost to a penalty is never due', () => {
+  const data = { ...paidDealer([]), penalties: [{ day: '2026-07-10', amount: 100, reason: 'Întârziere' }] };
+  const card = summarize(data, '2026-11-21');
+  assert.equal(card.bonuses[0].eligible, false);
+  assert.equal(card.pay.dueBonuses.length, 0);
+});

@@ -1,8 +1,8 @@
 // /sef-de-sala/: the floor manager approves or corrects every dealer's arrival and departure (by the next day
-// at the latest), enters each dealer's daily tips and any penalties, and opens any dealer's card.
+// at the latest), enters each dealer's daily tips and any penalties, records what was paid, and opens any dealer's card.
 // Admins also manage the list of floor managers here. Every permission is enforced by the database.
 (function () {
-  const { currentUser, rpc, requestFloorAccess, cleanName, isFullName, loginPrompt, signOutTo, el, money, hours, time, dateLabel, toInput, fromInput, today, STATUS_LABELS } = window.Staff;
+  const { currentUser, rpc, requestFloorAccess, cleanName, isFullName, loginPrompt, signOutTo, el, money, hours, time, dateLabel, monthLabel, toInput, fromInput, today, STATUS_LABELS } = window.Staff;
   const app = document.getElementById('app');
   const view = el('div', { style: 'display:contents' });
   const tabs = el('div', { class: 'tabs', role: 'tablist' });
@@ -138,6 +138,7 @@
         if (!confirm(`Ștergi penalizarea de ${money(penalty.amount)} (${penalty.reason})?`)) return;
         try { await rpc('players_floor_delete_penalty', { p_penalty: penalty.id }); await refresh(); } catch (error) { alert(error.message); }
       },
+      onDeletePayout: payout => deletePayout(payout, refresh),
     });
   }
 
@@ -151,6 +152,79 @@
       }, el('div', { class: 'who' }, el('span', {}, dealer.full_name),
         el('span', {}, dealer.open_shift ? el('span', { class: 'chip open' }, 'La lucru') : null, ' ', dealer.pending_shifts > 0 ? el('span', { class: 'chip pending' }, `${dealer.pending_shifts} de aprobat`) : null)),
       el('span', { class: 'muted' }, `de la ${dateLabel(dealer.start_date)} · ${dealer.email}`)))) : el('p', { class: 'empty' }, 'Niciun dealer încă.')));
+  }
+
+  // ---------- Plăți ----------
+  // Every closed month still unpaid and every bonus reached and earned, with the amount prefilled from the rules.
+  // The floor manager writes what was actually paid; a wrong entry is deleted and written again.
+  async function deletePayout(payout, refresh) {
+    if (!confirm(`Ștergi plata „${window.DealerCard.payoutLabel(payout)}” de ${money(payout.amount)}?`)) return;
+    try { await rpc('players_floor_delete_payout', { p_payout: payout.id }); await refresh(); } catch (error) { alert(error.message); }
+  }
+
+  function payForm(row, due, refresh) {
+    const status = statusLine();
+    const isBonus = due.kind === 'bonus';
+    const title = isBonus ? `${due.label} (din ${window.DealerCard.longDay(due.period)})` : `Luna ${monthLabel(due.period)}`;
+    const amount = el('input', { type: 'number', min: '1', step: '1', inputmode: 'decimal', required: true, value: String(due.amount), 'aria-label': `Suma ${row.name} ${title}` });
+    const fromDeposit = isBonus ? el('input', { type: 'number', min: '0', step: '1', inputmode: 'decimal', value: String(due.fromDeposit), 'aria-label': `Din depozit ${row.name}` }) : null;
+    const paidOn = el('input', { type: 'date', value: today(), max: today(), required: true, 'aria-label': `Data plății ${row.name}` });
+    const note = el('input', { type: 'text', maxlength: '300', placeholder: 'ex. numerar / transfer', 'aria-label': `Notă ${row.name}` });
+    const button = el('button', { class: 'btn small', type: 'submit', 'aria-label': `Marchează plătit: ${row.name}, ${title}` }, 'Marchează plătit');
+    const form = el('form', { class: 'item' },
+      el('div', { class: 'who' }, el('span', {}, `${row.name} · ${title}`), el('span', { class: 'muted' }, due.hint)),
+      el('label', {}, 'Suma plătită (RON)', amount),
+      fromDeposit ? el('label', {}, 'Din care din depozit', fromDeposit) : null,
+      el('label', {}, 'Plătit pe', paidOn),
+      el('label', { style: 'flex:2 1 180px' }, 'Notă', note),
+      button, status);
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      run(button, status, () => rpc('players_floor_record_payout', {
+        p_dealer: row.bundle.dealer.id, p_kind: due.kind, p_period: due.period, p_amount: Number(amount.value),
+        p_from_deposit: fromDeposit ? Number(fromDeposit.value || 0) : 0, p_paid_on: paidOn.value, p_note: note.value,
+      }), 'Plată trecută.', refresh);
+    });
+    return form;
+  }
+
+  function dueItems(row) {
+    const months = row.card.pay.dueMonths.map(month => ({
+      kind: 'month', period: month.key, amount: month.remaining,
+      hint: month.paid ? `de primit ${money(month.payout)} · plătit deja ${money(month.paid)}` : `de primit ${money(month.payout)} după regulament`,
+    }));
+    const bonuses = row.card.pay.dueBonuses.map(bonus => ({
+      kind: 'bonus', period: bonus.date, label: bonus.label, amount: bonus.total, fromDeposit: bonus.fromDeposit,
+      hint: `bonus ${money(bonus.amount)} + din depozit peste ${money(bonus.keep)}: ${money(bonus.fromDeposit)}`,
+    }));
+    return [...months, ...bonuses].map(due => ({ row, due }));
+  }
+
+  async function loadPayRows() {
+    const board = await rpc('players_staff_board');
+    return (board || []).map(bundle => ({ bundle, name: bundle.dealer.full_name, card: window.DealerMath.summarize(bundle) }));
+  }
+
+  async function renderPay() {
+    const rows = await loadPayRows();
+    const due = rows.flatMap(dueItems);
+    setCount('pay', due.length);
+    const owed = rows.reduce((total, row) => total + row.card.pay.owed, 0);
+    const history = rows.flatMap(row => (row.bundle.payouts || []).map(payout => ({ row, payout })))
+      .sort((a, b) => String(b.payout.paid_on).localeCompare(String(a.payout.paid_on))).slice(0, 40);
+    view.replaceChildren(
+      el('section', { class: 'panel' },
+        el('h2', {}, 'De plătit'),
+        el('p', { class: 'muted' }, 'Lunile încheiate și bonusurile ajunse la termen. Suma vine din regulament; dacă ai plătit altceva, scrie suma reală.'),
+        due.length ? el('p', {}, 'Total de plătit: ', el('b', {}, money(owed))) : null,
+        due.length ? el('div', { class: 'card-list' }, due.map(item => payForm(item.row, item.due, renderPay))) : el('p', { class: 'empty' }, 'Toate plățile sunt la zi.')),
+      el('section', { class: 'panel' },
+        el('h2', {}, 'Plăți trecute'),
+        history.length ? el('div', { class: 'card-list' }, history.map(({ row, payout }) => el('div', { class: 'item' },
+          el('div', { class: 'who' }, el('span', {}, `${row.name} · ${window.DealerCard.payoutLabel(payout)}`), el('span', {}, money(payout.amount))),
+          el('span', { class: 'muted' }, [`plătit ${dateLabel(payout.paid_on)}`, Number(payout.from_deposit) ? `din depozit ${money(payout.from_deposit)}` : '', payout.note || ''].filter(Boolean).join(' · ')),
+          el('button', { class: 'btn danger small', type: 'button', 'aria-label': `Șterge plata: ${row.name}, ${window.DealerCard.payoutLabel(payout)}`, onclick: () => deletePayout(payout, renderPay) }, 'Șterge'))))
+          : el('p', { class: 'empty' }, 'Nicio plată trecută încă.')));
   }
 
   // ---------- Șefi de sală (doar admin) ----------
@@ -202,7 +276,7 @@
         } }, 'Elimină')))) : el('p', { class: 'empty' }, 'Niciun șef de sală adăugat.')));
   }
 
-  const SECTIONS = { pending: ['De aprobat', renderPending], day: ['Tips & ore pe zi', () => renderDay()], dealers: ['Dealeri', renderDealers], managers: ['Șefi de sală', renderManagers] };
+  const SECTIONS = { pending: ['De aprobat', renderPending], day: ['Tips & ore pe zi', () => renderDay()], dealers: ['Dealeri', renderDealers], pay: ['Plăți', renderPay], managers: ['Șefi de sală', renderManagers] };
 
   function setCount(key, count) {
     const badge = tabs.querySelector(`[data-tab="${key}"] .count`);
@@ -264,10 +338,11 @@
     }
     isAdmin = admin === true;
     Object.entries(SECTIONS).filter(([key]) => key !== 'managers' || isAdmin).forEach(([key, [label]]) => {
-      tabs.append(el('button', { type: 'button', role: 'tab', 'data-tab': key, onclick: () => show(key) }, label, ['pending', 'managers'].includes(key) ? el('span', { class: 'count', hidden: true }) : null));
+      tabs.append(el('button', { type: 'button', role: 'tab', 'data-tab': key, onclick: () => show(key) }, label, ['pending', 'pay', 'managers'].includes(key) ? el('span', { class: 'count', hidden: true }) : null));
     });
     app.replaceChildren(el('h1', {}, 'Panoul șefului de sală'), tabs, view);
     await show(active);
+    loadPayRows().then(rows => setCount('pay', rows.flatMap(dueItems).length)).catch(() => {});
     if (isAdmin && active !== 'managers') rpc('players_admin_list_floor_requests').then(rows => setCount('managers', rows.length)).catch(() => {});
   }
 
