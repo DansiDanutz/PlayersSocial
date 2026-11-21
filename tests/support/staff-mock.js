@@ -66,6 +66,16 @@ function handlers(staff) {
       staff.penalties.unshift({ id: `penalty-${staff.penalties.length + 1}`, day: body.p_day, amount: body.p_amount, reason: body.p_reason });
       return staff.penalties[0].id;
     },
+    players_floor_request_mine: request => (bearer(request) === USER_TOKEN ? staff.request : null),
+    players_floor_request_view: (request, body) => staff.approvals[body.p_token] || null,
+    players_floor_request_decide: (request, body) => {
+      const pending = staff.approvals[body.p_token];
+      if (!pending) throw new Error('Linkul nu este valid');
+      if (pending.status !== 'pending') return pending.status;
+      pending.status = body.p_approve ? 'approved' : 'rejected';
+      if (body.p_approve) staff.managers.push(pending.email);
+      return pending.status;
+    },
     players_admin_list_floor_managers: request => {
       if (bearer(request) !== ADMIN_TOKEN) throw new Error('Acces interzis');
       return staff.managers.map(email => ({ email, added_at: '2026-11-01T00:00:00Z', added_by: ADMIN_EMAIL }));
@@ -78,9 +88,9 @@ function handlers(staff) {
   };
 }
 
-async function mockStaff(page, { admin = false, user = false, dealer = null, managers = [], shifts = [], tips = [], penalties = [] } = {}) {
+async function mockStaff(page, { admin = false, user = false, dealer = null, managers = [], shifts = [], tips = [], penalties = [], request = null, approvals = {}, floorRequestError = null } = {}) {
   const state = await mockSupabase(page, { admin, user });
-  const staff = { dealer, managers: [...managers], shifts: [...shifts], tips: [...tips], penalties: [...penalties], calls: [] };
+  const staff = { dealer, managers: [...managers], shifts: [...shifts], tips: [...tips], penalties: [...penalties], request, approvals: structuredClone(approvals), floorRequests: [], calls: [] };
   const table = handlers(staff);
   await page.route(`${SUPABASE_ORIGIN}/rest/v1/rpc/**`, async route => {
     const request = route.request();
@@ -93,6 +103,14 @@ async function mockStaff(page, { admin = false, user = false, dealer = null, man
     } catch (error) {
       return route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ message: error.message }) });
     }
+  });
+  // The Vercel function /api/floor-request (api/floor-request.js) does not run under the static test server.
+  await page.route('**/api/floor-request', async route => {
+    const request = route.request();
+    staff.floorRequests.push({ authorization: request.headers().authorization, body: request.postDataJSON() });
+    if (floorRequestError) return route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ error: floorRequestError }) });
+    staff.request = { status: 'pending', full_name: request.postDataJSON().fullName, created_at: '2026-11-21T10:00:00Z' };
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) });
   });
   await page.route(/fonts\.(googleapis|gstatic)\.com/, route => route.abort());
   return { state, staff };

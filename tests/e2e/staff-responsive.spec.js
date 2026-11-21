@@ -14,6 +14,7 @@ const DATA = {
   tips: [{ day: '2026-09-05', total: 12500 }, { day: '2026-11-03', total: 3000 }],
   shifts: [{ id: 's1', check_in: '2026-11-20T16:00:00Z', check_out: '2026-11-20T23:00:00Z', status: 'pending', overdue: true }],
   penalties: [{ id: 'p1', day: '2026-11-04', amount: 100, reason: 'Întârziere de 30 de minute la începutul programului' }],
+  approvals: { t1: { full_name: 'Alexandra-Maria Constantinescu-Popovici', email: 'alexandra.constantinescu.popovici@example.com', created_at: '2026-11-21T10:00:00Z', status: 'pending' } },
 };
 const PAGES = [
   { name: 'dealer card', path: '/dealer/' },
@@ -21,6 +22,8 @@ const PAGES = [
   { name: 'daily tips', path: '/sef-de-sala/', tab: 'Tips & ore pe zi' },
   { name: 'dealer list', path: '/sef-de-sala/', tab: 'Dealeri' },
   { name: 'rules and signing', path: '/dealers-payout/' },
+  { name: 'request approval', path: '/aprobare/#t=t1' },
+  { name: 'access request', path: '/sef-de-sala/', data: { user: true } },
 ];
 
 async function overflow(page) {
@@ -31,7 +34,7 @@ for (const screen of SCREENS) {
   for (const target of PAGES) {
     test(`${target.name} fits a ${screen.name} (${screen.width}px)`, async ({ page }) => {
       await page.setViewportSize({ width: screen.width, height: screen.height });
-      await mockStaff(page, DATA);
+      await mockStaff(page, target.data || DATA);
       await page.goto(target.path);
       await page.locator('main, .page').first().waitFor();
       if (target.tab) await page.getByRole('tab', { name: target.tab }).click();

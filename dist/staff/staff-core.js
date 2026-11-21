@@ -50,6 +50,17 @@
     return data;
   }
 
+  // Floor manager access goes through /api/floor-request, which emails the approval link to the super admin.
+  async function requestFloorAccess(fullName) {
+    const response = await fetch('/api/floor-request', { method: 'POST', headers: { Authorization: `Bearer ${tokens?.access_token || ''}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ fullName }) });
+    const data = await response.json().catch(() => null);
+    if (!response.ok) throw new Error(data?.error || 'Cererea nu a putut fi trimisă. Încearcă din nou.');
+    return data;
+  }
+
+  const cleanName = value => String(value || '').trim().replace(/\s+/g, ' ');
+  const isFullName = name => name.length >= 3 && name.includes(' ');
+
   function goToLogin() {
     localStorage.setItem(RETURN_KEY, JSON.stringify({ path: location.pathname, at: Date.now() }));
     location.assign('/?login=1');
@@ -92,5 +103,5 @@
       el('button', { class: 'btn', type: 'button', onclick: goToLogin }, 'Intră în cont')));
   }
 
-  window.Staff = { currentUser, rpc, goToLogin, signOutTo, loginPrompt, el, money, signedMoney, hours, time, dateLabel, monthLabel, toInput, fromInput, today, STATUS_LABELS };
+  window.Staff = { currentUser, rpc, requestFloorAccess, cleanName, isFullName, goToLogin, signOutTo, loginPrompt, el, money, signedMoney, hours, time, dateLabel, monthLabel, toInput, fromInput, today, STATUS_LABELS };
 })();
