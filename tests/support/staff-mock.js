@@ -16,7 +16,10 @@ function handlers(staff) {
   const requireManager = request => { if (!isManager(request)) throw new Error('Acces interzis'); };
   const bundle = () => ({ dealer: staff.dealer, shifts: staff.shifts, tips: staff.tips, penalties: staff.penalties, payouts: staff.payouts });
   const boardBundle = () => ({ ...bundle(), roles: { dealer: true, floor: staff.managers.includes(staff.dealer.email), admin: false } });
+  // Activity history (players_floor_activity): the mock logs the floor manager's own actions.
+  const logActivity = (action, details) => staff.activity.unshift({ id: staff.activity.length + 1, at: new Date().toISOString(), action, details, dealer: staff.dealer?.full_name || null, actor: 'Ana Maria Pop', mine: true });
   return {
+    players_floor_activity: request => { requireManager(request); return staff.activity; },
     is_players_floor_manager: request => isManager(request),
     // Floor managers edit site content (is_players_admin) but only the admin token is a Super Admin.
     is_players_admin: request => isManager(request),
@@ -48,6 +51,7 @@ function handlers(staff) {
       requireManager(request);
       const shift = staff.shifts.find(row => row.id === body.p_shift);
       Object.assign(shift, body.p_approve ? { check_in: body.p_check_in, check_out: body.p_check_out, status: 'approved' } : { status: 'rejected' });
+      logActivity(body.p_approve ? 'shift_approved' : 'shift_rejected', { check_in: shift.check_in, check_out: shift.check_out });
       return true;
     },
     players_floor_day: request => {
@@ -57,6 +61,7 @@ function handlers(staff) {
     players_floor_set_tips: (request, body) => {
       requireManager(request);
       staff.tips.push({ day: body.p_day, total: body.p_total });
+      logActivity('tips_set', { day: body.p_day, total: body.p_total, previous: null });
       return true;
     },
     players_floor_add_shift: request => { requireManager(request); return 'shift-x'; },
@@ -132,9 +137,9 @@ function handlers(staff) {
   };
 }
 
-async function mockStaff(page, { admin = false, user = false, dealer = null, managers = [], shifts = [], tips = [], penalties = [], request = null, approvals = {}, floorRequestError = null, team = [], adminRequests = [], payouts = [], adminIsDealer = false } = {}) {
+async function mockStaff(page, { admin = false, user = false, dealer = null, managers = [], shifts = [], tips = [], penalties = [], request = null, approvals = {}, floorRequestError = null, team = [], adminRequests = [], payouts = [], adminIsDealer = false, activity = [] } = {}) {
   const state = await mockSupabase(page, { admin, user });
-  const staff = { dealer, managers: [...managers], shifts: [...shifts], tips: [...tips], penalties: [...penalties], request, approvals: structuredClone(approvals), floorRequests: [], team: structuredClone(team), adminRequests: structuredClone(adminRequests), payouts: structuredClone(payouts), adminIsDealer, calls: [] };
+  const staff = { dealer, managers: [...managers], shifts: [...shifts], tips: [...tips], penalties: [...penalties], request, approvals: structuredClone(approvals), floorRequests: [], team: structuredClone(team), adminRequests: structuredClone(adminRequests), payouts: structuredClone(payouts), adminIsDealer, activity: structuredClone(activity), calls: [] };
   const table = handlers(staff);
   await page.route(`${SUPABASE_ORIGIN}/rest/v1/rpc/**`, async route => {
     const request = route.request();
