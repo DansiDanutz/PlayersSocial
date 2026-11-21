@@ -105,27 +105,71 @@
     });
   }
 
+  // What the floor manager recorded as paid for each month: closed months are paid, partly paid or due.
+  function withPayments(months, payouts) {
+    return months.map(month => {
+      const records = payouts.filter(payout => payout.kind === 'month' && payout.period === month.key);
+      const paid = sum(records, payout => Number(payout.amount));
+      const paidOn = records.map(payout => payout.paid_on).sort().pop() || null;
+      const remaining = month.closed ? round(Math.max(0, month.payout - paid)) : 0;
+      let payStatus = 'open';
+      if (month.closed) payStatus = remaining === 0 ? (paid > 0 ? 'paid' : 'none') : (paid > 0 ? 'partial' : 'due');
+      return { ...month, paid, paidOn, remaining, payStatus };
+    });
+  }
+
+  const bonusRule = step => (step % 2 === 0 ? BONUS_YEAR : BONUS_HALF_YEAR);
+
+  // Every bonus date already reached, with whether it was earned (no penalty in its period) and paid.
+  function pastBonuses(data, today, payouts) {
+    const list = [];
+    for (let step = 1; addMonths(data.dealer.start_date, step * BONUS_EVERY_MONTHS) <= today; step += 1) {
+      const date = addMonths(data.dealer.start_date, step * BONUS_EVERY_MONTHS);
+      const since = addMonths(data.dealer.start_date, (step - 1) * BONUS_EVERY_MONTHS);
+      const rule = bonusRule(step);
+      const eligible = !data.penalties.some(penalty => penalty.day >= since && penalty.day < date);
+      const paid = payouts.find(payout => payout.kind === 'bonus' && payout.period === date) || null;
+      list.push({ date, since, label: rule.label, amount: rule.amount, keep: rule.keep, eligible, paid });
+    }
+    return list;
+  }
+
   function nextBonus(data, today, balance) {
     let step = 1;
     while (addMonths(data.dealer.start_date, step * BONUS_EVERY_MONTHS) <= today) step += 1;
     const date = addMonths(data.dealer.start_date, step * BONUS_EVERY_MONTHS);
     const since = addMonths(data.dealer.start_date, (step - 1) * BONUS_EVERY_MONTHS);
-    const rule = step % 2 === 0 ? BONUS_YEAR : BONUS_HALF_YEAR;
+    const rule = bonusRule(step);
     const eligible = !data.penalties.some(penalty => penalty.day >= since);
     return { date, since, label: rule.label, amount: rule.amount, keep: rule.keep, eligible, estimate: round(Math.max(0, balance - rule.keep) + rule.amount) };
   }
 
   function summarize(data, today = localDay(Date.now())) {
-    const months = buildMonths(data, today);
+    const payouts = data.payouts || [];
+    const months = withPayments(buildMonths(data, today), payouts);
     const daily = sum(months, month => month.dailyDeposit);
     const monthly = sum(months.filter(month => month.closed), month => month.contribution);
     const penalties = sum(data.penalties, penalty => Number(penalty.amount));
-    const balance = round(daily + monthly - penalties);
+    const withdrawn = sum(payouts.filter(payout => payout.kind === 'bonus'), payout => Number(payout.from_deposit) || 0);
+    const balance = round(daily + monthly - penalties - withdrawn);
     const current = months[months.length - 1] || null;
+    const bonuses = pastBonuses(data, today, payouts);
+    const dueBonuses = bonuses.filter(bonus => bonus.eligible && !bonus.paid).map(bonus => {
+      const fromDeposit = round(Math.max(0, balance - bonus.keep));
+      return { ...bonus, fromDeposit, total: round(bonus.amount + fromDeposit) };
+    });
+    const dueMonths = months.filter(month => month.remaining > 0);
     return {
       months,
       current,
-      deposit: { daily, monthly, penalties, balance, stage: balance >= DEPOSIT_STAGES[0] ? 2 : 1, target: balance >= DEPOSIT_STAGES[0] ? DEPOSIT_STAGES[1] : DEPOSIT_STAGES[0] },
+      bonuses,
+      pay: {
+        paid: sum(payouts, payout => Number(payout.amount)),
+        owed: round(sum(dueMonths, month => month.remaining) + sum(dueBonuses, bonus => bonus.total)),
+        dueMonths,
+        dueBonuses,
+      },
+      deposit: { daily, monthly, penalties, withdrawn, balance, stage: balance >= DEPOSIT_STAGES[0] ? 2 : 1, target: balance >= DEPOSIT_STAGES[0] ? DEPOSIT_STAGES[1] : DEPOSIT_STAGES[0] },
       hours: { month: current ? current.hours : 0, total: sum(months, month => month.hours) },
       pendingShifts: data.shifts.filter(shift => shift.status === 'pending').length,
       openShift: data.shifts.find(shift => shift.status === 'open') || null,

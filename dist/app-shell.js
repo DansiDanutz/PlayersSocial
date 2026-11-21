@@ -166,15 +166,20 @@
     const saved = JSON.parse(localStorage.getItem(RETURN_KEY) || 'null');
     if (saved && Date.now() - saved.at < MAX_AGE_MS && STAFF_PATH.test(saved.path)) target = saved.path;
   } catch { target = null; }
-  window.addEventListener('players:account', (event) => {
+  const onAccount = (account) => {
     // Signed-in people always find the staff pages in the menu, even when the email sign-in link opened in
     // another tab or browser that never saw the return path.
     const staffMenu = document.getElementById('menuStaff');
-    if (staffMenu) staffMenu.hidden = !event.detail.signedIn;
-    if (!event.detail.signedIn || !target) return;
+    if (staffMenu) staffMenu.hidden = !account.signedIn;
+    if (!account.signedIn || !target) return;
+    const destination = target;
+    target = null;
     localStorage.removeItem(RETURN_KEY);
-    location.replace(target);
-  });
+    location.replace(destination);
+  };
+  window.addEventListener('players:account', (event) => onAccount(event.detail));
+  // The page may have announced the account before this script loaded; act on that state too.
+  if (window.playersAccount) onAccount(window.playersAccount);
   const wantsLogin = new URLSearchParams(location.search).get('login') === '1';
   if (wantsLogin && !localStorage.getItem('players-admin-session')) {
     window.addEventListener('load', () => document.getElementById('adminLogin').click());
