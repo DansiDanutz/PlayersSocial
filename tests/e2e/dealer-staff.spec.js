@@ -160,3 +160,31 @@ test('an admin adds a floor manager', async ({ page }) => {
   await expect(page.locator('.panel').filter({ has: page.getByRole('heading', { name: 'Toate conturile' }) }).locator('.item').filter({ hasText: 'sef.sala@example.com' }).locator('.role-icon.floor')).toBeVisible();
   expect(staff.managers).toContain('sef.sala@example.com');
 });
+
+test('"Ora curentă" fills the departure time with the current time', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-11-21T02:37:00'));
+  const { staff } = await mockStaff(page, {
+    user: true,
+    managers: [USER.email],
+    dealer: dealerRow(),
+    shifts: [{ id: 's1', check_in: '2026-11-20T16:00:00Z', check_out: '2026-11-20T23:00:00Z', status: 'pending', overdue: false }],
+  });
+  await page.goto('/sef-de-sala/');
+
+  await page.getByRole('button', { name: 'Ora curentă la Plecat' }).first().click();
+  await expect(page.getByLabel('Plecare Ana Maria Pop').first()).toHaveValue('2026-11-21T02:37');
+  await page.getByRole('button', { name: 'Aprobă' }).click();
+  await expect(page.getByText('Nimic de aprobat')).toBeVisible();
+  const review = staff.calls.find(row => row.name === 'players_floor_review_shift');
+  expect(new Date(review.body.p_check_out).getTime()).toBe(new Date('2026-11-21T02:37').getTime());
+});
+
+test('the dealer can fill "Am plecat" with the current time in the forgotten-shift form', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-11-21T02:37:00'));
+  await mockStaff(page, { user: true, dealer: dealerRow() });
+  await page.goto('/dealer/');
+
+  await page.getByText('Ai uitat să te pontezi?').click();
+  await page.getByRole('button', { name: 'Ora curentă la Am plecat' }).click();
+  await expect(page.getByLabel('Am plecat', { exact: true })).toHaveValue('2026-11-21T02:37');
+});

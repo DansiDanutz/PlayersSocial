@@ -301,6 +301,12 @@ details > summary { cursor: pointer; }
 .tiles > :nth-child(4), .b-stats > :nth-child(4), .b-grid > :nth-child(4) { animation-delay: .15s; }
 .tiles > :nth-child(n+5), .b-stats > :nth-child(n+5), .b-grid > :nth-child(n+5) { animation-delay: .2s; }
 
+/* Datetime field with an "Ora curentă" button beside it. */
+label:has(> .with-now) { min-width: 0; }
+.with-now { display: flex; gap: 6px; align-items: center; width: 100%; min-width: 0; }
+label .with-now input { flex: 1 1 auto; width: auto; min-width: 0; }
+.with-now .now-btn { flex: 0 0 auto; height: 40px; }
+
 /* Phone tab bar (built by nav.js). */
 .tabbar { display: none; }
 @media (max-width: 640px) {

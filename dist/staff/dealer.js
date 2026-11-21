@@ -1,7 +1,7 @@
 // /dealer/: the dealer writes when they arrived and when they left, and sees their card.
 // Every shift waits for the floor manager's approval before it counts.
 (function () {
-  const { currentUser, rpc, loginPrompt, signOutTo, el, time, toInput, fromInput } = window.Staff;
+  const { currentUser, rpc, loginPrompt, signOutTo, el, time, toInput, fromInput, timeField } = window.Staff;
   const app = document.getElementById('app');
 
   function statusLine() { return el('p', { class: 'status', role: 'status' }); }
@@ -59,9 +59,9 @@
   function forgotPanel() {
     const status = statusLine();
     const checkIn = el('input', { type: 'datetime-local', required: true });
-    const checkOut = el('input', { type: 'datetime-local', required: true });
+    const checkOut = el('input', { type: 'datetime-local', required: true, 'aria-label': 'Am plecat' });
     const button = el('button', { class: 'btn ghost', type: 'submit' }, 'Trimite la aprobare');
-    const form = el('form', { class: 'row' }, el('label', {}, 'Am venit', checkIn), el('label', {}, 'Am plecat', checkOut), button);
+    const form = el('form', { class: 'row' }, el('label', {}, 'Am venit', checkIn), timeField('Am plecat', checkOut), button);
     form.addEventListener('submit', event => {
       event.preventDefault();
       run(button, status, () => rpc('players_dealer_add_shift', { p_check_in: fromInput(checkIn.value), p_check_out: fromInput(checkOut.value) }), 'Tura a fost trimisă la aprobare.');

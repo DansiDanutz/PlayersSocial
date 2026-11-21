@@ -2,7 +2,7 @@
 // at the latest), enters each dealer's daily tips and any penalties, records what was paid, and opens any dealer's card.
 // Admins also manage the list of floor managers here. Every permission is enforced by the database.
 (function () {
-  const { currentUser, rpc, requestFloorAccess, cleanName, isFullName, loginPrompt, signOutTo, el, money, hours, time, dateLabel, monthLabel, toInput, fromInput, today, STATUS_LABELS } = window.Staff;
+  const { currentUser, rpc, requestFloorAccess, cleanName, isFullName, loginPrompt, signOutTo, el, money, hours, time, dateLabel, monthLabel, toInput, fromInput, today, timeField, STATUS_LABELS } = window.Staff;
   const app = document.getElementById('app');
   const view = el('div', { style: 'display:contents' });
   const tabs = el('div', { class: 'tabs', role: 'tablist' });
@@ -46,7 +46,7 @@
     return el('div', { class: `item ${shift.overdue ? 'late' : ''}` },
       el('div', { class: 'who' }, el('span', {}, `${shift.full_name} · ${dateLabel(shift.check_in)}`),
         el('span', {}, shift.overdue ? el('span', { class: 'chip late' }, 'Întârziat') : null, ' ', el('span', { class: `chip ${shift.status}` }, STATUS_LABELS[shift.status]))),
-      el('label', {}, 'Venit', checkIn), el('label', {}, 'Plecat', checkOut), approve, reject, status);
+      el('label', {}, 'Venit', checkIn), timeField('Plecat', checkOut), approve, reject, status);
   }
 
   async function renderPending() {
@@ -91,7 +91,7 @@
       el('div', { class: 'who' }, el('span', {}, row.full_name), el('span', { class: 'muted' }, `${hours(approvedHours)} aprobate · ${shiftText}`)),
       el('label', {}, 'Tips total (RON)', tipsInput), saveTips, preview,
       el('details', { style: 'flex:1 1 100%' }, el('summary', { class: 'muted' }, 'Dealerul nu s-a pontat? Trece tu orele'),
-        el('div', { class: 'row' }, el('label', {}, 'Venit', checkIn), el('label', {}, 'Plecat', checkOut), addShift)),
+        el('div', { class: 'row' }, el('label', {}, 'Venit', checkIn), timeField('Plecat', checkOut), addShift)),
       status);
   }
 
