@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<meta name="robots" content="noindex, nofollow">
+<title>Echipa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/staff/staff.css">
+<link rel="stylesheet" href="/staff/board.css">
+</head>
+<body class="board-page">
+<header class="b-header">
+  <div class="b-header-inner">
+    <a class="b-brand" href="/"><span class="b-logo">P</span><span>Players · Echipa</span></a>
+    <nav class="b-nav">
+      <a href="/dealer/">Cardul meu</a>
+      <a href="/sef-de-sala/">Șef de sală</a>
+      <a href="/cum-functioneaza/">Ghid</a>
+    </nav>
+  </div>
+</header>
+<main class="b-main" id="app"><p class="b-muted">Se încarcă…</p></main>
+<dialog class="b-sheet" id="sheet" aria-labelledby="sheetTitle">
+  <div class="b-sheet-head">
+    <div><h2 id="sheetTitle"></h2><p class="b-muted" id="sheetSub"></p></div>
+    <button class="b-icon-btn" type="button" id="sheetClose" aria-label="Închide">✕</button>
+  </div>
+  <div class="b-sheet-body" id="sheetBody"></div>
+</dialog>
+<script src="/staff/dealer-math.js"></script>
+<script src="/staff/staff-core.js"></script>
+<script src="/staff/card-view.js"></script>
+<script src="/staff/board.js"></script>
+</body>
+</html>
