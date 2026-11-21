@@ -4,7 +4,10 @@
 .b-title h1 { margin-bottom: 4px; }
 .b-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 12px; }
 .b-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
-.b-stat { padding: 16px; }
+:where(.b-stat) { --tone: var(--primary); --tone-soft: #e3f1ea; }
+.b-stat { position: relative; overflow: hidden; padding: 18px 16px 16px; }
+.b-stat::before { content: ""; position: absolute; inset: 0 0 auto; height: 4px; background: var(--tone); }
+
 .b-stat span { display: block; color: var(--muted-foreground); font-size: 13px; font-weight: 500; }
 .b-stat b { display: block; font-size: 24px; font-weight: 700; letter-spacing: -.02em; margin-top: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .b-stat small { color: var(--muted-foreground); font-size: 12px; }
@@ -19,29 +22,40 @@
 .b-view { margin-left: auto; }
 
 .b-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; }
-.b-dealer { display: flex; flex-direction: column; gap: 14px; padding: 16px; text-align: left; font: inherit; color: inherit; cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
-.b-dealer:hover { border-color: #d4d4d8; box-shadow: var(--shadow-md); transform: translateY(-1px); }
+:where(.b-dealer) { --tone: var(--green); --tone-soft: var(--green-soft); --tone-ink: var(--green-ink); }
+.b-dealer { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 14px; padding: 20px 16px 16px; text-align: left; font: inherit; color: inherit; cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+.b-dealer::before { content: ""; position: absolute; inset: 0 0 auto; height: 5px; background: var(--tone); }
+.b-dealer:hover { border-color: var(--tone); box-shadow: var(--shadow-md); transform: translateY(-2px); }
 .b-dealer:focus-visible, .b-link:focus-visible, .b-month button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .b-dealer-head { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.b-avatar { flex: 0 0 auto; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--surface-muted); border: 1px solid var(--border); color: var(--primary); font-weight: 700; font-size: 14px; }
+.b-avatar { flex: 0 0 auto; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--tone-soft); border: 2px solid var(--tone); color: var(--tone-ink); font-weight: 700; font-size: 15px; }
+.b-name-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 4px; }
+.b-name-meta .role-icon { height: 22px; min-width: 22px; padding: 0 3px; }
+.b-name-meta .role-icon svg { width: 14px; height: 14px; }
+.b-table .role-icons { vertical-align: middle; }
+.b-table .role-icon { height: 22px; min-width: 22px; padding: 0 3px; }
+.b-table .role-icon svg { width: 14px; height: 14px; }
+.b-table tbody tr td:first-child { box-shadow: inset 4px 0 0 var(--tone); }
 .b-name { min-width: 0; flex: 1 1 auto; }
 .b-name b { display: block; font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .b-figures { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; margin: 0; }
 .b-figures div { min-width: 0; }
 .b-figures dt { color: var(--muted-foreground); font-size: 12px; }
+.b-figures .b-pay dd { color: var(--green-ink); font-size: 17px; font-weight: 700; }
 .b-figures dd { margin: 0; font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 .b-progress { display: flex; flex-direction: column; gap: 6px; }
 .b-progress-row { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted-foreground); }
-.b-bar { height: 6px; border-radius: 99px; background: var(--surface-muted); overflow: hidden; }
-.b-bar i { display: block; height: 100%; border-radius: inherit; background: var(--primary); }
+.b-bar { height: 8px; border-radius: 99px; background: var(--surface-muted); overflow: hidden; }
+.b-bar i { display: block; height: 100%; border-radius: inherit; background: var(--tone); transition: width .4s ease; }
 .b-foot { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 12px; border-top: 1px solid var(--border); }
 .b-badge { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 99px; padding: 2px 9px; font-size: 12px; font-weight: 600; white-space: nowrap; color: var(--foreground); background: var(--card); }
-.b-badge.live { color: var(--success); background: var(--success-soft); border-color: var(--success-line); }
+.b-badge.live { color: var(--green-ink); background: var(--green-soft); border-color: var(--green-line); }
 .b-badge.live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: b-pulse 1.6s ease-in-out infinite; }
 @keyframes b-pulse { 50% { opacity: .35; } }
-.b-badge.warn { color: var(--warning); background: var(--warning-soft); border-color: var(--warning-line); }
-.b-badge.bad { color: var(--danger); background: var(--danger-soft); border-color: var(--danger-line); }
-.b-badge.good { color: var(--success); background: var(--success-soft); border-color: var(--success-line); }
+.b-badge.warn { color: var(--yellow-ink); background: var(--yellow-soft); border-color: var(--yellow-line); }
+.b-badge.due { color: var(--orange-ink); background: var(--orange-soft); border-color: var(--orange-line); }
+.b-badge.bad { color: var(--red-ink); background: var(--red-soft); border-color: var(--red-line); }
+.b-badge.good { color: var(--green-ink); background: var(--green-soft); border-color: var(--green-line); }
 .b-empty { padding: 32px 16px; text-align: center; }
 .b-link { font: inherit; font-weight: 600; color: var(--foreground); background: none; border: 0; padding: 0; cursor: pointer; text-align: left; text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: 3px; }
 .b-link:hover { text-decoration-color: currentColor; }

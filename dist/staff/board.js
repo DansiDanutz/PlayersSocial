@@ -2,7 +2,7 @@
 // facts for all active dealers (players_staff_board); every figure is computed by DealerMath like on /dealer/.
 // The board shows one month at a time (current month by default), as cards or as a table.
 (function () {
-  const { currentUser, rpc, loginPrompt, el, money, signedMoney, hours, monthLabel } = window.Staff;
+  const { currentUser, rpc, loginPrompt, el, money, signedMoney, hours, monthLabel, toneFor } = window.Staff;
   const app = document.getElementById('app');
   const sheet = document.getElementById('sheet');
   const VIEW_KEY = 'players-board-view';
@@ -14,7 +14,18 @@
     name: ['Nume', (a, b) => a.name.localeCompare(b.name, 'ro')],
   };
   const EMPTY_MONTH = { hours: 0, tips: 0, dealerShare: 0, adjustment: 0, payout: 0, days: 0, closed: true, paid: 0, remaining: 0, payStatus: 'none' };
-  const PAY_BADGES = { paid: ['Plătit', 'good'], partial: ['Plătit parțial', 'warn'], due: ['De plătit', 'warn'] };
+  const PAY_BADGES = { paid: ['Plătit', 'good'], partial: ['Plătit parțial', 'due'], due: ['De plătit', 'due'] };
+  // Traffic light for one dealer in the selected month: red = penalty, orange = money due, yellow = hours
+  // waiting for approval, green = all good.
+  const TONES = [['tone-green', 'Totul în regulă'], ['tone-yellow', 'Ore de aprobat'], ['tone-orange', 'De plătit'], ['tone-red', 'Penalizare']];
+  function statusTone(row) {
+    if (row.monthPenalties.length) return 'tone-red';
+    if (row.card.pay.owed > 0) return 'tone-orange';
+    if (row.card.pendingShifts) return 'tone-yellow';
+    return 'tone-green';
+  }
+  const roleIcons = row => window.PlayersRoles.render(row.bundle.roles || { dealer: true });
+  const depositPercent = row => Math.max(0, Math.min(100, Math.round((row.card.deposit.balance / row.card.deposit.target) * 100))) || 0;
   const payBadge = row => (PAY_BADGES[row.month.payStatus] ? badge(...PAY_BADGES[row.month.payStatus]) : null);
   let rows = [];
   let months = [];
@@ -44,37 +55,37 @@
     return { ...row, month: found || EMPTY_MONTH, monthPenalties: penalties };
   }
 
-  function statCard(label, value, note) {
-    return el('div', { class: 'b-card b-stat' }, el('span', {}, label), el('b', {}, value), note ? el('small', {}, note) : null);
+  function statCard(label, value, note, tone = '') {
+    return el('div', { class: `b-card b-stat ${tone}` }, el('span', {}, label), el('b', {}, value), note ? el('small', {}, note) : null);
   }
 
   function badges(row) {
     const list = [payBadge(row)].filter(Boolean);
     if (row.card.pendingShifts) list.push(badge(plural(row.card.pendingShifts, 'tură de aprobat', 'ture de aprobat'), 'warn'));
     list.push(row.monthPenalties.length ? badge(plural(row.monthPenalties.length, 'penalizare', 'penalizări'), 'bad') : badge('Fără penalizări', 'good'));
-    list.push(badge(`Bonus ${shortDate(row.card.nextBonus.date)}`, row.card.nextBonus.eligible ? 'good' : ''));
+    list.push(row.card.nextBonus.eligible ? badge(`Bonus ${shortDate(row.card.nextBonus.date)}`, 'good') : badge('Bonus pierdut', 'bad'));
     return list;
   }
 
   function depositProgress(row) {
     const { balance, target } = row.card.deposit;
-    const percent = Math.max(0, Math.min(100, Math.round((balance / target) * 100))) || 0;
-    return el('div', { class: 'b-progress' },
+    const percent = depositPercent(row);
+    return el('div', { class: `b-progress ${toneFor(percent)}` },
       el('div', { class: 'b-progress-row' }, el('span', {}, 'Depozit'), el('span', {}, `${money(balance)} / ${money(target)}`)),
       el('div', { class: 'b-bar', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(percent), 'aria-label': `Depozit ${row.name}` }, el('i', { style: `width:${percent}%` })));
   }
 
   function dealerCard(row) {
-    return el('button', { class: 'b-card b-dealer', type: 'button', 'aria-label': `Deschide cardul lui ${row.name}`, onclick: () => openSheet(row) },
+    return el('button', { class: `b-card b-dealer ${statusTone(row)}`, type: 'button', 'aria-label': `Deschide cardul lui ${row.name}`, onclick: () => openSheet(row) },
       el('div', { class: 'b-dealer-head' },
         el('span', { class: 'b-avatar', 'aria-hidden': 'true' }, initials(row.name)),
-        el('div', { class: 'b-name' }, el('b', {}, row.name), el('p', { class: 'b-muted' }, `Din ${shortDate(row.bundle.dealer.start_date)}`)),
+        el('div', { class: 'b-name' }, el('b', {}, row.name), el('div', { class: 'b-name-meta' }, roleIcons(row), el('span', { class: 'b-muted' }, `din ${shortDate(row.bundle.dealer.start_date)}`))),
         row.card.openShift ? badge('La lucru', 'live') : null),
       el('dl', { class: 'b-figures' },
         el('div', {}, el('dt', {}, 'Ore'), el('dd', {}, hours(row.month.hours))),
         el('div', {}, el('dt', {}, 'Tips la masă'), el('dd', {}, money(row.month.tips))),
         el('div', {}, el('dt', {}, 'Partea dealerului'), el('dd', {}, money(row.month.dealerShare))),
-        el('div', {}, el('dt', {}, row.month.closed ? 'De primit' : 'De primit (estimat)'), el('dd', {}, money(row.month.payout)))),
+        el('div', { class: 'b-pay' }, el('dt', {}, row.month.closed ? 'De primit' : 'De primit (estimat)'), el('dd', {}, money(row.month.payout)))),
       depositProgress(row),
       el('div', { class: 'b-foot' }, ...badges(row)));
   }
@@ -84,9 +95,9 @@
     return el('div', { class: 'table-wrap' }, el('table', { class: 'stack b-table' },
       el('thead', {}, el('tr', {}, ...['Dealer', 'Ore', 'Tips la masă', 'Partea dealerului', 'Garanție', 'De primit', 'Plată', 'Depozit', 'Penalizări']
         .map((name, index) => el('th', { class: index && index !== 6 ? 'num' : '' }, name)))),
-      el('tbody', {}, list.map(row => el('tr', {},
+      el('tbody', {}, list.map(row => el('tr', { class: statusTone(row) },
         el('td', { class: 'lead', 'data-label': 'Dealer' },
-          el('button', { class: 'b-link', type: 'button', onclick: () => openSheet(row) }, row.name),
+          el('button', { class: 'b-link', type: 'button', onclick: () => openSheet(row) }, row.name), ' ', roleIcons(row),
           row.card.openShift ? badge('La lucru', 'live') : null),
         td('Ore', hours(row.month.hours)),
         td('Tips la masă', money(row.month.tips)),
@@ -116,13 +127,15 @@
     const list = rows.map(withMonth);
     const atWork = rows.filter(row => row.card.openShift).length;
     const current = months[months.length - 1] === month;
+    const remaining = sumBy(list, row => row.month.remaining);
+    const averageDeposit = rows.length ? sumBy(rows, depositPercent) / rows.length : 0;
     target.replaceChildren(
-      statCard('Dealeri activi', String(rows.length), atWork ? `${atWork} la lucru acum` : 'nimeni la lucru acum'),
-      statCard('Ore aprobate', hours(sumBy(list, row => row.month.hours)), monthLabel(month)),
-      statCard('Tips la mese', money(sumBy(list, row => row.month.tips)), `partea dealerilor ${money(sumBy(list, row => row.month.dealerShare))}`),
+      statCard('Dealeri activi', String(rows.length), atWork ? `${atWork} la lucru acum` : 'nimeni la lucru acum', 'tone-green'),
+      statCard('Ore aprobate', hours(sumBy(list, row => row.month.hours)), monthLabel(month), rows.some(row => row.card.pendingShifts) ? 'tone-yellow' : 'tone-green'),
+      statCard('Tips la mese', money(sumBy(list, row => row.month.tips)), `partea dealerilor ${money(sumBy(list, row => row.month.dealerShare))}`, 'gold'),
       statCard(current ? 'De plătit (estimat)' : 'De plătit', money(sumBy(list, row => row.month.payout)),
-        current ? 'cu garanția inclusă' : `plătit ${money(sumBy(list, row => row.month.paid))} · rămas ${money(sumBy(list, row => row.month.remaining))}`),
-      statCard('Depozite', money(sumBy(rows, row => row.card.deposit.balance)), 'soldul de azi'));
+        current ? 'cu garanția inclusă' : `plătit ${money(sumBy(list, row => row.month.paid))} · rămas ${money(remaining)}`, current || remaining > 0 ? 'tone-orange' : 'tone-green'),
+      statCard('Depozite', money(sumBy(rows, row => row.card.deposit.balance)), 'soldul de azi', toneFor(averageDeposit)));
   }
 
   function renderList(target) {
@@ -166,6 +179,7 @@
       el('div', { class: 'b-toolbar' }, el('div', { class: 'b-month' }, prev, label, next), viewTabs),
       stats,
       el('div', { class: 'b-toolbar' }, search, order),
+      el('p', { class: 'legend', 'aria-label': 'Ce înseamnă culorile' }, ...TONES.map(([tone, text]) => el('span', { class: tone }, el('i', {}), text))),
       list);
     refresh();
   }

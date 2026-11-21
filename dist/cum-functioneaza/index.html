@@ -16,10 +16,12 @@
   .roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 12px; }
   .role { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-decoration: none; color: inherit; box-shadow: var(--shadow-sm); transition: box-shadow .15s ease, border-color .15s ease; }
   .role:hover { border-color: #d4d4d8; box-shadow: var(--shadow-md); }
-  .role::before { content: ""; display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--primary); margin-bottom: 10px; }
-  .role.floor::before { background: var(--accent); }
-  .role.admin::before { background: var(--info); }
-  .role b { display: block; font-size: 16px; font-weight: 600; color: var(--foreground); margin-bottom: 2px; }
+  .role { position: relative; overflow: hidden; }
+  .role::before { content: ""; position: absolute; inset: 0 0 auto; height: 4px; background: var(--primary); }
+  .role.floor::before { background: var(--info); }
+  .role.admin::before { background: var(--accent); }
+  .role b { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; color: var(--foreground); margin-bottom: 4px; }
+  .role b .role-icons { flex: 0 0 auto; }
   .role span { font-size: 14px; color: var(--muted); }
   .steps { list-style: none; counter-reset: step; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
   .steps li { counter-increment: step; display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: start; }
@@ -51,9 +53,9 @@
   <p class="lead">Fiecare membru al echipei își face cont pe playersclub.live cu Google sau cu adresa de email. La creare alegi dacă ești dealer sau șef de sală.</p>
 
   <div class="roles">
-    <a class="role" href="#dealer"><b>Dealer</b><span>Semnezi regulamentul și primești cardul imediat. Îți pontezi venirea și plecarea.</span></a>
-    <a class="role floor" href="#sef-de-sala"><b>Șef de sală</b><span>Ceri acces. După aprobare, aprobi orele dealerilor și treci tipsul zilnic.</span></a>
-    <a class="role admin" href="#administrator"><b>Administrator</b><span>Primește cererile pe email și le aprobă cu un singur buton.</span></a>
+    <a class="role" href="#dealer"><b data-role="dealer">Dealer</b><span>Semnezi regulamentul și primești cardul imediat. Îți pontezi venirea și plecarea.</span></a>
+    <a class="role floor" href="#sef-de-sala"><b data-role="floor">Șef de sală</b><span>Ceri acces. După aprobare, aprobi orele dealerilor și treci tipsul zilnic.</span></a>
+    <a class="role admin" href="#administrator"><b data-role="admin">Super Admin</b><span>Primește cererile pe email și le aprobă cu un singur buton.</span></a>
   </div>
 
   <section class="panel" id="dealer">
@@ -80,7 +82,7 @@
   </section>
 
   <section class="panel" id="administrator">
-    <h2>Administrator</h2>
+    <h2>Super Admin</h2>
     <ol class="steps">
       <li><div><strong>Primești emailul</strong><p>Pentru fiecare cerere vine un email „Cerere acces șef de sală” cu numele persoanei și butonul „Deschide cererea”.</p></div></li>
       <li><div><strong>Aprobă sau respinge</strong><p>Pagina arată numele, emailul și data cererii. Apeși „Aprobă” sau „Respinge”. Doar deschiderea linkului nu schimbă nimic.</p></div></li>
@@ -93,7 +95,7 @@
     <details><summary>Am apăsat „Cere acces”, dar nu am primit acces.</summary><p>Cererea așteaptă aprobarea administratorului. Reîncarcă pagina după ce ți se confirmă.</p></details>
     <details><summary>Cererea mea a fost respinsă sau a expirat.</summary><p>Poți trimite o cerere nouă din aceeași pagină. Se pot trimite cel mult 3 cereri pe zi.</p></details>
     <details><summary>Unde văd cardurile tuturor dealerilor?</summary><p>Pe pagina <a href="/echipa/">Echipa</a>. Orice dealer sau șef de sală vede acolo orele, tipsul, depozitul, penalizările și bonusurile fiecărui dealer.</p></details>
-    <details><summary>Pot avea mai multe roluri?</summary><p>Da. Același cont poate fi dealer, șef de sală și administrator. Un șef de sală care lucrează și ca dealer alege „Dealer” pe formular și semnează, ca să primească și cardul de dealer.</p></details>
+    <details><summary>Pot avea mai multe roluri?</summary><p>Da. Același cont poate fi dealer, șef de sală și Super Admin; lângă numele contului apare câte o iconiță pentru fiecare rol (carte de joc = Dealer, clipboard = Șef de sală, coroană = Super Admin). Un șef de sală care lucrează și ca dealer alege „Dealer” pe formular și semnează, ca să primească și cardul de dealer.</p></details>
     <details><summary>Cum văd dacă mi s-a plătit luna?</summary><p>Pe cardul tău, în tabelul „Lună de lună”, fiecare lună încheiată arată „Plătit” cu data, „De plătit” sau suma rămasă. Lista completă a plăților e la „Plăți”. Bonusul plătit scade din depozit partea luată din el.</p></details>
     <details><summary>Am uitat să mă pontez.</summary><p>Pe cardul tău, la „Ai uitat să te pontezi?”, scrii ora de venire și de plecare. Tura merge la șeful de sală pentru aprobare.</p></details>
     <details><summary>Ora de pe card nu e corectă.</summary><p>Spune-i șefului de sală: el poate corecta ora înainte să aprobe tura.</p></details>
@@ -104,5 +106,10 @@
     <a class="btn ghost" href="/dealers-payout/">Citește regulamentul</a>
   </div>
 </main>
+<script src="/staff/roles.js"></script>
+<script>
+  // Each role card shows the same icon the account carries across the site.
+  document.querySelectorAll('[data-role]').forEach(title => title.prepend(window.PlayersRoles.render({ [title.dataset.role]: true })));
+</script>
 </body>
 </html>

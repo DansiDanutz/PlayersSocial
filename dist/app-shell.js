@@ -102,6 +102,7 @@
     const label = document.getElementById('menuAccount');
     label.hidden = !account.signedIn;
     label.textContent = account.signedIn ? `Conectat ca ${account.name}` : '';
+    if (account.signedIn && account.roles && window.PlayersRoles) label.append(window.PlayersRoles.render(account.roles));
   }
   async function runPrompt(prompt) {
     installPrompt = null;

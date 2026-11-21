@@ -156,6 +156,7 @@ test('an admin adds a floor manager', async ({ page }) => {
   await page.getByLabel('Emailul șefului de sală').fill('Sef.Sala@Example.com');
   await page.getByRole('button', { name: 'Adaugă' }).click();
 
-  await expect(page.locator('.item').filter({ hasText: 'sef.sala@example.com' })).toBeVisible();
+  await expect(page.locator('.panel').filter({ has: page.getByRole('heading', { name: 'Șefi de sală', exact: true }) }).locator('.item').filter({ hasText: 'sef.sala@example.com' })).toBeVisible();
+  await expect(page.locator('.panel').filter({ has: page.getByRole('heading', { name: 'Toate conturile' }) }).locator('.item').filter({ hasText: 'sef.sala@example.com' }).locator('.role-icon.floor')).toBeVisible();
   expect(staff.managers).toContain('sef.sala@example.com');
 });

@@ -3,11 +3,14 @@ const { test, expect } = require('@playwright/test');
 const { mockStaff } = require('../support/staff-mock');
 const { gotoLoaded } = require('../support/supabase-mock');
 
-test('the guide explains dealer, floor manager and administrator steps', async ({ page }) => {
+test('the guide explains dealer, floor manager and super admin steps, each with its role icon', async ({ page }) => {
   await page.goto('/cum-functioneaza/');
 
-  for (const name of ['Dealer', 'Șef de sală', 'Administrator']) {
+  for (const name of ['Dealer', 'Șef de sală', 'Super Admin']) {
     await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+  }
+  for (const role of ['dealer', 'floor', 'admin']) {
+    await expect(page.locator(`a.role .role-icon.${role}`)).toHaveCount(1);
   }
   await expect(page.locator('#sef-de-sala')).toContainText('Aprobare administrator');
   await expect(page.locator('#administrator')).toContainText('expiră după 7 zile');
