@@ -253,6 +253,20 @@
       status);
   }
 
+  // Every staff account with its role icons: Dealer, Șef de sală, Super Admin.
+  function directoryPanel(people) {
+    const legend = el('p', { class: 'legend' }, ...window.PlayersRoles.ROLES.map(role => el('span', {}, window.PlayersRoles.render({ [role.key]: true }), role.label)));
+    return el('section', { class: 'panel' },
+      el('h2', {}, 'Toate conturile'),
+      el('p', { class: 'muted' }, 'Fiecare cont cu rolurile lui. Un cont poate avea mai multe roluri.'),
+      legend,
+      people.length ? el('div', { class: 'card-list', style: 'margin-top:12px' }, people.map(person => el('div', { class: 'item' },
+        el('div', { class: 'who' },
+          el('span', {}, person.full_name ? `${person.full_name} · ${person.email}` : person.email),
+          window.PlayersRoles.render(person.roles, { withLabels: true })))))
+        : el('p', { class: 'empty' }, 'Niciun cont încă.'));
+  }
+
   async function renderManagers() {
     const status = statusLine();
     const email = el('input', { type: 'email', required: true, placeholder: 'email@exemplu.ro', 'aria-label': 'Emailul șefului de sală' });
@@ -262,18 +276,23 @@
       event.preventDefault();
       run(button, status, () => rpc('players_admin_add_floor_manager', { p_email: email.value }), `${email.value.trim().toLowerCase()} este acum șef de sală.`, renderManagers);
     });
-    const [managers, requests] = await Promise.all([rpc('players_admin_list_floor_managers'), rpc('players_admin_list_floor_requests').catch(() => [])]);
+    const [managers, requests, people] = await Promise.all([
+      rpc('players_admin_list_floor_managers'),
+      rpc('players_admin_list_floor_requests').catch(() => []),
+      rpc('players_admin_staff_directory').catch(() => []),
+    ]);
     setCount('managers', requests.length);
+    const rolesByEmail = new Map(people.map(person => [person.email, person.roles]));
     view.replaceChildren(requestsPanel(requests), el('section', { class: 'panel' },
       el('h2', {}, 'Șefi de sală'),
       el('p', { class: 'muted' }, 'Pot aproba pontajul, trece tipsul și penalizările. Nu au acces la evenimente, video sau administratori.'),
       form, status,
       managers.length ? el('div', { class: 'card-list' }, managers.map(row => el('div', { class: 'item' },
-        el('div', { class: 'who' }, el('span', {}, row.email), el('span', { class: 'muted' }, row.added_by ? `adăugat de ${row.added_by}` : '')),
+        el('div', { class: 'who' }, el('span', {}, row.email, ' ', window.PlayersRoles.render(rolesByEmail.get(row.email) || { floor: true })), el('span', { class: 'muted' }, row.added_by ? `adăugat de ${row.added_by}` : '')),
         el('button', { class: 'btn danger small', type: 'button', onclick: async () => {
           if (!confirm(`Elimini accesul de șef de sală pentru ${row.email}?`)) return;
           try { await rpc('players_admin_remove_floor_manager', { p_email: row.email }); await renderManagers(); } catch (error) { alert(error.message); }
-        } }, 'Elimină')))) : el('p', { class: 'empty' }, 'Niciun șef de sală adăugat.')));
+        } }, 'Elimină')))) : el('p', { class: 'empty' }, 'Niciun șef de sală adăugat.')), directoryPanel(people));
   }
 
   const SECTIONS = { pending: ['De aprobat', renderPending], day: ['Tips & ore pe zi', () => renderDay()], dealers: ['Dealeri', renderDealers], pay: ['Plăți', renderPay], managers: ['Șefi de sală', renderManagers] };

@@ -39,7 +39,22 @@
       tokens = await refresh(saved).catch(() => null);
       user = tokens ? await fetchUser(tokens).catch(() => null) : null;
     }
+    if (user) showMyRoles();
     return user;
+  }
+
+  // The signed-in account's role icons in the page header, once per page.
+  let rolesShown = false;
+  async function showMyRoles() {
+    const topbar = document.querySelector('.topbar');
+    if (rolesShown || !topbar || !window.PlayersRoles) return;
+    rolesShown = true;
+    const roles = await rpc('players_my_roles').catch(() => null);
+    if (!roles) return;
+    const icons = window.PlayersRoles.render(roles);
+    icons.id = 'myRoles';
+    const who = topbar.querySelector('.who');
+    if (who) who.before(icons); else topbar.append(icons);
   }
 
   async function rpc(name, body = {}) {
@@ -85,6 +100,9 @@
 
   const STATUS_LABELS = { open: 'La lucru', pending: 'De aprobat', approved: 'Aprobat', rejected: 'Respins' };
 
+  // Traffic-light tone for a progress percentage (deposit towards its target): red, orange, yellow, green.
+  const toneFor = percent => (percent >= 75 ? 'tone-green' : percent >= 50 ? 'tone-yellow' : percent >= 25 ? 'tone-orange' : 'tone-red');
+
   function el(tag, attrs = {}, ...children) {
     const node = document.createElement(tag);
     Object.entries(attrs).forEach(([key, value]) => {
@@ -108,5 +126,5 @@
     if (new URL(link.href, location.href).pathname === location.pathname) link.setAttribute('aria-current', 'page');
   });
 
-  window.Staff = { currentUser, rpc, requestFloorAccess, cleanName, isFullName, goToLogin, signOutTo, loginPrompt, el, money, signedMoney, hours, time, dateLabel, monthLabel, toInput, fromInput, today, STATUS_LABELS };
+  window.Staff = { currentUser, rpc, requestFloorAccess, cleanName, isFullName, goToLogin, signOutTo, loginPrompt, el, money, signedMoney, hours, time, dateLabel, monthLabel, toInput, fromInput, today, STATUS_LABELS, toneFor };
 })();

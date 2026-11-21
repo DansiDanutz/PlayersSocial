@@ -15,6 +15,7 @@ function handlers(staff) {
   const isManager = request => bearer(request) === ADMIN_TOKEN || (bearer(request) === USER_TOKEN && staff.managers.includes(USER.email));
   const requireManager = request => { if (!isManager(request)) throw new Error('Acces interzis'); };
   const bundle = () => ({ dealer: staff.dealer, shifts: staff.shifts, tips: staff.tips, penalties: staff.penalties, payouts: staff.payouts });
+  const boardBundle = () => ({ ...bundle(), roles: { dealer: true, floor: staff.managers.includes(staff.dealer.email), admin: false } });
   return {
     is_players_floor_manager: request => isManager(request),
     players_dealer_sign: (request, body) => {
@@ -78,10 +79,22 @@ function handlers(staff) {
       staff.payouts = staff.payouts.filter(row => row.id !== body.p_payout);
       return true;
     },
+    players_my_roles: request => {
+      if (bearer(request) === ADMIN_TOKEN) return { dealer: Boolean(staff.adminIsDealer), floor: true, admin: true };
+      if (bearer(request) === USER_TOKEN) return { dealer: Boolean(staff.dealer), floor: staff.managers.includes(USER.email), admin: false };
+      throw new Error('permission denied for function players_my_roles');
+    },
+    players_admin_staff_directory: request => {
+      if (bearer(request) !== ADMIN_TOKEN) throw new Error('Acces interzis');
+      const people = new Map([[ADMIN_EMAIL, { email: ADMIN_EMAIL, full_name: null, roles: { dealer: false, floor: true, admin: true } }]]);
+      if (staff.dealer) people.set(staff.dealer.email, { email: staff.dealer.email, full_name: staff.dealer.full_name, roles: { dealer: true, floor: staff.managers.includes(staff.dealer.email), admin: false } });
+      staff.managers.forEach(email => { if (!people.has(email)) people.set(email, { email, full_name: null, roles: { dealer: false, floor: true, admin: false } }); });
+      return [...people.values()];
+    },
     players_staff_board: request => {
       const isDealer = bearer(request) === USER_TOKEN && staff.dealer;
       if (!isDealer && !isManager(request)) throw new Error('Acces doar pentru dealeri și șefi de sală');
-      return [...(staff.dealer ? [bundle()] : []), ...staff.team];
+      return [...(staff.dealer ? [boardBundle()] : []), ...staff.team];
     },
     players_floor_request_mine: request => (bearer(request) === USER_TOKEN ? staff.request : null),
     players_floor_request_view: (request, body) => staff.approvals[body.p_token] || null,
@@ -116,9 +129,9 @@ function handlers(staff) {
   };
 }
 
-async function mockStaff(page, { admin = false, user = false, dealer = null, managers = [], shifts = [], tips = [], penalties = [], request = null, approvals = {}, floorRequestError = null, team = [], adminRequests = [], payouts = [] } = {}) {
+async function mockStaff(page, { admin = false, user = false, dealer = null, managers = [], shifts = [], tips = [], penalties = [], request = null, approvals = {}, floorRequestError = null, team = [], adminRequests = [], payouts = [], adminIsDealer = false } = {}) {
   const state = await mockSupabase(page, { admin, user });
-  const staff = { dealer, managers: [...managers], shifts: [...shifts], tips: [...tips], penalties: [...penalties], request, approvals: structuredClone(approvals), floorRequests: [], team: structuredClone(team), adminRequests: structuredClone(adminRequests), payouts: structuredClone(payouts), calls: [] };
+  const staff = { dealer, managers: [...managers], shifts: [...shifts], tips: [...tips], penalties: [...penalties], request, approvals: structuredClone(approvals), floorRequests: [], team: structuredClone(team), adminRequests: structuredClone(adminRequests), payouts: structuredClone(payouts), adminIsDealer, calls: [] };
   const table = handlers(staff);
   await page.route(`${SUPABASE_ORIGIN}/rest/v1/rpc/**`, async route => {
     const request = route.request();

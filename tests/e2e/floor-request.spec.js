@@ -136,6 +136,7 @@ test('the admin sees pending requests in the panel and approves one there', asyn
   await page.getByRole('button', { name: 'Aprobă Maria Ionescu' }).click();
 
   await expect(page.getByText('Nicio cerere în așteptare.')).toBeVisible();
-  await expect(page.locator('.item').filter({ hasText: 'maria@example.com' })).toBeVisible();
+  await expect(page.locator('.panel').filter({ has: page.getByRole('heading', { name: 'Șefi de sală', exact: true }) }).locator('.item').filter({ hasText: 'maria@example.com' })).toBeVisible();
+  await expect(page.locator('.panel').filter({ has: page.getByRole('heading', { name: 'Toate conturile' }) }).locator('.item').filter({ hasText: 'maria@example.com' }).locator('.role-icon.floor')).toBeVisible();
   expect(staff.calls.find(call => call.name === 'players_admin_decide_floor_request').body).toEqual({ p_id: 'r1', p_approve: true });
 });

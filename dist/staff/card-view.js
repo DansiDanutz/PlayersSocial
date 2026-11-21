@@ -1,7 +1,7 @@
 // Dealer card: every amount the rules produce for one dealer, shown the same way to the dealer and to the
 // floor manager. Amounts come from DealerMath.summarize(); this file only lays them out.
 (function () {
-  const { el, money, signedMoney, hours, time, dateLabel, monthLabel, STATUS_LABELS } = window.Staff;
+  const { el, money, signedMoney, hours, time, dateLabel, monthLabel, STATUS_LABELS, toneFor } = window.Staff;
 
   // The dealer reads their own card in the second person; floor managers and teammates read it in the third.
   const WORDS = {
@@ -14,8 +14,8 @@
   // Payment state of one month, as recorded by the floor manager.
   function payChip(month) {
     if (month.payStatus === 'paid') return el('span', { class: 'chip approved' }, `Plătit ${shortDay(month.paidOn)}`);
-    if (month.payStatus === 'partial') return el('span', { class: 'chip pending' }, `Rămas ${money(month.remaining)}`);
-    if (month.payStatus === 'due') return el('span', { class: 'chip pending' }, 'De plătit');
+    if (month.payStatus === 'partial') return el('span', { class: 'chip due' }, `Rămas ${money(month.remaining)}`);
+    if (month.payStatus === 'due') return el('span', { class: 'chip due' }, 'De plătit');
     return '—';
   }
 
@@ -23,7 +23,7 @@
   const payoutLabel = payout => (payout.kind === 'month' ? `Luna ${monthLabel(payout.period)}` : `Bonus din ${longDay(payout.period)}`);
 
   function tile(label, value, note, extra = {}) {
-    return el('div', { class: `tile ${extra.gold ? 'gold' : ''}` }, el('small', {}, label), el('b', {}, value), note ? el('span', {}, note) : null, extra.bar || null);
+    return el('div', { class: `tile ${extra.tone || (extra.gold ? 'gold' : '')}` }, el('small', {}, label), el('b', {}, value), note ? el('span', {}, note) : null, extra.bar || null);
   }
 
   function progress(value, target) {
@@ -36,12 +36,13 @@
     const bonus = card.nextBonus;
     const due = card.pay.dueBonuses[0];
     const bonusTile = due
-      ? tile(due.label, money(due.total), `de plătit · din ${longDay(due.date)}`, { gold: true })
-      : tile(bonus.label, bonus.eligible ? money(bonus.estimate) : 'Pierdut', bonus.eligible ? `estimat la ${dateLabel(bonus.date)}` : `${words.lost} ${dateLabel(bonus.since)}`, { gold: true });
+      ? tile(due.label, money(due.total), `de plătit · din ${longDay(due.date)}`, { tone: 'tone-orange' })
+      : tile(bonus.label, bonus.eligible ? money(bonus.estimate) : 'Pierdut', bonus.eligible ? `estimat la ${dateLabel(bonus.date)}` : `${words.lost} ${dateLabel(bonus.since)}`, { tone: bonus.eligible ? 'gold' : 'tone-red' });
+    const depositPercent = (card.deposit.balance / card.deposit.target) * 100;
     return el('div', { class: 'tiles' },
-      tile('Luna aceasta', month ? money(month.dealerShare) : money(0), month ? `din ${money(month.tips)} tips · ${month.days} ${month.days === 1 ? 'zi' : 'zile'}` : ''),
-      tile('Ore aprobate', hours(card.hours.month), `luna aceasta · total ${hours(card.hours.total)}`),
-      tile(words.deposit, money(card.deposit.balance), `Etapa ${card.deposit.stage}: ținta ${money(card.deposit.target)}`, { gold: true, bar: progress(card.deposit.balance, card.deposit.target) }),
+      tile('Luna aceasta', month ? money(month.dealerShare) : money(0), month ? `din ${money(month.tips)} tips · ${month.days} ${month.days === 1 ? 'zi' : 'zile'}` : '', { tone: 'tone-green' }),
+      tile('Ore aprobate', hours(card.hours.month), card.pendingShifts ? `${card.pendingShifts} ${card.pendingShifts === 1 ? 'tură așteaptă' : 'ture așteaptă'} aprobarea` : `luna aceasta · total ${hours(card.hours.total)}`, { tone: card.pendingShifts ? 'tone-yellow' : 'tone-green' }),
+      tile(words.deposit, money(card.deposit.balance), `Etapa ${card.deposit.stage}: ținta ${money(card.deposit.target)}`, { tone: toneFor(depositPercent), bar: progress(card.deposit.balance, card.deposit.target) }),
       bonusTile);
   }
 
