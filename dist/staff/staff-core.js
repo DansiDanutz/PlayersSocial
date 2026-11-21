@@ -98,6 +98,17 @@
   const fromInput = value => (value ? new Date(value).toISOString() : null);
   const today = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
 
+  // A datetime field with an "Ora curentă" button that fills in the current time (e.g. when a dealer leaves now).
+  function timeField(label, input) {
+    const now = el('button', { class: 'btn ghost small now-btn', type: 'button', 'aria-label': `Ora curentă la ${label}` }, 'Ora curentă');
+    now.addEventListener('click', () => {
+      input.value = toInput(new Date().toISOString());
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    return el('label', {}, label, el('span', { class: 'with-now' }, input, now));
+  }
+
   const STATUS_LABELS = { open: 'La lucru', pending: 'De aprobat', approved: 'Aprobat', rejected: 'Respins' };
 
   // Traffic-light tone for a progress percentage (deposit towards its target): red, orange, yellow, green.
@@ -126,5 +137,5 @@
     if (new URL(link.href, location.href).pathname === location.pathname) link.setAttribute('aria-current', 'page');
   });
 
-  window.Staff = { currentUser, rpc, requestFloorAccess, cleanName, isFullName, goToLogin, signOutTo, loginPrompt, el, money, signedMoney, hours, time, dateLabel, monthLabel, toInput, fromInput, today, STATUS_LABELS, toneFor };
+  window.Staff = { currentUser, rpc, requestFloorAccess, cleanName, isFullName, goToLogin, signOutTo, loginPrompt, el, money, signedMoney, hours, time, dateLabel, monthLabel, toInput, fromInput, today, timeField, STATUS_LABELS, toneFor };
 })();
