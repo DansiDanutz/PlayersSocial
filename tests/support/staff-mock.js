@@ -66,6 +66,11 @@ function handlers(staff) {
       staff.penalties.unshift({ id: `penalty-${staff.penalties.length + 1}`, day: body.p_day, amount: body.p_amount, reason: body.p_reason });
       return staff.penalties[0].id;
     },
+    players_staff_board: request => {
+      const isDealer = bearer(request) === USER_TOKEN && staff.dealer;
+      if (!isDealer && !isManager(request)) throw new Error('Acces doar pentru dealeri și șefi de sală');
+      return [...(staff.dealer ? [bundle()] : []), ...staff.team];
+    },
     players_floor_request_mine: request => (bearer(request) === USER_TOKEN ? staff.request : null),
     players_floor_request_view: (request, body) => staff.approvals[body.p_token] || null,
     players_floor_request_decide: (request, body) => {
@@ -88,9 +93,9 @@ function handlers(staff) {
   };
 }
 
-async function mockStaff(page, { admin = false, user = false, dealer = null, managers = [], shifts = [], tips = [], penalties = [], request = null, approvals = {}, floorRequestError = null } = {}) {
+async function mockStaff(page, { admin = false, user = false, dealer = null, managers = [], shifts = [], tips = [], penalties = [], request = null, approvals = {}, floorRequestError = null, team = [] } = {}) {
   const state = await mockSupabase(page, { admin, user });
-  const staff = { dealer, managers: [...managers], shifts: [...shifts], tips: [...tips], penalties: [...penalties], request, approvals: structuredClone(approvals), floorRequests: [], calls: [] };
+  const staff = { dealer, managers: [...managers], shifts: [...shifts], tips: [...tips], penalties: [...penalties], request, approvals: structuredClone(approvals), floorRequests: [], team: structuredClone(team), calls: [] };
   const table = handlers(staff);
   await page.route(`${SUPABASE_ORIGIN}/rest/v1/rpc/**`, async route => {
     const request = route.request();

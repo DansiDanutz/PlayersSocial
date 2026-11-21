@@ -24,6 +24,7 @@ const PAGES = [
   { name: 'rules and signing', path: '/dealers-payout/' },
   { name: 'request approval', path: '/aprobare/#t=t1' },
   { name: 'staff guide', path: '/cum-functioneaza/' },
+  { name: 'team board', path: '/echipa/' },
   { name: 'access request', path: '/sef-de-sala/', data: { user: true } },
 ];
 
