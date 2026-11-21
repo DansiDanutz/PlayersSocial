@@ -1,5 +1,5 @@
-// Admin dashboard: list, add and remove administrators. Every admin capability on the site checks
-// public.is_players_admin() in the database, so this list is the single source of truth. The RPCs refuse
+// Admin dashboard: list, add and remove Super Admins (players_admins). Content editing checks
+// public.is_players_admin() (Super Admins and floor managers); managing access checks is_players_super_admin(). The RPCs refuse
 // non-admins, self-removal and removing the last admin; this file only drives the UI.
 function adminMemberItem(row){
   const item=document.createElement('div'), info=document.createElement('div'), email=document.createElement('strong'), meta=document.createElement('span');

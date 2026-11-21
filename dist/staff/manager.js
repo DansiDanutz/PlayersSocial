@@ -285,7 +285,7 @@
     const rolesByEmail = new Map(people.map(person => [person.email, person.roles]));
     view.replaceChildren(requestsPanel(requests), el('section', { class: 'panel' },
       el('h2', {}, 'Șefi de sală'),
-      el('p', { class: 'muted' }, 'Pot aproba pontajul, trece tipsul și penalizările. Nu au acces la evenimente, video sau administratori.'),
+      el('p', { class: 'muted' }, 'Pot aproba pontajul, trece tipsul și penalizările și pot modifica evenimentele, bannerele, programul și videoclipurile de pe site. Doar Super Admin gestionează accesul.'),
       form, status,
       managers.length ? el('div', { class: 'card-list' }, managers.map(row => el('div', { class: 'item' },
         el('div', { class: 'who' }, el('span', {}, row.email, ' ', window.PlayersRoles.render(rolesByEmail.get(row.email) || { floor: true })), el('span', { class: 'muted' }, row.added_by ? `adăugat de ${row.added_by}` : '')),
@@ -350,7 +350,7 @@
     const signOut = document.getElementById('signOut');
     signOut.hidden = false;
     signOut.addEventListener('click', () => signOutTo('/'));
-    const [allowed, admin] = await Promise.all([rpc('is_players_floor_manager').catch(() => false), rpc('is_players_admin').catch(() => false)]);
+    const [allowed, admin] = await Promise.all([rpc('is_players_floor_manager').catch(() => false), rpc('is_players_super_admin').catch(() => false)]);
     if (allowed !== true) {
       await refuse(user);
       return;
