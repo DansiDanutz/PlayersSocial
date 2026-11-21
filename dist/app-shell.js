@@ -167,6 +167,10 @@
     if (saved && Date.now() - saved.at < MAX_AGE_MS && STAFF_PATH.test(saved.path)) target = saved.path;
   } catch { target = null; }
   window.addEventListener('players:account', (event) => {
+    // Signed-in people always find the staff pages in the menu, even when the email sign-in link opened in
+    // another tab or browser that never saw the return path.
+    const staffMenu = document.getElementById('menuStaff');
+    if (staffMenu) staffMenu.hidden = !event.detail.signedIn;
     if (!event.detail.signedIn || !target) return;
     localStorage.removeItem(RETURN_KEY);
     location.replace(target);
