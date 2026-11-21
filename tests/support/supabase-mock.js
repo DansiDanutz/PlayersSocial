@@ -27,6 +27,7 @@ function rpcHandlers(state) {
     players_notifications_for_token: () => [],
     players_public_registrants: () => [],
     is_players_admin: request => isAdminRequest(request) || (bearer(request) === USER_TOKEN && state.admins.includes(USER.email)),
+    is_players_super_admin: request => isAdminRequest(request) || (bearer(request) === USER_TOKEN && state.admins.includes(USER.email)),
     players_admin_event_notes: () => state.events.filter(row => row.is_featured).map(row => ({ event_name: row.event_name, admin_notes: row.admin_notes || null })),
     players_admin_registrants: () => state.registrants,
     players_register: (request, body) => ({ token: `token-${state.calls.length}`, status: 'registered' }),

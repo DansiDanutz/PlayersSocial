@@ -18,6 +18,9 @@ function handlers(staff) {
   const boardBundle = () => ({ ...bundle(), roles: { dealer: true, floor: staff.managers.includes(staff.dealer.email), admin: false } });
   return {
     is_players_floor_manager: request => isManager(request),
+    // Floor managers edit site content (is_players_admin) but only the admin token is a Super Admin.
+    is_players_admin: request => isManager(request),
+    is_players_super_admin: request => bearer(request) === ADMIN_TOKEN,
     players_dealer_sign: (request, body) => {
       if (staff.dealer) throw new Error('Ai semnat deja regulamentul');
       staff.dealer = dealerRow({ full_name: body.p_full_name, start_date: '2026-11-21', signed_at: new Date().toISOString() });
