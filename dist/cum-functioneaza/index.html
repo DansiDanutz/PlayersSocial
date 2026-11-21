@@ -9,7 +9,7 @@
 <meta name="description" content="Ghidul personalului Players Club: contul de dealer, pontajul, aprobarea șefilor de sală.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/staff/staff.css">
 <style>
   .lead { font-size: 16px; color: var(--muted); margin: 0; max-width: 62ch; }
@@ -17,7 +17,7 @@
   .role { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-decoration: none; color: inherit; box-shadow: var(--shadow-sm); transition: box-shadow .15s ease, border-color .15s ease; }
   .role:hover { border-color: #d4d4d8; box-shadow: var(--shadow-md); }
   .role { position: relative; overflow: hidden; }
-  .role::before { content: ""; position: absolute; inset: 0 0 auto; height: 4px; background: var(--primary); }
+  .role::before { content: ""; position: absolute; inset: 0 0 auto; height: 4px; background: var(--green); }
   .role.floor::before { background: var(--info); }
   .role.admin::before { background: var(--accent); }
   .role b { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; color: var(--foreground); margin-bottom: 4px; }
@@ -108,6 +108,7 @@
   </div>
 </main>
 <script src="/staff/roles.js"></script>
+<script src="/staff/nav.js"></script>
 <script>
   // Each role card shows the same icon the account carries across the site.
   document.querySelectorAll('[data-role]').forEach(title => title.prepend(window.PlayersRoles.render({ [title.dataset.role]: true })));

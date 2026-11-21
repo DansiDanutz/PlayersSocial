@@ -9,7 +9,7 @@
 .b-stat::before { content: ""; position: absolute; inset: 0 0 auto; height: 4px; background: var(--tone); }
 
 .b-stat span { display: block; color: var(--muted-foreground); font-size: 13px; font-weight: 500; }
-.b-stat b { display: block; font-size: 24px; font-weight: 700; letter-spacing: -.02em; margin-top: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.b-stat b { display: block; font: 700 28px/1.1 var(--display); letter-spacing: -.035em; margin-top: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .b-stat small { color: var(--muted-foreground); font-size: 12px; }
 
 .b-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -41,7 +41,7 @@
 .b-figures { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; margin: 0; }
 .b-figures div { min-width: 0; }
 .b-figures dt { color: var(--muted-foreground); font-size: 12px; }
-.b-figures .b-pay dd { color: var(--green-ink); font-size: 17px; font-weight: 700; }
+.b-figures .b-pay dd { color: var(--green-ink); font: 700 19px/1.2 var(--display); letter-spacing: -.02em; }
 .b-figures dd { margin: 0; font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 .b-progress { display: flex; flex-direction: column; gap: 6px; }
 .b-progress-row { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted-foreground); }
@@ -74,7 +74,7 @@
   .b-main { gap: 16px; }
   .b-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .b-stat { padding: 12px; }
-  .b-stat b { font-size: 19px; }
+  .b-stat b { font-size: 22px; }
   .b-month { flex: 1 1 100%; justify-content: space-between; }
   .b-month output { min-width: 0; }
   .b-view { margin-left: 0; flex: 1 1 100%; }
@@ -82,3 +82,10 @@
   .b-sheet-head, .b-sheet-body { padding-left: 14px; padding-right: 14px; }
 }
 @media (pointer: coarse) { .b-month button { width: 44px; height: 44px; } }
+
+/* Felt theme: stats and dealer cards carry a light wash of their traffic-light tone. */
+.b-stat { background: linear-gradient(180deg, color-mix(in srgb, var(--tone-soft, #e3f1ea) 80%, #fff) 0%, var(--card) 70%); }
+.b-stat span { color: var(--tone-ink, var(--muted-foreground)); font-weight: 600; }
+.b-dealer { background: linear-gradient(180deg, color-mix(in srgb, var(--tone-soft) 55%, #fff) 0%, var(--card) 34%); }
+.b-avatar { background: radial-gradient(circle at 30% 25%, #fff, var(--tone-soft) 70%); box-shadow: 0 4px 12px -6px var(--tone); font-family: var(--display); }
+.b-name b { font-family: var(--display); font-size: 17px; font-weight: 650; letter-spacing: -.015em; }

@@ -22,6 +22,21 @@
     }
   }
 
+  // Current time and date, refreshed while the page is open (decorative: the input below holds the real value).
+  function liveClock() {
+    const clock = el('time', {});
+    const day = el('span', {});
+    const tick = () => {
+      const now = new Date();
+      clock.textContent = now.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' });
+      clock.setAttribute('datetime', now.toISOString());
+      day.textContent = now.toLocaleDateString('ro-RO', { weekday: 'long', day: 'numeric', month: 'long' });
+    };
+    tick();
+    const timer = setInterval(() => { if (clock.isConnected) tick(); else clearInterval(timer); }, 15000);
+    return el('div', { class: 'clock-now', 'aria-hidden': 'true' }, clock, day);
+  }
+
   // Arrival/departure: one big button; the time can be changed if the dealer presses it late.
   function clockPanel(bundle) {
     const open = bundle.shifts.find(shift => shift.status === 'open');
@@ -33,7 +48,8 @@
       if (open) run(button, status, () => rpc('players_dealer_check_out', { p_at: at }), 'Plecarea a fost înregistrată. Șeful de sală o va aproba.');
       else run(button, status, () => rpc('players_dealer_check_in', { p_at: at }), 'Sosirea a fost înregistrată.');
     });
-    return el('section', { class: 'panel clock', 'aria-labelledby': 'clockTitle' },
+    return el('section', { class: `panel clock ${open ? 'on-shift' : ''}`, 'aria-labelledby': 'clockTitle' },
+      liveClock(),
       el('h2', { id: 'clockTitle' }, open ? `Ești la lucru de la ${time(open.check_in)}` : 'Pontajul de azi'),
       el('label', {}, open ? 'Ora plecării' : 'Ora sosirii', when),
       button, status,
@@ -64,7 +80,9 @@
     const bundle = await rpc('players_dealer_me');
     if (!bundle?.dealer) { notDealer(); return; }
     const body = el('div', { style: 'display:contents' });
-    app.replaceChildren(el('h1', {}, bundle.dealer.full_name), clockPanel(bundle), body);
+    const since = new Date(`${bundle.dealer.start_date}T12:00:00`).toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' });
+    const head = el('div', { class: 'page-head' }, el('h1', {}, bundle.dealer.full_name), el('p', {}, `Dealer din ${since}`));
+    app.replaceChildren(head, clockPanel(bundle), body);
     window.DealerCard.renderCard(body, bundle, { after: forgotPanel() });
   }
 
