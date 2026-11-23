@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ro"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vouchere acordate · Player's Poker Club</title><meta name="robots" content="noindex">
+<style>body{font-family:system-ui,sans-serif;background:#120827;color:#f4efff;margin:0}main{max-width:720px;margin:0 auto;padding:28px 18px}
+h1{font-family:Georgia,serif;font-size:34px;margin:0 0 6px}p{color:#c4b6ea}table{width:100%;border-collapse:collapse;margin-top:18px}
+th,td{text-align:left;padding:12px 10px;border-bottom:1px solid #3d2a78}th{color:#f6ce6e;font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+td.s{font-family:ui-monospace,Menlo,monospace}a{color:#f6ce6e}</style></head>
+<body><main>
+<h1>Vouchere acordate</h1>
+<p>Lista publică arată doar numărul de serie, prenumele și data. Numele de familie și telefonul nu sunt publice. <a href="/promotions">Înapoi la promoție</a></p>
+<table><thead><tr><th>Serie</th><th>Prenume</th><th>Data</th></tr></thead><tbody id="rows"><tr><td colspan="3">Se încarcă…</td></tr></tbody></table>
+</main>
+<script>
+const URL_='https://lxhjfdxowpxzrybxdasi.supabase.co', KEY='sb_publishable_JoxC66D5pZiyxWmSVB2Vrw_A9nL2B9C';
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+fetch(URL_+'/rest/v1/players_promo_winners_public?select=serial,first_name,issued_on&order=serial.desc&limit=500',{headers:{apikey:KEY,Authorization:'Bearer '+KEY}})
+ .then(r=>r.ok?r.json():Promise.reject()).then(list=>{document.getElementById('rows').innerHTML=list.length?list.map(v=>
+  `<tr><td class="s">${esc(v.serial)}</td><td>${esc(v.first_name)}</td><td>${new Date(v.issued_on).toLocaleDateString('ro-RO')}</td></tr>`).join(''):'<tr><td colspan="3">Încă nu sunt vouchere acordate.</td></tr>'})
+ .catch(()=>{document.getElementById('rows').innerHTML='<tr><td colspan="3">Lista nu poate fi încărcată acum.</td></tr>'});
+</script></body></html>
