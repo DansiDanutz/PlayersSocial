@@ -281,7 +281,7 @@ window.addEventListener('DOMContentLoaded',function(){
     if(conv){busy=true;try{await conv.endSession()}catch(e){}conv=null;busy=false;idle('Convorbire încheiată. Mulțumim!');return}
     busy=true;st.textContent='Se pornește… permite accesul la microfon';
     try{
-      await navigator.mediaDevices.getUserMedia({audio:true});
+      var pre=await navigator.mediaDevices.getUserMedia({audio:true});pre.getTracks().forEach(function(t){t.stop()});
       var m=await import('https://esm.sh/@elevenlabs/client@0');
       conv=await m.Conversation.startSession({agentId:AGENT,clientTools:{issue_voucher:issueVoucher},
         onConnect:function(){orb.classList.add('live');orb.querySelector('.orb-label').textContent='Încheie convorbirea';orb.setAttribute('aria-pressed','true');st.textContent='Conectat. Vorbește liniștit cu Mirela.'},
