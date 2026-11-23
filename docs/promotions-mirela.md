@@ -30,7 +30,7 @@ table, any stake; valid 3 months from when poker resumes.
 1. Apply the migration (Supabase SQL editor or `supabase db push`), then run the test file (must print ALL PASSED).
 2. Outside the repository, add the two server keys:
    `insert into public.players_server_keys(name, key_hash) values ('promo-voucher', public.players_sha256('<PROMO_VOUCHER_KEY>')), ('promo-voucher-memo', public.players_sha256('<PROMO_VOUCHER_MEMO_KEY>'));`
-3. Vercel env (Production + Preview): `ELEVENLABS_API_KEY`, `PROMO_VOUCHER_KEY`. Memo env: `PROMO_VOUCHER_MEMO_KEY`.
+3. Vercel env (Production + Preview): `ELEVENLABS_API_KEY`, `PROMO_VOUCHER_KEY`. Memo: the value of `PROMO_VOUCHER_MEMO_KEY` goes in the macOS Keychain item `sienna-promo-voucher-key` (not an env var).
 4. Merge, check `/promotions` on the phone, then enable the Memo matching (separate PR on DansiDanutz/Phone, flag OFF by default).
 
 ## Service worker
@@ -69,7 +69,7 @@ Incoming text from the page button (wa.me/40750409972):
 1. In Memo's club-mode inbound handler, before the normal "Sienna" reply, test:
    `/confirm\s+voucher\s+(PPC-V-\d{6})\s*\(([A-HJ-NP-Z2-9]{4})\)/i`
 2. If it matches, call Supabase RPC `players_promo_voucher_attach_phone(p_server_key, p_serial, p_check, p_phone)`
-   with the sender's WhatsApp number in +E.164 and the Memo key (`PROMO_VOUCHER_MEMO_KEY`, stored only in Memo's env).
+   with the sender's WhatsApp number in +E.164 and the Memo key (`PROMO_VOUCHER_MEMO_KEY`, stored only in Memo's Keychain item `sienna-promo-voucher-key`).
 3. Reply inside the free 24h service window, depending on `status`:
    - confirmed → "Mulțumim, {first_name}! Voucherul {serial} (500 lei = 5 × 100 lei) este înregistrat pe acest număr. Îl folosești după reluarea jocurilor de poker; te anunțăm când reîncepem." (+ "Pentru dezabonare scrie STOP.")
    - already_confirmed → "Voucherul {serial} este deja înregistrat pe acest număr."
