@@ -58,7 +58,13 @@
     const confirmed = rows.filter(v => v.whatsapp_confirmed_at).length;
     const used = rows.reduce((sum, v) => sum + v.redeemed_count, 0);
     const search = el('input', { type: 'search', placeholder: 'Caută serie, nume sau telefon', value: query, 'aria-label': 'Caută' });
-    search.addEventListener('input', () => { query = search.value; render(); search.focus(); });
+    search.addEventListener('input', () => {
+      query = search.value;
+      const pos = search.selectionStart;
+      render();
+      const next = app.querySelector('input[type=search]');
+      if (next) { next.focus(); next.setSelectionRange(pos, pos); }
+    });
     const select = el('select', { 'aria-label': 'Filtru' },
       ...[['all', 'Toate'], ['confirmed', 'Confirmate pe WhatsApp'], ['pending', 'Așteaptă WhatsApp']].map(([value, label]) => el('option', { value, selected: filter === value }, label)));
     select.addEventListener('change', () => { filter = select.value; render(); });

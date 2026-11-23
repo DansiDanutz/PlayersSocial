@@ -147,6 +147,7 @@ begin
   select * into v from public.players_promo_vouchers where serial = p_serial for update;
   if not found then raise exception 'Voucher inexistent'; end if;
   if p_action = 'redeem' and v.whatsapp_confirmed_at is null then raise exception 'Voucherul nu e confirmat pe WhatsApp'; end if;
+  if p_action = 'redeem' and (v.void_reason is not null or v.opted_out_at is not null) then raise exception 'Voucherul este închis (STOP sau anulat)'; end if;
   update public.players_promo_vouchers set
     redeemed_count   = case when p_action = 'redeem' then redeemed_count + 1 else redeemed_count end,
     last_redeemed_at = case when p_action = 'redeem' then now() else last_redeemed_at end,
