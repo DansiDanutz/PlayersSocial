@@ -28,12 +28,25 @@
           "value": "no-cache"
         }
       ]
+    },
+    {
+      "source": "/api/promo-voucher",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
     }
   ],
   "rewrites": [
     {
       "source": "/e/:slug",
       "destination": "/api/share?slug=:slug"
+    },
+    {
+      "source": "/promotions/:file(mirela-640\\.webp|mirela-1024\\.webp|mirela-1280\\.webp|mirela-1024\\.jpg|mirela-avatar\\.webp|og\\.jpg)",
+      "destination": "/api/promo-asset?f=:file"
     }
   ]
 }
